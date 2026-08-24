@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "apps/device-agent/src",
+  "apps/api/src",
+]
+testpaths = [
+  "apps/device-agent/tests",
+  "apps/api/tests",
+]

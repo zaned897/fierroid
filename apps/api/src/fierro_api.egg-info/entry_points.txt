@@ -1,0 +1,2 @@
+[console_scripts]
+fierro-api = fierro_api.main:main

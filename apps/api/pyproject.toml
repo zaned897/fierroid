@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fierro-api"
+version = "0.1.0"
+description = "Cloud ingest API for cattle weight readings"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.7",
+]
+
+[project.scripts]
+fierro-api = "fierro_api.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

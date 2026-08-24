@@ -1,0 +1,12 @@
+pyproject.toml
+src/fierro_api/__init__.py
+src/fierro_api/main.py
+src/fierro_api/settings.py
+src/fierro_api/store.py
+src/fierro_api.egg-info/PKG-INFO
+src/fierro_api.egg-info/SOURCES.txt
+src/fierro_api.egg-info/dependency_links.txt
+src/fierro_api.egg-info/entry_points.txt
+src/fierro_api.egg-info/requires.txt
+src/fierro_api.egg-info/top_level.txt
+tests/test_api.py

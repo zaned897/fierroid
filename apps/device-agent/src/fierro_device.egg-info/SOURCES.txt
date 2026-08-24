@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/fierro_device/__init__.py
+src/fierro_device/hardware.py
+src/fierro_device/main.py
+src/fierro_device/models.py
+src/fierro_device/settings.py
+src/fierro_device/store.py
+src/fierro_device/sync.py
+src/fierro_device.egg-info/PKG-INFO
+src/fierro_device.egg-info/SOURCES.txt
+src/fierro_device.egg-info/dependency_links.txt
+src/fierro_device.egg-info/entry_points.txt
+src/fierro_device.egg-info/requires.txt
+src/fierro_device.egg-info/top_level.txt
+tests/test_hardware.py
+tests/test_store.py
