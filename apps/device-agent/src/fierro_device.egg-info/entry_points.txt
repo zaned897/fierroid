@@ -1,2 +1,0 @@
-[console_scripts]
-fierro-device = fierro_device.main:main
