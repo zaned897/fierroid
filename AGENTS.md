@@ -1,3 +1,11 @@
+## Agent documentation
+
+Guías de trabajo (flujo, PRs, Jira, tests): **[`docs/agent/README.md`](docs/agent/README.md)**
+
+Skills equivalentes en `.cursor/skills/`: `fierro-dev-workflow`, `fierro-pull-requests`, `fierro-jira`.
+
+---
+
 ## Cursor Cloud specific instructions
 
 ### Product scope
@@ -17,6 +25,13 @@ No Docker required for the MVP path (HTTP ingest + SQLite). MQTT is optional lat
 
 - Python: `ruff check apps` and `pytest apps/device-agent apps/api -q`
 - Web: `cd apps/web && pnpm lint && pnpm build`
+
+Details: [`docs/agent/testing.md`](docs/agent/testing.md)
+
+### PRs and Jira
+
+- PRs: [`docs/agent/pull-requests.md`](docs/agent/pull-requests.md) — branch `cursor/<name>-7dff` → `main`
+- Jira: [`docs/agent/jira.md`](docs/agent/jira.md) — templates and Atlassian MCP
 
 ### Gotchas
 
