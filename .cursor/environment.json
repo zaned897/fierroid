@@ -1,0 +1,8 @@
+{
+  "name": "fierroid",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "install": "if [ -f ./scripts/install-deps.sh ]; then ./scripts/install-deps.sh; fi"
+}
