@@ -4,7 +4,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [[ ! -d .venv ]]; then
-  python3 -m venv .venv
+  if python3 -m venv .venv; then
+    :
+  else
+    echo "python3 -m venv failed; ensure python3-venv is installed" >&2
+    exit 1
+  fi
 fi
 # shellcheck disable=SC1091
 source .venv/bin/activate
