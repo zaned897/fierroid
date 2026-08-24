@@ -1,8 +1,27 @@
 ## Agent documentation
 
-Guías de trabajo (flujo, PRs, Jira, tests): **[`docs/agent/README.md`](docs/agent/README.md)**
+Guías de trabajo completas: **[`docs/agent/README.md`](docs/agent/README.md)**
 
-Skills equivalentes en `.cursor/skills/`: `fierro-dev-workflow`, `fierro-pull-requests`, `fierro-jira`.
+Skills equivalentes, espejadas en `.cursor/skills/` (Cursor) y `.claude/skills/` (Claude Code):
+
+| Skill | Cuándo |
+|-------|--------|
+| `fierro-engineering-rules` | Antes de cualquier cambio no trivial o decisión de diseño |
+| `fierro-edge-reliability` | Device agent, storage, energía, systemd, deploy a RPi |
+| `fierro-hardware-boundary` | Drivers serial, RFID/báscula, PCB, gabinete, BOM |
+| `fierro-unblock` | En cuanto el desarrollo se estanca |
+| `fierro-sprints` | Planear, partir trabajo, abrir o cerrar tickets |
+| `fierro-dev-workflow` | Flujo general de trabajo |
+| `fierro-pull-requests` | Crear y actualizar PRs |
+| `fierro-jira` | Tickets en Jira |
+
+### Reglas no negociables
+
+1. **Ninguna lectura se pierde.** Commit local en SQLite = éxito de captura.
+2. **Falla ruidosa, nunca datos falsos.** Patrón: `SerialHardware.read()` lanza `NotImplementedError`.
+3. **Idempotencia** por `event_id`; nada pasa a `synced` sin ACK.
+4. **Diff mínimo**, dentro del alcance del ticket.
+5. **Atascado ≠ insistir.** Aplicar `fierro-unblock` tras 3 intentos o ~45 min sin avance.
 
 ---
 
