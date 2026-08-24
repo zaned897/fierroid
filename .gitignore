@@ -6,6 +6,7 @@ __pycache__/
 .ruff_cache/
 apps/web/node_modules/
 apps/web/dist/
+apps/web/.vite/
 *.db
 .DS_Store
 .env
