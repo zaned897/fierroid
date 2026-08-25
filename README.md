@@ -23,6 +23,7 @@ Sin hardware real usa `FIERRO_MOCK_HW=1` para simular aretes y pesos.
 
 Docs de detalle:
 
+- [`docs/team-plan.md`](docs/team-plan.md) — **plan de equipo** (epics, tareas, roles mecánica vs electrónica)
 - [`docs/end-to-end.md`](docs/end-to-end.md) — **diagramas de bloques** de principio a fin
 - [`docs/agent/README.md`](docs/agent/README.md) — **guías para agentes** (workflow, PRs, Jira, tests)
 - [`docs/architecture.md`](docs/architecture.md) — BOM, fiabilidad, roadmap
