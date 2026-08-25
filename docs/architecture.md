@@ -10,6 +10,8 @@ Principio no negociable: **la lectura se guarda en el dispositivo antes de inten
 
 ## Arquitectura lógica
 
+> Diagramas Mermaid de principio a fin (flujo, secuencia, sprints): [`end-to-end.md`](end-to-end.md).
+
 ```
 [Arete RFID ISO11784/85] → [Lector panel LF] ─┐
                                               ├→ [Raspberry Pi agent] → SQLite outbox → MQTT/HTTPS → [API nube]
