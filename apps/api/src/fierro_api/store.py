@@ -124,3 +124,16 @@ class ReadingStore:
             """
         ).fetchall()
         return [dict(row) for row in rows]
+
+
+def build_store(*, dsn: str | None, db_path: str) -> Any:
+    """SQLite para laboratorio, Postgres cuando hay DSN.
+
+    El import de psycopg es perezoso: `pip install fierro-api` sin el extra
+    [postgres] sigue levantando la API en SQLite.
+    """
+    if dsn:
+        from fierro_api.store_pg import PostgresReadingStore
+
+        return PostgresReadingStore(dsn)
+    return ReadingStore(db_path)

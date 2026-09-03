@@ -13,8 +13,18 @@ dependencies = [
   "pydantic>=2.7",
 ]
 
+[project.optional-dependencies]
+# Opcional a proposito: la API arranca en SQLite sin psycopg instalado.
+postgres = ["psycopg[binary,pool]>=3.2"]
+
 [project.scripts]
 fierro-api = "fierro_api.main:main"
+fierro-api-migrate = "fierro_api.migrate:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+# Las migraciones viajan dentro del paquete para que funcionen en la imagen
+# Docker, no solo en un checkout del repo.
+fierro_api = ["migrations/*.sql"]

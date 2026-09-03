@@ -8,10 +8,10 @@ from pydantic import BaseModel, Field
 
 from fierro_api import __version__
 from fierro_api.settings import Settings
-from fierro_api.store import ReadingStore
+from fierro_api.store import build_store
 
 settings = Settings.from_env()
-store = ReadingStore(settings.db_path)
+store = build_store(dsn=settings.dsn, db_path=settings.db_path)
 
 app = FastAPI(title="Fierro API", version=__version__)
 app.add_middleware(

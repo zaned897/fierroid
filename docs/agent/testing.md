@@ -8,7 +8,7 @@ Expectativas de calidad para cambios en Fierro IoT.
 source .venv/bin/activate
 
 # Python
-ruff check apps
+ruff check apps scripts
 pytest apps/device-agent apps/api -q
 
 # Web (si hubo cambios en apps/web)
@@ -26,6 +26,30 @@ Instalar deps: `./scripts/install-deps.sh`
 | web | eslint + build; manual PWA si UI cambió |
 | docs only | Revisión de links; no tests obligatorios |
 | scripts / env | Ejecutar install script dos veces (idempotente) |
+
+## Pruebas contra Postgres
+
+Las pruebas de `store_pg.py` se saltan solas si no hay DSN. Para correrlas:
+
+```bash
+docker compose up -d db
+FIERRO_TEST_PG_DSN=postgresql://fierro:fierro@localhost:5432/fierro   pytest apps/api -q
+```
+
+CI las corre siempre: el job `python` levanta un servicio Postgres y define esa
+variable. Si tu PR toca el store y las ves como `skipped` en local, no asumas
+que pasan.
+
+## Entorno completo en Docker
+
+```bash
+docker compose up --build          # db + migraciones + api + agent mock
+docker compose --profile tools run --rm seed   # datos sinteticos historicos
+docker compose down -v             # borra tambien los volumenes
+```
+
+CI corre este mismo stack en el job `compose`: build, health de la API, siembra
+y verificacion de que las lecturas quedaron persistidas.
 
 ## Flujo manual de referencia (hello-world)
 
@@ -72,6 +96,17 @@ Agregar tests cuando:
 
 No agregar tests triviales que solo assertan getters obvios.
 
-## CI (futuro)
+## CI
 
-Cuando exista GitHub Actions, replicar los mismos comandos en PR. Hasta entonces, el agente ejecuta localmente antes de push.
+[`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) corre en cada PR y en push a `main`:
+
+| Job | Que valida |
+|-----|------------|
+| `python` | `ruff check apps scripts` + `pytest` con servicio Postgres real |
+| `web` | `pnpm lint` + `pnpm build` con lockfile congelado |
+| `compose` | Build de imagenes, health de la API, siembra sintetica y persistencia |
+
+`FIERRO_MOCK_HW=1` esta fijado a nivel workflow: ningun job toca hardware.
+
+Correr los mismos comandos en local antes del push sigue siendo lo esperado; CI
+es la red de seguridad, no el primer lugar donde te enteras.
