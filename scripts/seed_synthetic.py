@@ -211,6 +211,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--days", type=int, default=90, help="Historia hacia atras, en dias")
     parser.add_argument("--interval-days", type=int, default=7, help="Dias entre jornadas")
     parser.add_argument("--devices", type=int, default=2, help="Estaciones que reportan")
+    parser.add_argument(
+        "--device-ids",
+        help="IDs concretos separados por coma. Gana sobre --devices. "
+        "Sirve para sembrar el hato de una organizacion ya creada.",
+    )
     parser.add_argument("--batch-size", type=int, default=200)
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument("--country-code", type=int, default=DEFAULT_COUNTRY_CODE)
@@ -230,7 +235,13 @@ def main(argv: list[str] | None = None) -> int:
     rng = random.Random(args.seed)
     now = datetime.now(timezone.utc).replace(microsecond=0)
     herd = build_herd(rng, args.animals, args.country_code, now)
-    devices = [f"rpi-synthetic-{i + 1:03d}" for i in range(max(args.devices, 1))]
+    if args.device_ids:
+        devices = [d.strip() for d in args.device_ids.split(",") if d.strip()]
+        if not devices:
+            print("--device-ids no contiene ningun id", file=sys.stderr)
+            return 2
+    else:
+        devices = [f"rpi-synthetic-{i + 1:03d}" for i in range(max(args.devices, 1))]
     events = generate_events(
         rng=rng,
         herd=herd,

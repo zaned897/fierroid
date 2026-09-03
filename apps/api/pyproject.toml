@@ -20,6 +20,7 @@ postgres = ["psycopg[binary,pool]>=3.2"]
 [project.scripts]
 fierro-api = "fierro_api.main:main"
 fierro-api-migrate = "fierro_api.migrate:main"
+fierro-api-seed-tenants = "fierro_api.tenancy:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

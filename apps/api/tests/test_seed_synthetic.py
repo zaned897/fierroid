@@ -110,6 +110,23 @@ def test_ningun_pesaje_en_el_futuro(seed_module, now):
         assert datetime.fromisoformat(event["captured_at"]) <= now
 
 
+def test_hatos_de_semillas_distintas_no_comparten_aretes(seed_module, now):
+    """La base de "usuarios de prueba con datos distintos".
+
+    Si dos organizaciones sembradas con semillas distintas comparten un arete,
+    el mismo animal aparece en dos ranchos y la separacion multi-cliente es
+    mentira, aunque el filtrado por tenant funcione perfecto.
+    """
+    herd_a, _ = build(seed_module, now, animals=40, seed=1130)
+    herd_b, _ = build(seed_module, now, animals=40, seed=1111)
+    herd_c, _ = build(seed_module, now, animals=40, seed=1012)
+
+    aretes = [{a.tag_id for a in h} for h in (herd_a, herd_b, herd_c)]
+    for i, uno in enumerate(aretes):
+        for otro in aretes[i + 1 :]:
+            assert not (uno & otro)
+
+
 def test_eventos_ordenados_por_fecha(seed_module, now):
     _, events = build(seed_module, now, animals=15, days=90)
     stamps = [e["captured_at"] for e in events]
