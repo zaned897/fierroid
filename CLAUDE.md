@@ -24,6 +24,7 @@ En `.claude/skills/` (espejo de `.cursor/skills/`). Cargar la que aplique **ante
 
 | Skill | Cuándo |
 |-------|--------|
+| `fierro-product-principles` | **Antes de escribir código.** UI, contrato de datos, bugs, releases |
 | `fierro-engineering-rules` | Cualquier cambio no trivial o decisión de diseño |
 | `fierro-edge-reliability` | Device agent, storage, energía, systemd, deploy a RPi |
 | `fierro-hardware-boundary` | Drivers serial, RFID/báscula, PCB, gabinete, BOM |

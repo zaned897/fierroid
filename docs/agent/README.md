@@ -10,6 +10,7 @@ Los agentes deben leer esto **antes** de implementar cambios no triviales.
 
 | Documento | Contenido |
 |-----------|-----------|
+| [`product-principles.md`](product-principles.md) | **Empieza aquí.** Elegancia sobre estado del arte, multi-idioma, entrega por etapas, causa raíz, diseño, LoRaWAN |
 | [`engineering-rules.md`](engineering-rules.md) | Pilares: pragmatismo, robustez, escala, estándares industriales |
 | [`edge-reliability.md`](edge-reliability.md) | Que la RPi no falle: apagones, corrupción de SD, watchdog, reloj, OTA |
 | [`hardware-boundary.md`](hardware-boundary.md) | Frontera HW/SW, drivers, PCBs propias, versionado de revisiones |
@@ -40,6 +41,7 @@ rm -rf .claude/skills && cp -r .cursor/skills .claude/skills
 
 | Skill | Uso |
 |-------|-----|
+| [`fierro-product-principles`](../../.cursor/skills/fierro-product-principles/SKILL.md) | Principios de producto: cómo se construye aquí |
 | [`fierro-engineering-rules`](../../.cursor/skills/fierro-engineering-rules/SKILL.md) | Reglas de ingeniería y estándares |
 | [`fierro-edge-reliability`](../../.cursor/skills/fierro-edge-reliability/SKILL.md) | Confiabilidad del device en campo |
 | [`fierro-hardware-boundary`](../../.cursor/skills/fierro-hardware-boundary/SKILL.md) | Separación hardware / software y PCBs |
@@ -62,8 +64,9 @@ rm -rf .claude/skills && cp -r .cursor/skills .claude/skills
 
 ## Orden de lectura sugerido
 
-1. [`engineering-rules.md`](engineering-rules.md) — cómo se decide aquí
-2. [`workflow.md`](workflow.md) — cómo se trabaja día a día
-3. El documento del dominio que toques: [`edge-reliability.md`](edge-reliability.md) (device), [`hardware-boundary.md`](hardware-boundary.md) (drivers / PCB)
-4. [`sprints.md`](sprints.md) + [`pull-requests.md`](pull-requests.md) al entregar
-5. [`unblock.md`](unblock.md) en cuanto algo se atore
+1. [`product-principles.md`](product-principles.md) — cómo se construye aquí
+2. [`engineering-rules.md`](engineering-rules.md) — cómo se decide aquí
+3. [`workflow.md`](workflow.md) — cómo se trabaja día a día
+4. El documento del dominio que toques: [`edge-reliability.md`](edge-reliability.md) (device), [`hardware-boundary.md`](hardware-boundary.md) (drivers / PCB)
+5. [`sprints.md`](sprints.md) + [`pull-requests.md`](pull-requests.md) al entregar
+6. [`unblock.md`](unblock.md) en cuanto algo se atore
