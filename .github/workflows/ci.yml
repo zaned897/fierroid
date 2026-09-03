@@ -112,11 +112,25 @@ jobs:
       - name: Seed synthetic data
         run: python3 scripts/seed_synthetic.py --api http://127.0.0.1:8000 --animals 15 --days 5 --seed 42
 
+      # Leer exige credencial, asi que el smoke ahora recorre tambien el alta de
+      # usuario y el login. Mejor asi: prueba mas camino real, no menos.
+      - name: Create a superuser and sign in
+        run: |
+          echo 'clave-de-smoke-ci' | docker compose exec -T api fierro-api-user --email ci@fierro.test --superuser --password-stdin
+          token=$(curl -fsS -X POST http://127.0.0.1:8000/v1/auth/login -H 'Content-Type: application/json' -d '{"email":"ci@fierro.test","password":"clave-de-smoke-ci"}' | python3 -c "import json,sys; print(json.load(sys.stdin)['api_key'])")
+          echo "FIERRO_CI_TOKEN=$token" >> "$GITHUB_ENV"
+
       - name: Assert readings persisted
         run: |
-          count=$(curl -fsS "http://127.0.0.1:8000/v1/readings?limit=500" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['readings']))")
+          count=$(curl -fsS "http://127.0.0.1:8000/v1/readings?limit=200" -H "Authorization: Bearer $FIERRO_CI_TOKEN" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['readings']))")
           echo "readings devueltas: $count"
           test "$count" -gt 0
+
+      - name: Assert reading without a credential is refused
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/v1/readings)
+          echo "sin credencial: HTTP $code"
+          test "$code" = "401"
 
       - name: Dump logs on failure
         if: failure()
