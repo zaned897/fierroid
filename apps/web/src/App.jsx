@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { CowForTag, CowIcon } from "./icons/cows.jsx";
+
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 async function fetchJson(path) {
@@ -51,7 +53,10 @@ export default function App() {
   return (
     <div className="page">
       <header className="hero">
-        <p className="brand">Fierro</p>
+        <div className="brand-row">
+          <CowIcon variant="frente" size={40} className="cow" />
+          <p className="brand">Fierro</p>
+        </div>
         <h1>Pesajes</h1>
         <p className="lede">Lecturas RFID + peso sincronizadas desde el corral.</p>
       </header>
@@ -83,16 +88,27 @@ export default function App() {
         {loading && <p className="muted">Cargando…</p>}
         {error && <p className="error">{error}</p>}
         {!loading && readings.length === 0 && (
-          <p className="muted">Todavía no hay pesajes. Arranca el agent mock.</p>
+          <p className="empty">
+            <CowIcon variant="becerro" size={52} className="cow" />
+            Todavía no hay pesajes. Arranca el agent mock.
+          </p>
         )}
         <ul className="reading-list">
           {readings.map((r) => (
             <li key={r.event_id}>
-              <div className="weight">{formatKg(r.weight_kg)}</div>
-              <div className="meta">
-                <span className="tag">{r.tag_id}</span>
-                <span>{r.device_id}</span>
-                <span>{formatWhen(r.captured_at)}</span>
+              {/* Mismo arete, mismo dibujo: ancla visual para reconocer al animal. */}
+              <CowForTag tagId={r.tag_id} size={34} className="cow" />
+              <div className="reading-body">
+                <div className="weight">
+                  {formatKg(r.weight_kg)}
+                  {/* La API ya manda `stable`; ocultarlo seria esconder un dato malo. */}
+                  {!r.stable && <span className="badge">inestable</span>}
+                </div>
+                <div className="meta">
+                  <span className="tag">{r.tag_id}</span>
+                  <span>{r.device_id}</span>
+                  <span>{formatWhen(r.captured_at)}</span>
+                </div>
               </div>
             </li>
           ))}
