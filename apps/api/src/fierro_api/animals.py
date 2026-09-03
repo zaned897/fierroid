@@ -14,7 +14,12 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from psycopg import Cursor
+
+from fierro_api.db import require_row
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +72,7 @@ def validate_photo(raw: bytes, declared_type: str | None) -> str:
     return normalizado
 
 
-def _org_id(cur, org_slug: str) -> int:
+def _org_id(cur: "Cursor[Any]", org_slug: str) -> int:
     cur.execute("SELECT id FROM organizations WHERE slug = %s", (org_slug,))
     fila = cur.fetchone()
     if fila is None:
@@ -101,7 +106,7 @@ def upsert_animal(
             """,
             (org_id, tag_id, alias, notes),
         )
-        fila = dict(cur.fetchone())
+        fila = dict(require_row(cur.fetchone(), "guardar ficha del animal"))
         conn.commit()
 
     fila["created_at"] = fila["created_at"].isoformat()
@@ -190,7 +195,7 @@ def save_photo(
             """,
             (org_id, tag_id),
         )
-        animal_id = cur.fetchone()[0]
+        animal_id = require_row(cur.fetchone(), "crear ficha para la foto")[0]
         cur.execute(
             """
             INSERT INTO animal_photos (animal_id, bytes, content_type, byte_size)

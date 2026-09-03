@@ -14,6 +14,8 @@ import sys
 from dataclasses import dataclass
 from typing import Any
 
+from fierro_api.db import require_row
+
 # Nombres verosimiles de ganaderia mexicana, para que los datos de prueba se
 # lean como datos y no como "org-1", "org-2".
 ORG_CATALOG: list[tuple[str, str, list[str]]] = [
@@ -92,7 +94,7 @@ def seed_tenants(dsn: str, specs: list[OrgSpec]) -> list[dict[str, Any]]:
                 """,
                 (org.slug, org.name),
             )
-            org_id = cur.fetchone()[0]
+            org_id = require_row(cur.fetchone(), "crear organizacion")[0]
 
             ranchos = []
             for ranch in org.ranches:
@@ -104,7 +106,7 @@ def seed_tenants(dsn: str, specs: list[OrgSpec]) -> list[dict[str, Any]]:
                     """,
                     (org_id, ranch.slug, ranch.name),
                 )
-                ranch_id = cur.fetchone()[0]
+                ranch_id = require_row(cur.fetchone(), "crear rancho")[0]
 
                 for device_id in ranch.devices:
                     # Re-sembrar reasigna: es una herramienta de desarrollo y

@@ -63,6 +63,14 @@ python -m fierro_api.contract --check   # verificar
 Sin esto, un agente agrega, renombra o quita un campo y nadie se entera hasta
 que el front deja de funcionar.
 
+### Los tipos son parte del contrato
+
+`mypy` corre en pre-commit y en CI sobre `apps/` y `scripts/`, con
+`disallow_untyped_defs`. Una función nueva sin anotar no pasa.
+
+No está en `strict` todavía: hoy dejaría 12 errores, y un gate que nace en rojo
+se desactiva a la semana. Subirlo es un ticket aparte.
+
 ### El esquema va antes que la lógica
 
 Para algo nuevo que persiste datos, el orden es: **migración SQL → prueba →
@@ -103,8 +111,8 @@ Las tres barreras, en orden de cuándo actúan:
 
 | Barrera | Cuándo | Qué detiene |
 |---|---|---|
-| `pre-commit` | antes del commit | Estilo, contrato desactualizado, skills desincronizadas |
-| CI | en el PR | ruff, pytest contra Postgres real, build web, smoke de compose |
+| `pre-commit` | antes del commit | Estilo, tipos, contrato desactualizado, skills desincronizadas |
+| CI | en el PR | ruff, **mypy**, pytest contra Postgres real, build web, smoke de compose |
 | Revisión humana | antes del merge | Todo lo demás |
 
 Las dos primeras son automáticas y no se saltan. La tercera es la que atrapa

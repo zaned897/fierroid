@@ -53,6 +53,9 @@ jobs:
       - name: Skills mirrored
         run: diff -r .cursor/skills .claude/skills
 
+      - name: Types
+        run: mypy apps/api/src apps/device-agent/src scripts
+
       - name: Migrate test database
         env:
           FIERRO_API_DSN: postgresql://fierro:fierro@localhost:5432/fierro_test

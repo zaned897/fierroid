@@ -27,6 +27,8 @@ from typing import Any
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 
+from fierro_api.db import require_row
+
 # argon2id con parametros por defecto de argon2-cffi, que siguen la
 # recomendacion de OWASP. Subirlos es una decision de operacion, no de codigo.
 _hasher = PasswordHasher()
@@ -135,7 +137,7 @@ def issue_api_key(
             """,
             (user_id, key_hash, prefix, name, expires_at),
         )
-        key_id, created_at = cur.fetchone()
+        key_id, created_at = require_row(cur.fetchone(), "emitir API key")
         conn.commit()
 
     return {
@@ -345,7 +347,7 @@ def create_user(
             """,
             (email, password_hash, full_name, org_id, is_superuser),
         )
-        user_id = cur.fetchone()[0]
+        user_id = require_row(cur.fetchone(), "crear usuario")[0]
         conn.commit()
         return user_id
 
