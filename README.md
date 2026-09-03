@@ -45,7 +45,7 @@ Docs de detalle:
 | Persistencia cloud | SQLite (lab) o Postgres/Timescale | Se elige con `FIERRO_API_DSN` |
 | Sync | HTTPS batch (MQTT opcional después) | Idempotencia por `event_id` |
 | Frontend | React 19, Vite 6, PWA | UI mobile-first |
-| Tooling | uv, pnpm, ruff, pytest, ESLint | `scripts/install-deps.sh` |
+| Tooling | uv, pnpm, ruff, mypy, pytest, ESLint | `scripts/install-deps.sh` |
 | Infra local | Docker Compose | Postgres + API + agent mock reproducibles |
 | CI | GitHub Actions | ruff, pytest con Postgres, build web, smoke de compose |
 | Entornos | Ramas `stage` / `production` + GHCR | Promoción por fast-forward; imágenes solo si CI pasó |
@@ -310,6 +310,7 @@ expirar aunque el usuario cerrara sesión.
 ```bash
 source .venv/bin/activate
 ruff check apps scripts
+mypy apps/api/src apps/device-agent/src scripts
 pytest apps/device-agent apps/api -q
 cd apps/web && pnpm lint && pnpm build
 ```
@@ -320,9 +321,9 @@ cd apps/web && pnpm lint && pnpm build
 pip install pre-commit && pre-commit install
 ```
 
-Se instala una vez y corre en cada commit: ruff, higiene de archivos, que el
-contrato OpenAPI esté al día, y que los dos directorios de skills sigan siendo
-idénticos. Necesita el venv activo, porque verificar el contrato importa la API.
+Se instala una vez y corre en cada commit: ruff, mypy, higiene de archivos, que
+el contrato OpenAPI esté al día, y que los dos directorios de skills sigan
+siendo idénticos. Necesita el venv activo, porque verificar el contrato importa la API.
 
 CI es la red de seguridad; esto es el filtro. Encontrar el problema aquí cuesta
 segundos; encontrarlo en CI cuesta diez minutos y un push.

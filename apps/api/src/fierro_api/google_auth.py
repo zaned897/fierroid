@@ -13,7 +13,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from jwt import PyJWKClient
+
+    from fierro_api.auth import AuthUser
 
 from fierro_api.auth import AuthError
 
@@ -33,7 +38,7 @@ class GoogleIdentity:
     name: str | None = None
 
 
-def _default_jwks_client():
+def _default_jwks_client() -> "PyJWKClient":
     """Cliente JWKS compartido: cachea las llaves publicas de Google."""
     global _jwks_client
     if _jwks_client is None:
@@ -87,7 +92,7 @@ def verify_id_token(token: str, *, client_id: str, jwks_client: Any = None) -> G
     return GoogleIdentity(sub=claims["sub"], email=email, name=claims.get("name"))
 
 
-def user_for_identity(dsn: str, identity: GoogleIdentity):
+def user_for_identity(dsn: str, identity: GoogleIdentity) -> "AuthUser":
     """Busca al usuario invitado que corresponde a esa identidad.
 
     No crea usuarios: el alta es por invitacion. Si el correo no esta dado de

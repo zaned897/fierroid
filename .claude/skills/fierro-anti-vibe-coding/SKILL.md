@@ -66,8 +66,8 @@ agent wrote.
 
 | Gate | When | Catches |
 |---|---|---|
-| `pre-commit` | before commit | style, stale contract, unsynced skills |
-| CI | on the PR | ruff, pytest against real Postgres, web build, compose smoke |
+| `pre-commit` | before commit | style, types, stale contract, unsynced skills |
+| CI | on the PR | ruff, **mypy**, pytest against real Postgres, web build, compose smoke |
 | Human review | before merge | whether it is the right solution at all |
 
 The first two cannot be skipped. `/code-review` gives an independent audit

@@ -45,6 +45,15 @@ repos:
         pass_filenames: false
         files: ^apps/api/src/
 
+      # Tipos. La configuracion vive en pyproject.toml, no aqui, para que no
+      # se separe de la que usa CI.
+      - id: mypy
+        name: mypy
+        entry: bash -c 'PYTHONPATH=apps/api/src:apps/device-agent/src python -m mypy apps/api/src apps/device-agent/src scripts'
+        language: system
+        pass_filenames: false
+        files: ^(apps|scripts)/.*\.py$
+
       # CLAUDE.md exige que los dos directorios de skills sean identicos.
       # Sin esto, se separan y cada agente lee reglas distintas.
       - id: skills-espejo

@@ -10,7 +10,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from psycopg.rows import dict_row
+from psycopg import Connection
+from psycopg.rows import DictRow, dict_row
 from psycopg_pool import ConnectionPool
 
 
@@ -28,7 +29,11 @@ def _iso(value: datetime | None) -> str | None:
 
 class PostgresReadingStore:
     def __init__(self, dsn: str, *, min_size: int = 1, max_size: int = 10) -> None:
-        self._pool = ConnectionPool(
+        # El tipo del pool declara que las filas son diccionarios, que es lo
+        # que produce row_factory=dict_row. Sin la anotacion, un verificador de
+        # tipos supone tuplas y marca como error cada acceso por nombre de
+        # columna, que es justo como se lee este modulo.
+        self._pool: ConnectionPool[Connection[DictRow]] = ConnectionPool(
             dsn,
             min_size=min_size,
             max_size=max_size,
