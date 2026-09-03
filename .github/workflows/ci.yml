@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, stage, production]
   pull_request:
 
 concurrency:
@@ -125,3 +125,25 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose down -v
+
+  promote-guard:
+    name: promocion sin divergencia
+    if: github.event_name == 'push' && contains(fromJSON('["stage", "production"]'), github.ref_name)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar que la rama solo avance por promocion
+        run: |
+          git fetch --quiet origin main
+          extra=$(git log --oneline origin/main..HEAD)
+          if [ -n "$extra" ]; then
+            echo "::error::${{ github.ref_name }} tiene commits que no estan en main."
+            echo "Las ramas de entorno solo avanzan promocionando desde main."
+            echo "Commits divergentes:"
+            echo "$extra"
+            exit 1
+          fi
+          echo "${{ github.ref_name }} desciende limpio de main."

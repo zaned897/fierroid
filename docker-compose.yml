@@ -45,6 +45,7 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
+      FIERRO_ENV: dev
       FIERRO_API_DSN: *db-dsn
     ports:
       - "${FIERRO_API_PORT:-8000}:8000"
