@@ -160,6 +160,40 @@ por raza y sexo, y redondea a la división real del indicador (0.5 kg, OIML R76)
 Es **idempotente**: la misma `--seed` produce los mismos `event_id`. Correrlo dos
 veces es la prueba más barata de que el ingest no duplica.
 
+### Multi-cliente (organizaciones y ranchos)
+
+```
+organización → ranchos → estaciones → lecturas
+```
+
+`readings` **no** lleva `org_id`. La pertenencia se deriva por
+`device_id → devices.ranch_id → ranches.org_id`: una sola fuente de verdad.
+
+`devices.ranch_id` es **nullable a propósito**. Una estación nueva puede mandar
+heartbeat antes de que alguien la asigne, y sus lecturas se aceptan igual — el
+invariante raíz manda. `NULL` significa "sin asignar", no "inválida"; al
+asignarla, su historia completa aparece bajo la organización correcta.
+
+> ⚠️ **El esquema existe, pero la API todavía no filtra por organización.**
+> `GET /v1/readings` sigue devolviendo todo. El aislamiento real llega con el
+> ticket de filtrado por tenant, junto con auth. No expongas esto a internet.
+
+Sembrar la estructura (solo Postgres, es una operación administrativa):
+
+```bash
+FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro fierro-api-seed-tenants --orgs 3
+```
+
+Imprime las estaciones de cada organización y el comando listo para poblar su
+hato. Cada organización recibe una semilla derivada de su slug, así que sus
+hatos son distintos y **no comparten aretes**.
+
+Ver el árbol completo con conteos:
+
+```bash
+FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro fierro-api-seed-tenants --list
+```
+
 ### Lint / test / build
 
 ```bash
@@ -181,7 +215,7 @@ cd apps/web && pnpm lint && pnpm build
 | `FIERRO_API_DSN` | vacío | DSN Postgres; si está definido, gana sobre SQLite |
 | `FIERRO_ENV` | `dev` | `dev` \| `stage` \| `production`; los dos últimos validan config al arrancar |
 | `FIERRO_API_CORS_ORIGINS` | `*` | Orígenes permitidos, separados por coma. `*` prohibido fuera de dev |
-| `FIERRO_TEST_PG_DSN` | vacío | Activa las pruebas del store Postgres |
+| `FIERRO_TEST_PG_DSN` | vacío | Activa las pruebas del store Postgres y de tenancy |
 | `FIERRO_SCALE_PORT` / `FIERRO_RFID_PORT` | `/dev/ttyUSB*` | Puertos seriales reales |
 
 ---
