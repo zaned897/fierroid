@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import secrets
 from dataclasses import dataclass, field
 
 # dev = laboratorio y tests. stage y production son entornos desplegados y
@@ -21,6 +22,8 @@ class Settings:
     dsn: str | None = None
     env: str = "dev"
     cors_origins: tuple[str, ...] = field(default=("*",))
+    jwt_secret: str = ""
+    jwt_ttl_minutes: int = 60
 
     @property
     def is_deployed(self) -> bool:
@@ -32,13 +35,23 @@ class Settings:
         dsn = os.getenv("FIERRO_API_DSN", "").strip() or None
         raw_origins = os.getenv("FIERRO_API_CORS_ORIGINS", "*")
         origins = tuple(o.strip() for o in raw_origins.split(",") if o.strip())
+        # En dev, un secreto aleatorio por arranque: sin secreto por defecto
+        # que alguien pueda heredar a produccion sin darse cuenta. El costo es
+        # que las sesiones no sobreviven un reinicio local, que da igual.
+        jwt_secret = os.getenv("FIERRO_JWT_SECRET", "").strip()
+        env = os.getenv("FIERRO_ENV", "dev").strip().lower()
+        if not jwt_secret and env not in DEPLOYED_ENVS:
+            jwt_secret = secrets.token_urlsafe(32)
+
         return cls(
             db_path=os.getenv("FIERRO_API_DB_PATH", "/tmp/fierro-api.db"),
             host=os.getenv("FIERRO_API_HOST", "0.0.0.0"),
             port=int(os.getenv("FIERRO_API_PORT", "8000")),
             dsn=dsn,
-            env=os.getenv("FIERRO_ENV", "dev").strip().lower(),
+            env=env,
             cors_origins=origins or ("*",),
+            jwt_secret=jwt_secret,
+            jwt_ttl_minutes=int(os.getenv("FIERRO_JWT_TTL_MIN", "60")),
         )
 
     def validate(self) -> None:
@@ -64,4 +77,13 @@ class Settings:
             raise ConfigError(
                 f"FIERRO_API_CORS_ORIGINS no puede ser '*' en {self.env}. "
                 "Lista los origenes explicitamente, separados por coma."
+            )
+
+        if len(self.jwt_secret) < 32:
+            # Un secreto corto o ausente permite falsificar tokens de cualquier
+            # usuario, superusuario incluido.
+            raise ConfigError(
+                f"FIERRO_JWT_SECRET es obligatorio en {self.env} y necesita al menos "
+                "32 caracteres. Generalo con: python -c "
+                "\"import secrets; print(secrets.token_urlsafe(48))\""
             )

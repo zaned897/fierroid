@@ -54,7 +54,8 @@ es lento — no que haya que saltárselo.
 | Falta | Por qué aborta |
 |-------|----------------|
 | `FIERRO_API_DSN` | Sin Postgres guardaría en SQLite dentro del contenedor, que se borra al reiniciar. Perder pesajes en silencio es justo lo que el invariante raíz prohíbe |
-| `FIERRO_API_CORS_ORIGINS` distinto de `*` | Una API sin auth y con CORS abierto es un problema, no una comodidad |
+| `FIERRO_API_CORS_ORIGINS` distinto de `*` | CORS abierto sobre una API con sesiones es un problema, no una comodidad |
+| `FIERRO_JWT_SECRET` de 32+ caracteres | Sin secreto se pueden falsificar tokens de cualquier usuario, superusuario incluido |
 
 Un `FIERRO_ENV` con typo (`prod` en vez de `production`) también aborta, en vez
 de caer silenciosamente en modo `dev`.
