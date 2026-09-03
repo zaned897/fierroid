@@ -33,7 +33,7 @@ Skill útil del ecosistema Cursor: **triage-issue** (buscar duplicados y estruct
 
 ## Plantilla — Story / Task
 
-**Summary:** `[componente] Verbo + resultado`  
+**Summary:** `[componente] Verbo + resultado`
 Ej.: `[device-agent] Leer peso estable desde indicador RS232`
 
 **Description:**

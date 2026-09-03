@@ -1,0 +1,55 @@
+# Gate local, antes de que el codigo llegue a CI.
+#
+# CI es la red de seguridad; esto es el filtro. Un agente que genera codigo y
+# comitea sin pasar por aqui deja el trabajo de encontrar el problema a alguien
+# mas, diez minutos despues.
+#
+#   pip install pre-commit && pre-commit install
+#   pre-commit run --all-files    # primera pasada sobre todo el repo
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.2
+    hooks:
+      # Mismas reglas que CI (E, F, I, B, linea de 100), definidas en
+      # pyproject.toml. No se duplican aqui para que no se separen.
+      - id: ruff
+        args: [--fix]
+        files: ^(apps|scripts)/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      # Una foto o un dump commiteado por accidente es dificil de sacar despues.
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      # Reglas del repo: nada de .env ni bases de datos en el historial.
+      - id: check-case-conflict
+
+  - repo: local
+    hooks:
+      # El contrato de la API es un archivo versionado. Si la superficie cambio
+      # y el archivo no, el commit se detiene aqui y no en el front de alguien.
+      - id: contrato-api
+        name: contrato OpenAPI al dia
+        # PYTHONPATH en vez de depender de una instalacion editable: asi
+        # funciona con el venv activo aunque nadie haya hecho `pip install -e`.
+        # Requiere el venv: sin el, las dependencias de la API no existen.
+        entry: bash -c 'PYTHONPATH=apps/api/src python -m fierro_api.contract --check'
+        language: system
+        pass_filenames: false
+        files: ^apps/api/src/
+
+      # CLAUDE.md exige que los dos directorios de skills sean identicos.
+      # Sin esto, se separan y cada agente lee reglas distintas.
+      - id: skills-espejo
+        name: .cursor/skills y .claude/skills identicos
+        entry: bash -c 'diff -r .cursor/skills .claude/skills'
+        language: system
+        pass_filenames: false
+        files: ^\.(cursor|claude)/skills/

@@ -24,6 +24,7 @@ En `.claude/skills/` (espejo de `.cursor/skills/`). Cargar la que aplique **ante
 
 | Skill | Cuándo |
 |-------|--------|
+| `fierro-anti-vibe-coding` | **Antes de escribir cualquier función.** Buscar en el grafo, contrato primero |
 | `fierro-product-principles` | **Antes de escribir código.** UI, contrato de datos, bugs, releases |
 | `fierro-engineering-rules` | Cualquier cambio no trivial o decisión de diseño |
 | `fierro-edge-reliability` | Device agent, storage, energía, systemd, deploy a RPi |
@@ -41,7 +42,8 @@ Notas de Cloud Agents: [`AGENTS.md`](AGENTS.md).
 
 ```bash
 ./scripts/install-deps.sh && source .venv/bin/activate
-ruff check apps
+pre-commit install            # gate local, una vez
+ruff check apps scripts
 pytest apps/device-agent apps/api -q
 cd apps/web && pnpm lint && pnpm build   # solo si tocaste web
 ```
