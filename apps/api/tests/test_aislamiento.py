@@ -112,9 +112,13 @@ def client(monkeypatch):
     # No basta con parchear settings: `store` es un singleton creado al importar
     # el modulo, asi que sin esto el login iria a Postgres y las lecturas a
     # SQLite vacio.
+    store = PostgresReadingStore(DSN)
     monkeypatch.setattr(main_module, "settings", replace(main_module.settings, dsn=DSN))
-    monkeypatch.setattr(main_module, "store", PostgresReadingStore(DSN))
-    return TestClient(main_module.app)
+    monkeypatch.setattr(main_module, "store", store)
+    yield TestClient(main_module.app)
+    # El store abre un pool de conexiones: sin cerrarlo, cada prueba deja
+    # conexiones vivas y con suficientes pruebas se agota el servidor.
+    store.close()
 
 
 def entrar(client, correo: str) -> dict[str, str]:

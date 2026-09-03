@@ -268,6 +268,32 @@ puede invalidar antes de que expire.
 Auth requiere Postgres. En modo SQLite los endpoints devuelven `503` con un
 mensaje que lo dice.
 
+### Fichas de animales y fotos
+
+El hato **sale de lo que se ha pesado**, no de fichas creadas a mano: un animal
+aparece en la lista en cuanto pasa por la manga. La ficha (nombre, notas, foto)
+es metadato opcional que se agrega encima.
+
+| Endpoint | Qué hace |
+|---|---|
+| `GET /v1/animals` | Hato de la organización, con último peso y si tiene foto |
+| `PUT /v1/animals/{tag_id}` | Nombre y notas |
+| `POST /v1/animals/{tag_id}/photo` | Subir foto (multipart, máx. 2 MB) |
+| `GET /v1/animals/{tag_id}/photo` | Servir la foto |
+
+El arete es único **por organización**, no globalmente: si un animal se vende,
+el comprador lleva su propia ficha sin ver la del vendedor.
+
+**Las fotos viven en Postgres**, en la tabla `animal_photos`, separada de
+`animals`. A escala piloto son decenas de MB, entran en el respaldo de la base y
+no obligan a decidir el proveedor de nube. Todo lo que toca el binario está en
+`animals.py` y en esa tabla, así que mover las fotos a almacenamiento de objetos
+es reemplazar tres funciones. Ver los issues abiertos sobre ese cambio.
+
+> El tipo de imagen se valida contra los **bytes mágicos**, no contra lo que
+> declara el cliente, y el SVG se rechaza. Subir un HTML diciendo que es un JPEG
+> es como se sirve XSS desde tu propio dominio. La respuesta lleva `nosniff`.
+
 #### En la PWA
 
 El botón *Continuar con Google* usa `VITE_GOOGLE_CLIENT_ID`, que vive en el

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import Animales from "./Animales.jsx";
 import Login from "./Login.jsx";
 import {
   apiFetch,
@@ -142,6 +143,7 @@ function Pesajes({ session, onExpired }) {
 
 export default function App() {
   const [session, setSession] = useState(loadSession);
+  const [vista, setVista] = useState("pesajes");
 
   const entrar = useCallback((nueva) => {
     saveSession(nueva);
@@ -184,7 +186,28 @@ export default function App() {
         </p>
       </header>
 
-      <Pesajes session={session} onExpired={expirada} />
+      <nav className="tabs" aria-label="Secciones">
+        <button
+          type="button"
+          className={vista === "pesajes" ? "activa" : ""}
+          onClick={() => setVista("pesajes")}
+        >
+          Pesajes
+        </button>
+        <button
+          type="button"
+          className={vista === "animales" ? "activa" : ""}
+          onClick={() => setVista("animales")}
+        >
+          Animales
+        </button>
+      </nav>
+
+      {vista === "pesajes" ? (
+        <Pesajes session={session} onExpired={expirada} />
+      ) : (
+        <Animales session={session} onExpired={expirada} />
+      )}
     </div>
   );
 }

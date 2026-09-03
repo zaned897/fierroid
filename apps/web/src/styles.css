@@ -251,3 +251,124 @@ code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.9em;
 }
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.tabs button {
+  flex: 1;
+}
+
+.tabs button.activa {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(196, 163, 90, 0.12);
+}
+
+.animal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.animal-list li {
+  border-bottom: 1px solid var(--line);
+}
+
+button.animal {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.7rem 0;
+  border-radius: 0;
+}
+
+button.animal:hover {
+  color: var(--ink);
+  border: none;
+}
+
+.animal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.animal-nombre {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.retrato {
+  flex: none;
+  border-radius: 0.5rem;
+  object-fit: cover;
+  background: var(--bg0);
+}
+
+.ficha-retrato {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 1rem;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.datos dt {
+  color: var(--muted);
+}
+
+.datos dd {
+  margin: 0;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.campo input,
+.campo textarea {
+  font: inherit;
+  color: var(--ink);
+  background: rgba(242, 239, 230, 0.06);
+  border: 1px solid rgba(242, 239, 230, 0.35);
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.7rem;
+  min-height: 44px;
+}
+
+.campo input:focus,
+.campo textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.acciones {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.acciones button {
+  flex: 1;
+  min-width: 8rem;
+}

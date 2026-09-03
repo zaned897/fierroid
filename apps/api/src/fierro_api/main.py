@@ -3,12 +3,14 @@ from __future__ import annotations
 import base64
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from fierro_api import __version__, google_auth
+from fierro_api import animals as animals_mod
 from fierro_api.auth import (
     AuthError,
     AuthUser,
@@ -58,6 +60,11 @@ class LoginIn(BaseModel):
 
 class GoogleLoginIn(BaseModel):
     id_token: str
+
+
+class AnimalIn(BaseModel):
+    alias: str | None = None
+    notes: str | None = None
 
 
 class HeartbeatIn(BaseModel):
@@ -260,6 +267,120 @@ def _decode_cursor(cursor: str | None) -> tuple[str, str] | None:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Cursor invalido"
         ) from exc
     return captured_at, event_id
+
+
+# ---------------------------------------------------------------------------
+# Fichas de animales
+# ---------------------------------------------------------------------------
+
+
+def _write_scope(user: AuthUser, org: str | None) -> str:
+    """Organizacion sobre la que se escribe.
+
+    Un superusuario no tiene organizacion propia, asi que para escribir tiene
+    que decir cual. Adivinarla seria escribir en el rancho equivocado.
+    """
+    if user.is_superuser:
+        if not org:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Como superusuario, indica la organizacion con ?org=<slug>",
+            )
+        return org
+    return _scope(user)  # type: ignore[return-value]
+
+
+@app.get("/v1/animals")
+def get_animals(user: CurrentUser) -> dict[str, Any]:
+    return {"animals": animals_mod.list_animals(_require_postgres(), org_slug=_scope(user))}
+
+
+@app.get("/v1/animals/{tag_id}")
+def get_animal(tag_id: str, user: CurrentUser) -> dict[str, Any]:
+    animal = animals_mod.get_animal(
+        _require_postgres(), tag_id=tag_id, org_slug=_scope(user)
+    )
+    if animal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Animal no encontrado")
+    return animal
+
+
+@app.put("/v1/animals/{tag_id}")
+def put_animal(
+    tag_id: str,
+    body: AnimalIn,
+    user: CurrentUser,
+    org: str | None = Query(default=None),
+) -> dict[str, Any]:
+    try:
+        return animals_mod.upsert_animal(
+            _require_postgres(),
+            org_slug=_write_scope(user, org),
+            tag_id=tag_id,
+            alias=body.alias,
+            notes=body.notes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@app.post("/v1/animals/{tag_id}/photo")
+async def post_animal_photo(
+    tag_id: str,
+    user: CurrentUser,
+    file: Annotated[UploadFile, File()],
+    org: str | None = Query(default=None),
+) -> dict[str, Any]:
+    dsn = _require_postgres()
+    org_slug = _write_scope(user, org)
+
+    raw = await file.read()
+    try:
+        content_type = animals_mod.validate_photo(raw, file.content_type)
+    except animals_mod.PhotoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+    try:
+        return animals_mod.save_photo(
+            dsn, org_slug=org_slug, tag_id=tag_id, raw=raw, content_type=content_type
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@app.get("/v1/animals/{tag_id}/photo")
+def get_animal_photo(tag_id: str, user: CurrentUser) -> Response:
+    photo = animals_mod.load_photo(
+        _require_postgres(), tag_id=tag_id, org_slug=_scope(user)
+    )
+    if photo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sin foto")
+
+    return Response(
+        content=photo.bytes_,
+        media_type=photo.content_type,
+        headers={
+            # nosniff: aunque el tipo se valida contra los bytes magicos al
+            # subir, servir contenido de usuario desde nuestro origen sin esto
+            # deja la puerta abierta a que el navegador lo reinterprete.
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, max-age=300",
+        },
+    )
+
+
+@app.delete("/v1/animals/{tag_id}/photo")
+def delete_animal_photo(
+    tag_id: str, user: CurrentUser, org: str | None = Query(default=None)
+) -> dict[str, Any]:
+    borrada = animals_mod.delete_photo(
+        _require_postgres(), tag_id=tag_id, org_slug=_write_scope(user, org)
+    )
+    if not borrada:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sin foto")
+    return {"ok": True, "tag_id": tag_id}
 
 
 # Sin autenticacion a proposito: es el camino de ingest de las estaciones, y
