@@ -40,10 +40,12 @@ Docs de detalle:
 | Hardware (objetivo) | RPi 4/5, Sixfab Base HAT + LTE, lector LF 134.2 kHz, báscula 3.º | Drivers serial plugables |
 | Conectividad | Sixfab LTE (ECM/QMI), Wi‑Fi opcional | **No** Sixfab CORE (discontinuado) |
 | API | FastAPI, Pydantic, Uvicorn | Ingest + heartbeats + listado |
-| Persistencia cloud (MVP) | SQLite en API | Postgres/Timescale en sprints siguientes |
+| Persistencia cloud | SQLite (lab) o Postgres/Timescale | Se elige con `FIERRO_API_DSN` |
 | Sync | HTTPS batch (MQTT opcional después) | Idempotencia por `event_id` |
 | Frontend | React 19, Vite 6, PWA | UI mobile-first |
 | Tooling | uv, pnpm, ruff, pytest, ESLint | `scripts/install-deps.sh` |
+| Infra local | Docker Compose | Postgres + API + agent mock reproducibles |
+| CI | GitHub Actions | ruff, pytest con Postgres, build web, smoke de compose |
 | Cloud Agents | `.cursor/Dockerfile` + `environment.json` | Install idempotente con uv |
 
 ### Monorepo
@@ -94,11 +96,73 @@ cd apps/web && pnpm dev
 
 Abrir `http://127.0.0.1:5173`.
 
+### Entorno reproducible con Docker
+
+Levanta Postgres (Timescale), aplica migraciones y arranca API + agent mock:
+
+```bash
+docker compose up --build
+```
+
+- API en `http://127.0.0.1:8000`, Postgres en `localhost:5432`
+- El servicio `migrate` corre una sola vez y la API no arranca hasta que termina en 0
+- El agent contenerizado empieza a generar pesajes mock de inmediato
+- La outbox del agent vive en un volumen: reiniciar el contenedor no pierde lecturas
+
+Solo el backend (lo mismo que valida CI):
+
+```bash
+docker compose up -d db api
+```
+
+Si el puerto 5432 ya está ocupado: `FIERRO_DB_PORT=55432 docker compose up -d db`.
+
+El agent corre en Docker **solo para demo**. En la Raspberry Pi real va como
+servicio systemd: `/dev/ttyUSB*` y el watchdog necesitan el host.
+
+### Base de datos
+
+| Modo | Cómo | Cuándo |
+|------|------|--------|
+| SQLite | default, sin `FIERRO_API_DSN` | laboratorio, tests, hello-world |
+| Postgres | `FIERRO_API_DSN=postgresql://...` | compose, staging, producción |
+
+Migraciones: archivos SQL numerados en `apps/api/src/fierro_api/migrations/`,
+aplicados por `fierro-api-migrate` bajo un advisory lock (varias réplicas pueden
+arrancar a la vez). El esquema queda listo para Timescale pero `readings` **no**
+es hypertable todavía: eso exigiría mover la PK a `(event_id, captured_at)` y
+degradaría la idempotencia. El razonamiento completo está en
+[`002_timescale.sql`](apps/api/src/fierro_api/migrations/002_timescale.sql).
+
+```bash
+FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro fierro-api-migrate
+```
+
+### Datos sintéticos
+
+`MockHardware` solo produce el presente en tiempo real. Para tener meses de
+historia en la PWA:
+
+```bash
+# Sembrar contra la API
+python3 scripts/seed_synthetic.py --api http://127.0.0.1:8000 --animals 60 --days 120
+
+# O generar un JSON de fixtures para el front
+python3 scripts/seed_synthetic.py --out fixtures.json --animals 20 --days 30
+```
+
+Solo usa stdlib, así que corre con `python3` pelado en cualquier contenedor.
+Genera aretes ISO 11784 (código de país 484), curva de crecimiento de Gompertz
+por raza y sexo, y redondea a la división real del indicador (0.5 kg, OIML R76).
+
+Es **idempotente**: la misma `--seed` produce los mismos `event_id`. Correrlo dos
+veces es la prueba más barata de que el ingest no duplica.
+
 ### Lint / test / build
 
 ```bash
 source .venv/bin/activate
-ruff check apps
+ruff check apps scripts
 pytest apps/device-agent apps/api -q
 cd apps/web && pnpm lint && pnpm build
 ```
@@ -111,7 +175,9 @@ cd apps/web && pnpm lint && pnpm build
 | `FIERRO_DEVICE_ID` | `rpi-dev-001` | ID de la estación |
 | `FIERRO_DB_PATH` | `/tmp/fierro-device.db` | Outbox del agent |
 | `FIERRO_API_URL` | `http://127.0.0.1:8000` | Destino de sync |
-| `FIERRO_API_DB_PATH` | `/tmp/fierro-api.db` | DB de la API |
+| `FIERRO_API_DB_PATH` | `/tmp/fierro-api.db` | DB SQLite de la API |
+| `FIERRO_API_DSN` | vacío | DSN Postgres; si está definido, gana sobre SQLite |
+| `FIERRO_TEST_PG_DSN` | vacío | Activa las pruebas del store Postgres |
 | `FIERRO_SCALE_PORT` / `FIERRO_RFID_PORT` | `/dev/ttyUSB*` | Puertos seriales reales |
 
 ---
@@ -125,7 +191,9 @@ cd apps/web && pnpm lint && pnpm build
 - [x] Mock de hardware y hello-world end-to-end
 - [x] Docs de arquitectura y contrato de datos
 - [ ] Auth mínima (API key por device / JWT usuario)
-- [ ] CI (lint + test en PR)
+- [x] CI (lint + test en PR) — GitHub Actions, 3 jobs
+- [x] Postgres + migraciones + entorno Docker reproducible
+- [x] Generador de datos sintéticos (hato, curva de crecimiento, aretes ISO 11784)
 
 ### Sprint 1 — Primer prototipo físico (1–3 estaciones)
 
@@ -141,7 +209,7 @@ cd apps/web && pnpm lint && pnpm build
 - Debounce / anti doble lectura (mismo tag, dos animales cerca)
 - Heartbeat enriquecido (señal LTE, disco, temperatura)
 - Pruebas de chaos: reinicio mid-pesaje, LTE off, SD llena
-- Migrar API a Postgres (preparar Timescale para series)
+- Migrar API a Postgres — *store y migraciones listos; falta desplegarlo como default*
 
 ### Sprint 3 — Producto usable en rancho
 
@@ -167,7 +235,7 @@ cd apps/web && pnpm lint && pnpm build
 1. **Drivers serial reales** — hoy `SerialHardware` lanza `NotImplementedError`; falta protocolo por marca de indicador y lector.
 2. **Energía y gabinete** — sin UPS/IP65 las lecturas se pierden por cortes y polvo/humedad.
 3. **Auth y tenancy** — API abierta en MVP; no apta para internet pública.
-4. **Persistencia cloud** — SQLite de API no escala; migrar a Postgres pronto.
+4. **Persistencia cloud** — el store Postgres ya existe y está probado, pero el default sigue siendo SQLite; falta el despliegue real y decidir el proveedor.
 
 ### Importantes (calidad / operación)
 

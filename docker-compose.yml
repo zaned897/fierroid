@@ -1,0 +1,90 @@
+# Entorno reproducible completo: Postgres + API + agent con hardware mock.
+#
+#   docker compose up --build        # stack completo, el agent genera pesajes
+#   docker compose up -d db api      # solo backend (lo que corre CI)
+#   docker compose --profile tools run --rm seed   # datos sinteticos historicos
+#
+# La PWA se corre aparte con `cd apps/web && pnpm dev` (proxy a :8000).
+
+name: fierro
+
+x-db-dsn: &db-dsn postgresql://fierro:fierro@db:5432/fierro
+
+services:
+  db:
+    image: timescale/timescaledb:2.17.2-pg16
+    environment:
+      POSTGRES_USER: fierro
+      POSTGRES_PASSWORD: fierro
+      POSTGRES_DB: fierro
+    ports:
+      - "${FIERRO_DB_PORT:-5432}:5432"
+    volumes:
+      - fierro-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fierro -d fierro"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Job de un solo disparo. La API no arranca hasta que este termina en 0.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["fierro-api-migrate"]
+    environment:
+      FIERRO_API_DSN: *db-dsn
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      FIERRO_API_DSN: *db-dsn
+    ports:
+      - "${FIERRO_API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: apps/device-agent/Dockerfile
+    environment:
+      FIERRO_MOCK_HW: "1"
+      FIERRO_DEVICE_ID: rpi-compose-001
+      FIERRO_API_URL: http://api:8000
+      FIERRO_DB_PATH: /data/fierro-device.db
+    volumes:
+      # La outbox sobrevive al reinicio del contenedor: ninguna lectura se pierde.
+      - fierro-agent:/data
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  seed:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    profiles: ["tools"]
+    entrypoint: ["python", "/scripts/seed_synthetic.py"]
+    command: ["--api", "http://api:8000", "--animals", "60", "--days", "120"]
+    volumes:
+      - ./scripts:/scripts:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  fierro-db:
+  fierro-agent:
