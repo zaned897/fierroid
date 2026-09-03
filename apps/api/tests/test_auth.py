@@ -436,6 +436,38 @@ def test_google_guarda_el_sub_la_primera_vez(migrated, usuario):
         assert cur.fetchone()[0] == "sub-original"
 
 
+@pg
+def test_usuario_sin_contrasena_solo_entra_por_google(migrated, correo, limpiar):
+    """El camino normal: nadie gestiona contrasenas de terceros."""
+    import psycopg
+    from fierro_api.auth import authenticate, create_user
+    from fierro_api.google_auth import user_for_identity
+
+    limpiar.append(correo)
+    create_user(migrated, email=correo, org_slug="los-encinos")
+
+    with psycopg.connect(migrated) as conn, conn.cursor() as cur:
+        cur.execute("SELECT password_hash FROM users WHERE lower(email) = lower(%s)", (correo,))
+        assert cur.fetchone()[0] is None
+
+    with pytest.raises(AuthError, match="credenciales"):
+        authenticate(migrated, correo, "cualquier-cosa")
+
+    assert user_for_identity(migrated, GoogleIdentity(sub="s", email=correo)).email == correo
+
+
+@pg
+def test_redar_de_alta_sin_contrasena_no_borra_la_existente(migrated, correo, limpiar):
+    from fierro_api.auth import authenticate, create_user
+
+    limpiar.append(correo)
+    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
+    create_user(migrated, email=correo, org_slug="valle-verde", full_name="Ana")
+
+    user = authenticate(migrated, correo, "clave-de-prueba")
+    assert user.org_slug == "valle-verde"
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------

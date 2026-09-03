@@ -210,8 +210,11 @@ un Gmail entraría al sistema.
 ```bash
 export FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro
 
-# Dar de alta a alguien (sin contraseña: entrará por Google)
+# Dar de alta a alguien. Sin contraseña: entra por Google, que es el default
 fierro-api-user --email ana@los-encinos.mx --org los-encinos --name "Ana Ruiz"
+
+# Con contraseña de respaldo (solo para cuentas administrativas)
+fierro-api-user --email admin@fierro.mx --superuser --with-password
 fierro-api-user --list
 ```
 

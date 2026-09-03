@@ -304,18 +304,22 @@ def create_user(
     dsn: str,
     *,
     email: str,
-    password: str,
+    password: str | None = None,
     org_slug: str | None = None,
     is_superuser: bool = False,
     full_name: str | None = None,
 ) -> int:
-    """Crea o actualiza un usuario. Idempotente por correo."""
+    """Crea o actualiza un usuario. Idempotente por correo.
+
+    Sin contrasena el usuario solo puede entrar por Google, que es el camino
+    normal: el equipo no gestiona contrasenas de terceros.
+    """
     import psycopg
 
     if not is_superuser and not org_slug:
         raise ValueError("un usuario que no es superusuario necesita organizacion")
 
-    password_hash = hash_password(password)
+    password_hash = hash_password(password) if password else None
 
     with psycopg.connect(dsn) as conn, conn.cursor() as cur:
         org_id = None
@@ -331,7 +335,8 @@ def create_user(
             INSERT INTO users (email, password_hash, full_name, org_id, is_superuser)
             VALUES (lower(%s), %s, %s, %s, %s)
             ON CONFLICT (lower(email)) DO UPDATE SET
-              password_hash = EXCLUDED.password_hash,
+              -- COALESCE: re-dar de alta sin contrasena no borra la que ya tenia.
+              password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash),
               full_name     = EXCLUDED.full_name,
               org_id        = EXCLUDED.org_id,
               is_superuser  = EXCLUDED.is_superuser,
@@ -376,6 +381,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--name", help="Nombre completo")
     parser.add_argument("--superuser", action="store_true", help="Ve todas las organizaciones")
     parser.add_argument(
+        "--with-password",
+        action="store_true",
+        help="Pedir una contrasena de respaldo (por defecto: solo Google)",
+    )
+    parser.add_argument(
         "--password-stdin",
         action="store_true",
         help="Leer la contrasena de stdin en vez de preguntarla",
@@ -402,10 +412,12 @@ def main(argv: list[str] | None = None) -> int:
         print("Falta --email (o usa --list)", file=sys.stderr)
         return 2
 
-    # Nunca por argumento: quedaria en el historial del shell y en `ps`.
+    # Sin contrasena por defecto: el camino normal es Google. Y nunca por
+    # argumento, que quedaria en el historial del shell y en `ps`.
+    password = None
     if args.password_stdin:
         password = sys.stdin.readline().rstrip("\n")
-    else:
+    elif args.with_password:
         password = getpass.getpass("Contrasena: ")
 
     try:
@@ -422,7 +434,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     alcance = "todas las organizaciones" if args.superuser else args.org
-    print(f"usuario {args.email} listo (id {user_id}, alcance: {alcance})")
+    via = "contrasena + Google" if password else "solo Google"
+    print(f"usuario {args.email} listo (id {user_id}, alcance: {alcance}, entra por: {via})")
     return 0
 
 
