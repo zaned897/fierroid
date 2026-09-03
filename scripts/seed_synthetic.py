@@ -134,6 +134,10 @@ def generate_events(
                 second=rng.randrange(0, 60),
                 microsecond=0,
             )
+            if captured_at > now:
+                # La jornada de hoy todavia no termina: un pesaje con fecha
+                # futura es dato invalido, no dato faltante.
+                continue
             iso = captured_at.isoformat()
             events.append(
                 {
