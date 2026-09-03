@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from datetime import datetime, timezone
 
 import pytest
 
@@ -36,13 +37,27 @@ def store():
     instance.close()
 
 
+def count_rows(store, event_id):
+    """Cuenta filas por event_id con SQL directo.
+
+    La unicidad es una propiedad de la tabla, no del listado. list_readings
+    devuelve solo las N mas recientes, asi que contra una base poblada las
+    filas de prueba caen fuera de la ventana y el assert miente.
+    """
+    with store._pool.connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT count(*) AS n FROM readings WHERE event_id = %s", (event_id,))
+        return cur.fetchone()["n"]
+
+
 def make_reading(**overrides):
+    # captured_at "ahora", como una lectura real: asi la fila entra en la
+    # ventana de list_readings aunque la base ya tenga historia.
     reading = {
         "event_id": f"evt-{uuid.uuid4().hex}",
         "device_id": "rpi-pgtest",
         "tag_id": "484000123456789",
         "weight_kg": 412.5,
-        "captured_at": "2026-08-24T00:15:30+00:00",
+        "captured_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "stable": True,
         "source": "test",
     }
@@ -63,9 +78,7 @@ def test_reenvio_del_mismo_lote_no_duplica(store):
     assert accepted == [reading["event_id"]]
     assert duplicates == [reading["event_id"]]
 
-    listed = store.list_readings(limit=500)
-    ids = [r["event_id"] for r in listed]
-    assert ids.count(reading["event_id"]) == 1
+    assert count_rows(store, reading["event_id"]) == 1
 
 
 def test_duplicado_dentro_del_mismo_lote(store):
@@ -76,8 +89,7 @@ def test_duplicado_dentro_del_mismo_lote(store):
     assert accepted == [reading["event_id"], reading["event_id"]]
     assert duplicates == [reading["event_id"]]
 
-    listed = store.list_readings(limit=500)
-    assert [r["event_id"] for r in listed].count(reading["event_id"]) == 1
+    assert count_rows(store, reading["event_id"]) == 1
 
 
 def test_lote_vacio_no_toca_la_base(store):
@@ -97,11 +109,13 @@ def test_campos_devueltos_respetan_el_contrato(store):
     assert row["device_id"] == "rpi-pgtest"
     # captured_at viaja como string ISO-8601, igual que en SQLite.
     assert isinstance(row["captured_at"], str)
-    assert row["captured_at"].startswith("2026-08-24T00:15:30")
+    assert row["captured_at"] == reading["captured_at"]
 
 
 def test_captured_at_sin_zona_se_asume_utc(store):
-    reading = make_reading(captured_at="2026-08-24T00:15:30")
+    # UTC pero sin zona: es justo el caso que el store debe interpretar.
+    naive = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat()
+    reading = make_reading(captured_at=naive)
     accepted, _ = store.upsert_readings([reading])
     assert accepted == [reading["event_id"]]
 
