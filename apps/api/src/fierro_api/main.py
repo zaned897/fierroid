@@ -11,12 +11,15 @@ from fierro_api.settings import Settings
 from fierro_api.store import build_store
 
 settings = Settings.from_env()
+# Antes de tocar la base: en stage o production, una config incompleta aborta
+# el arranque en vez de degradar a un almacenamiento efimero.
+settings.validate()
 store = build_store(dsn=settings.dsn, db_path=settings.db_path)
 
 app = FastAPI(title="Fierro API", version=__version__)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(settings.cors_origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -44,7 +47,9 @@ class HeartbeatIn(BaseModel):
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    return {"ok": True, "version": __version__}
+    # El entorno viaja en /health: es como el despliegue confirma que la
+    # imagen que corre es la que se esperaba.
+    return {"ok": True, "version": __version__, "env": settings.env}
 
 
 @app.post("/v1/readings")

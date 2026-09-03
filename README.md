@@ -28,6 +28,7 @@ Docs de detalle:
 - [`docs/agent/README.md`](docs/agent/README.md) — **guías para agentes** (workflow, PRs, Jira, tests)
 - [`docs/architecture.md`](docs/architecture.md) — BOM, fiabilidad, roadmap
 - [`docs/data-contract.md`](docs/data-contract.md) — contrato de eventos
+- [`docs/environments.md`](docs/environments.md) — **entornos y promoción** (dev / stage / production)
 - [`AGENTS.md`](AGENTS.md) — notas para Cloud Agents
 
 ---
@@ -46,6 +47,7 @@ Docs de detalle:
 | Tooling | uv, pnpm, ruff, pytest, ESLint | `scripts/install-deps.sh` |
 | Infra local | Docker Compose | Postgres + API + agent mock reproducibles |
 | CI | GitHub Actions | ruff, pytest con Postgres, build web, smoke de compose |
+| Entornos | Ramas `stage` / `production` + GHCR | Promoción por fast-forward; imágenes solo si CI pasó |
 | Cloud Agents | `.cursor/Dockerfile` + `environment.json` | Install idempotente con uv |
 
 ### Monorepo
@@ -177,6 +179,8 @@ cd apps/web && pnpm lint && pnpm build
 | `FIERRO_API_URL` | `http://127.0.0.1:8000` | Destino de sync |
 | `FIERRO_API_DB_PATH` | `/tmp/fierro-api.db` | DB SQLite de la API |
 | `FIERRO_API_DSN` | vacío | DSN Postgres; si está definido, gana sobre SQLite |
+| `FIERRO_ENV` | `dev` | `dev` \| `stage` \| `production`; los dos últimos validan config al arrancar |
+| `FIERRO_API_CORS_ORIGINS` | `*` | Orígenes permitidos, separados por coma. `*` prohibido fuera de dev |
 | `FIERRO_TEST_PG_DSN` | vacío | Activa las pruebas del store Postgres |
 | `FIERRO_SCALE_PORT` / `FIERRO_RFID_PORT` | `/dev/ttyUSB*` | Puertos seriales reales |
 
