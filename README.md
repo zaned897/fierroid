@@ -29,6 +29,7 @@ Docs de detalle:
 - [`docs/architecture.md`](docs/architecture.md) — BOM, fiabilidad, roadmap
 - [`docs/data-contract.md`](docs/data-contract.md) — contrato de eventos
 - [`docs/environments.md`](docs/environments.md) — **entornos y promoción** (dev / stage / production)
+- [`docs/agent/anti-vibe-coding.md`](docs/agent/anti-vibe-coding.md) — **antes de escribir código**: buscar en el grafo, contrato primero
 - [`AGENTS.md`](AGENTS.md) — notas para Cloud Agents
 
 ---
@@ -311,6 +312,31 @@ source .venv/bin/activate
 ruff check apps scripts
 pytest apps/device-agent apps/api -q
 cd apps/web && pnpm lint && pnpm build
+```
+
+### Gate local
+
+```bash
+pip install pre-commit && pre-commit install
+```
+
+Se instala una vez y corre en cada commit: ruff, higiene de archivos, que el
+contrato OpenAPI esté al día, y que los dos directorios de skills sigan siendo
+idénticos. Necesita el venv activo, porque verificar el contrato importa la API.
+
+CI es la red de seguridad; esto es el filtro. Encontrar el problema aquí cuesta
+segundos; encontrarlo en CI cuesta diez minutos y un push.
+
+### Contrato de la API
+
+[`docs/contracts/openapi.json`](docs/contracts/openapi.json) está **versionado**.
+Cambiar la superficie de la API obliga a actualizarlo en el mismo commit, y una
+prueba falla si no. Sin eso, un campo agregado o renombrado no se descubre hasta
+que el front deja de funcionar.
+
+```bash
+python -m fierro_api.contract           # regenerar tras un cambio deliberado
+python -m fierro_api.contract --check   # verificar
 ```
 
 ### Variables de entorno útiles

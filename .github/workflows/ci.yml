@@ -48,6 +48,11 @@ jobs:
       - name: Lint
         run: ruff check apps scripts
 
+      # CLAUDE.md exige que los dos directorios de skills sean identicos. Sin
+      # verificarlo, se separan y cada agente termina leyendo reglas distintas.
+      - name: Skills mirrored
+        run: diff -r .cursor/skills .claude/skills
+
       - name: Migrate test database
         env:
           FIERRO_API_DSN: postgresql://fierro:fierro@localhost:5432/fierro_test

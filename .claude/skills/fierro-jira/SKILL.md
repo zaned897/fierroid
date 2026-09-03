@@ -24,10 +24,10 @@ Full guide: [`docs/agent/jira.md`](../../../docs/agent/jira.md)
 
 ## Issue templates (short)
 
-**Story/Task summary:** `[component] Outcome`  
+**Story/Task summary:** `[component] Outcome`
 Example: `[device-agent] Read stable weight from RS232 scale`
 
-**Bug summary:** `[bug] Symptom`  
+**Bug summary:** `[bug] Symptom`
 Include: repro steps, expected vs actual, env (mock vs hardware)
 
 ## Atlassian MCP
