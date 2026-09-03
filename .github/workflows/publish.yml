@@ -25,6 +25,10 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     strategy:
+      # Las dos imagenes son artefactos independientes. Sin esto, un tropiezo
+      # transitorio de Docker Hub al bajar buildkit en una cancela la otra,
+      # que fue justo lo que paso en la primera corrida.
+      fail-fast: false
       matrix:
         include:
           - image: fierro-api
