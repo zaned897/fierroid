@@ -196,49 +196,63 @@ FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro fierro-api-seed-
 
 ### Usuarios y sesión
 
-Un usuario pertenece a **una** organización. El superusuario es la excepción:
-no tiene organización porque las ve todas, y el esquema lo impone con un
-`CHECK` — un usuario normal sin organización no puede existir.
+**Nadie del equipo gestiona contraseñas de terceros.** La identidad la prueba
+Google; nosotros emitimos una **API key propia, revocable**.
+
+```
+Google prueba el correo  →  API emite una API key  →  la PWA la usa en cada request
+```
+
+El acceso es **por invitación**: tener cuenta de Google no da entrada. El correo
+tiene que estar dado de alta antes, con su organización. Si no, cualquiera con
+un Gmail entraría al sistema.
 
 ```bash
 export FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro
 
-# Usuario de una organización
+# Dar de alta a alguien (sin contraseña: entrará por Google)
 fierro-api-user --email ana@los-encinos.mx --org los-encinos --name "Ana Ruiz"
-
-# Superusuario
-fierro-api-user --email admin@fierro.mx --superuser
-
 fierro-api-user --list
 ```
 
-La contraseña se pide por consola, nunca como argumento: un argumento queda en
-el historial del shell y en `ps`. Para scripts, `--password-stdin`.
+#### Configurar Google (una vez)
 
-Login y uso del token:
+1. En [Google Cloud Console](https://console.cloud.google.com/), crear un proyecto
+2. **APIs y servicios → Pantalla de consentimiento**: tipo *Externo*, scopes solo
+   `email` y `profile`. Con esos **no hace falta verificación de Google**; sale
+   una pantalla de advertencia hasta que se verifique, que es gratis
+3. **Credenciales → Crear → ID de cliente de OAuth → Aplicación web**
+4. Orígenes autorizados: `http://localhost:5173` para desarrollo
+5. Copiar el ID de cliente a `FIERRO_GOOGLE_CLIENT_ID`
 
-```bash
-curl -sX POST http://127.0.0.1:8000/v1/auth/login   -H 'Content-Type: application/json'   -d '{"email":"ana@los-encinos.mx","password":"..."}'
-```
+Sin esa variable, `POST /v1/auth/google` responde `503` diciendo exactamente qué
+falta, en vez de fallar de forma confusa.
 
-```bash
-curl -s http://127.0.0.1:8000/v1/auth/me -H "Authorization: Bearer $TOKEN"
-```
+#### Sesiones
 
-| Detalle | Elección |
+| Endpoint | Qué hace |
 |---|---|
-| Hash de contraseña | argon2id, parámetros por defecto de argon2-cffi (recomendación OWASP) |
-| Token | JWT firmado HS256, vida 60 min por defecto (`FIERRO_JWT_TTL_MIN`) |
-| Dónde vive | localStorage en la PWA — **decisión del equipo** |
-| Revocación | Desactivar la cuenta corta el acceso de inmediato: cada request relee al usuario |
+| `POST /v1/auth/google` | ID token de Google → API key |
+| `POST /v1/auth/login` | Contraseña → API key. **Vía de respaldo** para cuentas administrativas |
+| `GET /v1/auth/me` | Usuario de la credencial actual |
+| `GET /v1/auth/keys` | Sesiones abiertas. Nunca devuelve la llave, solo su prefijo |
+| `DELETE /v1/auth/keys/{id}` | Cerrar una sesión |
+| `POST /v1/auth/logout-all` | Cerrar sesión en todos los dispositivos |
 
-> ⚠️ Con el token en localStorage, un XSS en la PWA puede leerlo, y un token
-> robado sirve hasta que expira. Se mitiga con vida corta y claims mínimos.
-> Conviene reevaluarlo cuando entre 2FA, porque 2FA sin poder cerrar sesiones
-> existentes protege menos de lo que parece.
+La API key se devuelve **una sola vez**, al emitirla. En la base solo vive su
+hash SHA-256.
+
+> ¿Por qué SHA-256 y no argon2 como las contraseñas? La llave son 256 bits
+> aleatorios: no hay diccionario que la adivine, así que un hash lento no
+> protege de nada — y se verifica en **cada** request, donde argon2 costaría
+> ~80 ms. argon2 es para secretos que elige un humano.
+
+**Revocar surte efecto de inmediato**, porque la credencial se resuelve contra
+la base en cada request. Esa es la razón de usar API keys y no JWT: un JWT no se
+puede invalidar antes de que expire.
 
 Auth requiere Postgres. En modo SQLite los endpoints devuelven `503` con un
-mensaje que lo dice, en vez de fallar de forma confusa.
+mensaje que lo dice.
 
 ### Lint / test / build
 
@@ -260,8 +274,8 @@ cd apps/web && pnpm lint && pnpm build
 | `FIERRO_API_DB_PATH` | `/tmp/fierro-api.db` | DB SQLite de la API |
 | `FIERRO_API_DSN` | vacío | DSN Postgres; si está definido, gana sobre SQLite |
 | `FIERRO_ENV` | `dev` | `dev` \| `stage` \| `production`; los dos últimos validan config al arrancar |
-| `FIERRO_JWT_SECRET` | aleatorio en dev | Firma de tokens. Obligatorio y 32+ chars en stage/production |
-| `FIERRO_JWT_TTL_MIN` | `60` | Vida del token de acceso, en minutos |
+| `FIERRO_GOOGLE_CLIENT_ID` | vacío | ID de cliente OAuth. Sin él, el login con Google responde 503 |
+| `FIERRO_API_KEY_TTL_DAYS` | `90` | Vida de la API key de sesión. `0` = sin expiración |
 | `FIERRO_API_CORS_ORIGINS` | `*` | Orígenes permitidos, separados por coma. `*` prohibido fuera de dev |
 | `FIERRO_TEST_PG_DSN` | vacío | Activa las pruebas del store Postgres y de tenancy |
 | `FIERRO_SCALE_PORT` / `FIERRO_RFID_PORT` | `/dev/ttyUSB*` | Puertos seriales reales |
@@ -276,7 +290,7 @@ cd apps/web && pnpm lint && pnpm build
 - [x] Outbox SQLite + ingest idempotente
 - [x] Mock de hardware y hello-world end-to-end
 - [x] Docs de arquitectura y contrato de datos
-- [x] Auth de usuario (login JWT, argon2id, superusuario)
+- [x] Auth de usuario (Google OAuth + API keys revocables, superusuario)
 - [ ] Auth de device (API key por estación)
 - [x] CI (lint + test en PR) — GitHub Actions, 3 jobs
 - [x] Postgres + migraciones + entorno Docker reproducible

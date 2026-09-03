@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import logging
 import os
-import secrets
 from dataclasses import dataclass, field
 
 # dev = laboratorio y tests. stage y production son entornos desplegados y
 # se validan con las mismas reglas: si algo falta, la API no arranca.
 VALID_ENVS = ("dev", "stage", "production")
 DEPLOYED_ENVS = ("stage", "production")
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigError(RuntimeError):
@@ -22,8 +24,9 @@ class Settings:
     dsn: str | None = None
     env: str = "dev"
     cors_origins: tuple[str, ...] = field(default=("*",))
-    jwt_secret: str = ""
-    jwt_ttl_minutes: int = 60
+    google_client_id: str = ""
+    # 0 = sin expiracion. 90 dias equilibra "larga vida" con higiene.
+    api_key_ttl_days: int = 90
 
     @property
     def is_deployed(self) -> bool:
@@ -35,13 +38,7 @@ class Settings:
         dsn = os.getenv("FIERRO_API_DSN", "").strip() or None
         raw_origins = os.getenv("FIERRO_API_CORS_ORIGINS", "*")
         origins = tuple(o.strip() for o in raw_origins.split(",") if o.strip())
-        # En dev, un secreto aleatorio por arranque: sin secreto por defecto
-        # que alguien pueda heredar a produccion sin darse cuenta. El costo es
-        # que las sesiones no sobreviven un reinicio local, que da igual.
-        jwt_secret = os.getenv("FIERRO_JWT_SECRET", "").strip()
         env = os.getenv("FIERRO_ENV", "dev").strip().lower()
-        if not jwt_secret and env not in DEPLOYED_ENVS:
-            jwt_secret = secrets.token_urlsafe(32)
 
         return cls(
             db_path=os.getenv("FIERRO_API_DB_PATH", "/tmp/fierro-api.db"),
@@ -50,8 +47,8 @@ class Settings:
             dsn=dsn,
             env=env,
             cors_origins=origins or ("*",),
-            jwt_secret=jwt_secret,
-            jwt_ttl_minutes=int(os.getenv("FIERRO_JWT_TTL_MIN", "60")),
+            google_client_id=os.getenv("FIERRO_GOOGLE_CLIENT_ID", "").strip(),
+            api_key_ttl_days=int(os.getenv("FIERRO_API_KEY_TTL_DAYS", "90")),
         )
 
     def validate(self) -> None:
@@ -79,11 +76,12 @@ class Settings:
                 "Lista los origenes explicitamente, separados por coma."
             )
 
-        if len(self.jwt_secret) < 32:
-            # Un secreto corto o ausente permite falsificar tokens de cualquier
-            # usuario, superusuario incluido.
-            raise ConfigError(
-                f"FIERRO_JWT_SECRET es obligatorio en {self.env} y necesita al menos "
-                "32 caracteres. Generalo con: python -c "
-                "\"import secrets; print(secrets.token_urlsafe(48))\""
+        if not self.google_client_id:
+            # Advertencia, no error: sin esto el login por Google no funciona,
+            # pero la API sigue recibiendo pesajes de las estaciones, que es lo
+            # que no puede parar. El endpoint lo dice claro cuando se usa.
+            logger.warning(
+                "FIERRO_GOOGLE_CLIENT_ID no esta definido en %s: "
+                "el inicio de sesion con Google respondera 503",
+                self.env,
             )
