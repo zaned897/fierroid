@@ -194,6 +194,52 @@ Ver el árbol completo con conteos:
 FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro fierro-api-seed-tenants --list
 ```
 
+### Usuarios y sesión
+
+Un usuario pertenece a **una** organización. El superusuario es la excepción:
+no tiene organización porque las ve todas, y el esquema lo impone con un
+`CHECK` — un usuario normal sin organización no puede existir.
+
+```bash
+export FIERRO_API_DSN=postgresql://fierro:fierro@localhost:5432/fierro
+
+# Usuario de una organización
+fierro-api-user --email ana@los-encinos.mx --org los-encinos --name "Ana Ruiz"
+
+# Superusuario
+fierro-api-user --email admin@fierro.mx --superuser
+
+fierro-api-user --list
+```
+
+La contraseña se pide por consola, nunca como argumento: un argumento queda en
+el historial del shell y en `ps`. Para scripts, `--password-stdin`.
+
+Login y uso del token:
+
+```bash
+curl -sX POST http://127.0.0.1:8000/v1/auth/login   -H 'Content-Type: application/json'   -d '{"email":"ana@los-encinos.mx","password":"..."}'
+```
+
+```bash
+curl -s http://127.0.0.1:8000/v1/auth/me -H "Authorization: Bearer $TOKEN"
+```
+
+| Detalle | Elección |
+|---|---|
+| Hash de contraseña | argon2id, parámetros por defecto de argon2-cffi (recomendación OWASP) |
+| Token | JWT firmado HS256, vida 60 min por defecto (`FIERRO_JWT_TTL_MIN`) |
+| Dónde vive | localStorage en la PWA — **decisión del equipo** |
+| Revocación | Desactivar la cuenta corta el acceso de inmediato: cada request relee al usuario |
+
+> ⚠️ Con el token en localStorage, un XSS en la PWA puede leerlo, y un token
+> robado sirve hasta que expira. Se mitiga con vida corta y claims mínimos.
+> Conviene reevaluarlo cuando entre 2FA, porque 2FA sin poder cerrar sesiones
+> existentes protege menos de lo que parece.
+
+Auth requiere Postgres. En modo SQLite los endpoints devuelven `503` con un
+mensaje que lo dice, en vez de fallar de forma confusa.
+
 ### Lint / test / build
 
 ```bash
@@ -214,6 +260,8 @@ cd apps/web && pnpm lint && pnpm build
 | `FIERRO_API_DB_PATH` | `/tmp/fierro-api.db` | DB SQLite de la API |
 | `FIERRO_API_DSN` | vacío | DSN Postgres; si está definido, gana sobre SQLite |
 | `FIERRO_ENV` | `dev` | `dev` \| `stage` \| `production`; los dos últimos validan config al arrancar |
+| `FIERRO_JWT_SECRET` | aleatorio en dev | Firma de tokens. Obligatorio y 32+ chars en stage/production |
+| `FIERRO_JWT_TTL_MIN` | `60` | Vida del token de acceso, en minutos |
 | `FIERRO_API_CORS_ORIGINS` | `*` | Orígenes permitidos, separados por coma. `*` prohibido fuera de dev |
 | `FIERRO_TEST_PG_DSN` | vacío | Activa las pruebas del store Postgres y de tenancy |
 | `FIERRO_SCALE_PORT` / `FIERRO_RFID_PORT` | `/dev/ttyUSB*` | Puertos seriales reales |
@@ -228,7 +276,8 @@ cd apps/web && pnpm lint && pnpm build
 - [x] Outbox SQLite + ingest idempotente
 - [x] Mock de hardware y hello-world end-to-end
 - [x] Docs de arquitectura y contrato de datos
-- [ ] Auth mínima (API key por device / JWT usuario)
+- [x] Auth de usuario (login JWT, argon2id, superusuario)
+- [ ] Auth de device (API key por estación)
 - [x] CI (lint + test en PR) — GitHub Actions, 3 jobs
 - [x] Postgres + migraciones + entorno Docker reproducible
 - [x] Generador de datos sintéticos (hato, curva de crecimiento, aretes ISO 11784)

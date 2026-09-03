@@ -11,6 +11,8 @@ dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
   "pydantic>=2.7",
+  "pyjwt>=2.9",
+  "argon2-cffi>=23.1",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +23,7 @@ postgres = ["psycopg[binary,pool]>=3.2"]
 fierro-api = "fierro_api.main:main"
 fierro-api-migrate = "fierro_api.migrate:main"
 fierro-api-seed-tenants = "fierro_api.tenancy:main"
+fierro-api-user = "fierro_api.auth:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
