@@ -7,14 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
-from fierro_api import __version__
+from fierro_api import __version__, google_auth
 from fierro_api.auth import (
     AuthError,
     AuthUser,
     authenticate,
-    create_access_token,
-    decode_access_token,
-    get_user,
+    issue_api_key,
+    list_api_keys,
+    revoke_all_api_keys,
+    revoke_api_key,
+    user_for_api_key,
 )
 from fierro_api.settings import Settings
 from fierro_api.store import build_store
@@ -53,6 +55,10 @@ class LoginIn(BaseModel):
     password: str
 
 
+class GoogleLoginIn(BaseModel):
+    id_token: str
+
+
 class HeartbeatIn(BaseModel):
     pending_count: int = 0
     agent_version: str | None = None
@@ -87,8 +93,51 @@ def _require_postgres() -> str:
     return settings.dsn
 
 
+def _session_response(dsn: str, user: AuthUser, origen: str) -> dict[str, Any]:
+    """Emite la API key. La version en claro se devuelve UNA sola vez."""
+    key = issue_api_key(
+        dsn,
+        user_id=user.id,
+        name=origen,
+        ttl_days=settings.api_key_ttl_days or None,
+    )
+    return {**key, "token_type": "bearer", "user": user.to_public()}
+
+
+@app.post("/v1/auth/google")
+def login_google(body: GoogleLoginIn) -> dict[str, Any]:
+    """Cambia un ID token de Google por una API key nuestra.
+
+    Google solo confirma el correo. El alta es por invitacion: si ese correo no
+    esta dado de alta, no hay acceso aunque la cuenta de Google sea valida.
+    """
+    dsn = _require_postgres()
+    if not settings.google_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El inicio de sesion con Google no esta configurado "
+            "(falta FIERRO_GOOGLE_CLIENT_ID).",
+        )
+
+    try:
+        identity = google_auth.verify_id_token(
+            body.id_token, client_id=settings.google_client_id
+        )
+        user = google_auth.user_for_identity(dsn, identity)
+    except AuthError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
+        ) from exc
+
+    return _session_response(dsn, user, "google")
+
+
 @app.post("/v1/auth/login")
 def login(body: LoginIn) -> dict[str, Any]:
+    """Via de respaldo con contrasena, para cuentas administrativas.
+
+    El camino normal de las personas es /v1/auth/google.
+    """
     dsn = _require_postgres()
     try:
         # argon2 tarda ~50-100 ms a proposito: es el freno natural a la fuerza
@@ -99,15 +148,7 @@ def login(body: LoginIn) -> dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
         ) from exc
 
-    token, expires_in = create_access_token(
-        user, secret=settings.jwt_secret, ttl_minutes=settings.jwt_ttl_minutes
-    )
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "expires_in": expires_in,
-        "user": user.to_public(),
-    }
+    return _session_response(dsn, user, "contrasena")
 
 
 def current_user(creds: BearerCreds) -> AuthUser:
@@ -117,21 +158,14 @@ def current_user(creds: BearerCreds) -> AuthUser:
             detail="Falta el encabezado Authorization",
         )
     dsn = _require_postgres()
-    try:
-        claims = decode_access_token(creds.credentials, secret=settings.jwt_secret)
-    except AuthError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
-        ) from exc
 
-    # Se relee el usuario en vez de confiar solo en los claims. Cuesta un
-    # lookup por PK y a cambio desactivar una cuenta la corta de inmediato,
-    # que es la unica revocacion que existe con JWT en localStorage.
-    user = get_user(dsn, int(claims["sub"]))
+    # La llave se resuelve contra la base en cada request. Eso es lo que hace
+    # que revocarla surta efecto de inmediato.
+    user = user_for_api_key(dsn, creds.credentials)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="El usuario ya no existe o esta desactivado",
+            detail="Credencial invalida, revocada o expirada",
         )
     return user
 
@@ -142,6 +176,29 @@ CurrentUser = Annotated[AuthUser, Depends(current_user)]
 @app.get("/v1/auth/me")
 def me(user: CurrentUser) -> dict[str, Any]:
     return user.to_public()
+
+
+@app.get("/v1/auth/keys")
+def get_keys(user: CurrentUser) -> dict[str, Any]:
+    """Sesiones abiertas. Nunca devuelve la llave, solo su prefijo."""
+    return {"keys": list_api_keys(_require_postgres(), user.id)}
+
+
+@app.delete("/v1/auth/keys/{key_id}")
+def delete_key(key_id: int, user: CurrentUser) -> dict[str, Any]:
+    # Acotado al propio usuario: nadie revoca sesiones ajenas por id.
+    if not revoke_api_key(_require_postgres(), user_id=user.id, key_id=key_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Esa credencial no existe o ya estaba revocada",
+        )
+    return {"ok": True, "revoked": key_id}
+
+
+@app.post("/v1/auth/logout-all")
+def logout_all(user: CurrentUser) -> dict[str, Any]:
+    """Cerrar sesion en todos los dispositivos, la actual incluida."""
+    return {"ok": True, "revoked": revoke_all_api_keys(_require_postgres(), user.id)}
 
 
 @app.post("/v1/readings")

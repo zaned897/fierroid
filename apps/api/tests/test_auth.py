@@ -1,12 +1,12 @@
-"""Contrasenas, tokens y login.
+"""Contrasenas, API keys e identidad de Google.
 
-Las pruebas de criptografia corren siempre; las de base y endpoints requieren
-FIERRO_TEST_PG_DSN.
+Los tokens de Google se firman aqui con un par de llaves RSA generado en la
+prueba y un cliente JWKS falso: verificar identidad no debe depender de tener
+red ni de llamar a Google.
 """
 
 from __future__ import annotations
 
-import base64
 import json
 import os
 import uuid
@@ -14,26 +14,16 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from fierro_api.auth import (
-    ALGORITHM,
+    KEY_PREFIX,
     AuthError,
-    AuthUser,
-    create_access_token,
-    decode_access_token,
+    generate_api_key,
     hash_password,
     verify_password,
 )
+from fierro_api.google_auth import GOOGLE_JWKS_URL, GoogleIdentity, verify_id_token
 
 DSN = os.getenv("FIERRO_TEST_PG_DSN", "").strip()
-SECRETO = "secreto-de-pruebas-suficientemente-largo-1234"
-
-USUARIO = AuthUser(
-    id=7,
-    email="ana@los-encinos.mx",
-    org_id=1,
-    org_slug="los-encinos",
-    is_superuser=False,
-    full_name="Ana Ruiz",
-)
+CLIENT_ID = "1234567890-prueba.apps.googleusercontent.com"
 
 
 # ---------------------------------------------------------------------------
@@ -47,13 +37,11 @@ def test_hash_y_verificacion():
 
 
 def test_contrasena_incorrecta_no_verifica():
-    stored = hash_password("contrasena-de-prueba")
-    assert not verify_password(stored, "otra-cosa")
+    assert not verify_password(hash_password("contrasena-de-prueba"), "otra-cosa")
 
 
 def test_el_hash_nunca_contiene_la_contrasena():
-    stored = hash_password("contrasena-de-prueba")
-    assert "contrasena-de-prueba" not in stored
+    assert "contrasena-de-prueba" not in hash_password("contrasena-de-prueba")
 
 
 def test_dos_hashes_de_lo_mismo_son_distintos():
@@ -67,74 +55,192 @@ def test_contrasena_corta_se_rechaza():
 
 
 def test_hash_corrupto_no_revienta():
-    """Una fila danada devuelve False, no una excepcion sin manejar."""
+    """InvalidHashError hereda de ValueError: sin esa rama seria un 500."""
     assert not verify_password("esto-no-es-un-hash-argon2", "lo-que-sea")
 
 
 # ---------------------------------------------------------------------------
-# Tokens
+# API keys
 # ---------------------------------------------------------------------------
 
 
-def test_ida_y_vuelta_del_token():
-    token, expires_in = create_access_token(USUARIO, secret=SECRETO, ttl_minutes=60)
-    claims = decode_access_token(token, secret=SECRETO)
-
-    assert claims["sub"] == "7"
-    assert claims["org"] == "los-encinos"
-    assert claims["su"] is False
-    assert expires_in == 3600
+def test_la_llave_lleva_prefijo_reconocible():
+    """Para identificarla de un vistazo si se filtra en un log o un repo."""
+    plain, _, prefix = generate_api_key()
+    assert plain.startswith(KEY_PREFIX)
+    assert plain.startswith(prefix)
 
 
-def test_el_token_no_lleva_datos_de_mas():
-    """Los claims los lee cualquiera que tenga el token: solo lo indispensable."""
-    token, _ = create_access_token(USUARIO, secret=SECRETO, ttl_minutes=60)
-    claims = decode_access_token(token, secret=SECRETO)
-
-    assert set(claims) == {"sub", "email", "org", "su", "iat", "exp"}
-    assert "Ana Ruiz" not in json.dumps(claims)
+def test_el_hash_guardado_no_permite_reconstruir_la_llave():
+    plain, key_hash, prefix = generate_api_key()
+    assert plain not in key_hash
+    assert len(key_hash) == 64  # sha256 en hexadecimal
+    assert plain[len(prefix) :] not in key_hash
 
 
-def test_token_con_otro_secreto_se_rechaza():
-    token, _ = create_access_token(USUARIO, secret=SECRETO, ttl_minutes=60)
-    with pytest.raises(AuthError):
-        decode_access_token(token, secret="otro-secreto-igualmente-largo-000000")
+def test_dos_llaves_nunca_coinciden():
+    llaves = {generate_api_key()[0] for _ in range(200)}
+    assert len(llaves) == 200
 
 
-def test_token_alterado_se_rechaza():
-    token, _ = create_access_token(USUARIO, secret=SECRETO, ttl_minutes=60)
-    cabecera, cuerpo, firma = token.split(".")
-    alterado = f"{cabecera}.{cuerpo[:-4]}AAAA.{firma}"
-    with pytest.raises(AuthError):
-        decode_access_token(alterado, secret=SECRETO)
+# ---------------------------------------------------------------------------
+# Identidad de Google, con JWKS falso
+# ---------------------------------------------------------------------------
 
 
-def test_token_expirado_se_rechaza():
-    token, _ = create_access_token(USUARIO, secret=SECRETO, ttl_minutes=-1)
-    with pytest.raises(AuthError, match="expiro"):
-        decode_access_token(token, secret=SECRETO)
+@pytest.fixture(scope="module")
+def rsa_keys():
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
 
-
-def test_algoritmo_none_se_rechaza():
-    """El ataque clasico: firmar con alg=none y que el servidor lo acepte."""
-
-    def b64(data: dict) -> str:
-        crudo = json.dumps(data, separators=(",", ":")).encode()
-        return base64.urlsafe_b64encode(crudo).rstrip(b"=").decode()
-
-    expira = int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
-    falso = (
-        b64({"alg": "none", "typ": "JWT"})
-        + "."
-        + b64({"sub": "1", "email": "atacante@mal.mx", "org": None, "su": True, "exp": expira})
-        + "."
+    private = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = private.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
     )
+    return pem, private.public_key()
+
+
+@pytest.fixture
+def jwks(rsa_keys):
+    """Cliente JWKS falso: devuelve siempre nuestra llave publica de prueba."""
+
+    class FakeKey:
+        def __init__(self, key):
+            self.key = key
+
+    class FakeClient:
+        def __init__(self, key):
+            self._key = FakeKey(key)
+
+        def get_signing_key_from_jwt(self, token):  # noqa: ARG002
+            return self._key
+
+    return FakeClient(rsa_keys[1])
+
+
+@pytest.fixture
+def firmar(rsa_keys):
+    import jwt
+
+    def _firmar(**overrides):
+        ahora = datetime.now(timezone.utc)
+        claims = {
+            "iss": "https://accounts.google.com",
+            "aud": CLIENT_ID,
+            "sub": "108123456789012345678",
+            "email": "ana@los-encinos.mx",
+            "email_verified": True,
+            "name": "Ana Ruiz",
+            "iat": int(ahora.timestamp()),
+            "exp": int((ahora + timedelta(hours=1)).timestamp()),
+        }
+        claims.update(overrides)
+        return jwt.encode(claims, rsa_keys[0], algorithm="RS256", headers={"kid": "prueba"})
+
+    return _firmar
+
+
+def test_token_valido_devuelve_la_identidad(firmar, jwks):
+    identidad = verify_id_token(firmar(), client_id=CLIENT_ID, jwks_client=jwks)
+
+    assert identidad == GoogleIdentity(
+        sub="108123456789012345678", email="ana@los-encinos.mx", name="Ana Ruiz"
+    )
+
+
+def test_token_de_otra_app_se_rechaza(firmar, jwks):
+    """Sin comprobar audience, sirve un token de cualquier otra app de Google."""
+    token = firmar(aud="otra-app.apps.googleusercontent.com")
     with pytest.raises(AuthError):
-        decode_access_token(falso, secret=SECRETO)
+        verify_id_token(token, client_id=CLIENT_ID, jwks_client=jwks)
 
 
-def test_algoritmo_declarado_es_hmac():
-    assert ALGORITHM == "HS256"
+def test_emisor_que_no_es_google_se_rechaza(firmar, jwks):
+    with pytest.raises(AuthError, match="emisor"):
+        verify_id_token(firmar(iss="https://accounts.malicioso.mx"), client_id=CLIENT_ID,
+                        jwks_client=jwks)
+
+
+def test_emisor_sin_esquema_es_valido(firmar, jwks):
+    """Google emite las dos formas; ambas son legitimas."""
+    identidad = verify_id_token(
+        firmar(iss="accounts.google.com"), client_id=CLIENT_ID, jwks_client=jwks
+    )
+    assert identidad.email == "ana@los-encinos.mx"
+
+
+def test_correo_sin_verificar_se_rechaza(firmar, jwks):
+    """Si no, una cuenta podria reclamar la direccion de otra persona."""
+    with pytest.raises(AuthError, match="no esta verificado"):
+        verify_id_token(firmar(email_verified=False), client_id=CLIENT_ID, jwks_client=jwks)
+
+
+def test_token_sin_correo_se_rechaza(firmar, jwks):
+    with pytest.raises(AuthError, match="correo"):
+        verify_id_token(firmar(email=""), client_id=CLIENT_ID, jwks_client=jwks)
+
+
+def test_token_expirado_se_rechaza(firmar, jwks):
+    ayer = datetime.now(timezone.utc) - timedelta(days=1)
+    token = firmar(exp=int(ayer.timestamp()), iat=int((ayer - timedelta(hours=1)).timestamp()))
+    with pytest.raises(AuthError):
+        verify_id_token(token, client_id=CLIENT_ID, jwks_client=jwks)
+
+
+def test_confusion_de_algoritmo_se_rechaza(rsa_keys, jwks):
+    """El ataque clasico: firmar con HS256 usando la llave PUBLICA como secreto.
+
+    Si el verificador no fija el algoritmo, acepta ese token porque la llave
+    publica de Google es, justamente, publica.
+
+    El token se forja a mano con hmac y no con jwt.encode() a proposito: PyJWT
+    se niega a firmar HMAC con una llave PEM, pero un atacante no usa PyJWT.
+    """
+    import base64
+    import hashlib
+    import hmac
+
+    from cryptography.hazmat.primitives import serialization
+
+    publica = rsa_keys[1].public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+
+    def b64(raw: bytes) -> str:
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    ahora = datetime.now(timezone.utc)
+    cabecera = b64(json.dumps({"alg": "HS256", "typ": "JWT", "kid": "prueba"}).encode())
+    cuerpo = b64(
+        json.dumps(
+            {
+                "iss": "https://accounts.google.com",
+                "aud": CLIENT_ID,
+                "sub": "1",
+                "email": "atacante@mal.mx",
+                "email_verified": True,
+                "iat": int(ahora.timestamp()),
+                "exp": int((ahora + timedelta(hours=1)).timestamp()),
+            }
+        ).encode()
+    )
+    firmado = f"{cabecera}.{cuerpo}".encode()
+    firma = b64(hmac.new(publica, firmado, hashlib.sha256).digest())
+
+    with pytest.raises(AuthError):
+        verify_id_token(f"{cabecera}.{cuerpo}.{firma}", client_id=CLIENT_ID, jwks_client=jwks)
+
+
+def test_sin_client_id_configurado_falla_claro(firmar, jwks):
+    with pytest.raises(AuthError, match="FIERRO_GOOGLE_CLIENT_ID"):
+        verify_id_token(firmar(), client_id="", jwks_client=jwks)
+
+
+def test_la_url_de_jwks_es_la_de_google():
+    assert GOOGLE_JWKS_URL.startswith("https://www.googleapis.com/")
 
 
 # ---------------------------------------------------------------------------
@@ -171,122 +277,163 @@ def limpiar(migrated):
         conn.commit()
 
 
-@pg
-def test_crear_usuario_y_autenticar(migrated, correo, limpiar):
-    from fierro_api.auth import authenticate, create_user
+@pytest.fixture
+def usuario(migrated, correo, limpiar):
+    """Usuario invitado de los-encinos, con contrasena de respaldo."""
+    from fierro_api.auth import create_user
 
     limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
+    user_id = create_user(
+        migrated,
+        email=correo,
+        password="clave-de-prueba",
+        org_slug="los-encinos",
+        full_name="Ana Ruiz",
+    )
+    return user_id, correo
 
-    user = authenticate(migrated, correo, "clave-de-prueba")
+
+@pg
+def test_llave_emitida_resuelve_al_usuario(migrated, usuario):
+    from fierro_api.auth import issue_api_key, user_for_api_key
+
+    user_id, correo = usuario
+    emitida = issue_api_key(migrated, user_id=user_id, name="prueba")
+
+    user = user_for_api_key(migrated, emitida["api_key"])
+    assert user is not None
     assert user.email == correo
     assert user.org_slug == "los-encinos"
-    assert user.is_superuser is False
 
 
 @pg
-def test_el_correo_no_distingue_mayusculas(migrated, correo, limpiar):
-    from fierro_api.auth import authenticate, create_user
+def test_llave_inventada_no_resuelve(migrated):
+    from fierro_api.auth import user_for_api_key
 
-    limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
-
-    assert authenticate(migrated, correo.upper(), "clave-de-prueba").email == correo
+    assert user_for_api_key(migrated, "fierro_llave-que-no-existe") is None
 
 
 @pg
-def test_contrasena_incorrecta_no_autentica(migrated, correo, limpiar):
-    from fierro_api.auth import authenticate, create_user
+def test_llave_revocada_deja_de_servir(migrated, usuario):
+    from fierro_api.auth import issue_api_key, revoke_api_key, user_for_api_key
 
-    limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
+    user_id, _ = usuario
+    emitida = issue_api_key(migrated, user_id=user_id)
+    assert user_for_api_key(migrated, emitida["api_key"]) is not None
 
-    with pytest.raises(AuthError, match="credenciales"):
-        authenticate(migrated, correo, "clave-equivocada")
-
-
-@pg
-def test_usuario_inexistente_da_el_mismo_error(migrated):
-    """No revelar que correos estan registrados."""
-    from fierro_api.auth import authenticate
-
-    with pytest.raises(AuthError, match="credenciales"):
-        authenticate(migrated, "nadie@fierro.test", "lo-que-sea")
+    assert revoke_api_key(migrated, user_id=user_id, key_id=emitida["id"]) is True
+    assert user_for_api_key(migrated, emitida["api_key"]) is None
 
 
 @pg
-def test_usuario_desactivado_no_entra(migrated, correo, limpiar):
+def test_llave_expirada_deja_de_servir(migrated, usuario):
+    import psycopg
+    from fierro_api.auth import issue_api_key, user_for_api_key
+
+    user_id, _ = usuario
+    emitida = issue_api_key(migrated, user_id=user_id)
+    with psycopg.connect(migrated) as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE api_keys SET expires_at = now() - interval '1 day' WHERE id = %s",
+            (emitida["id"],),
+        )
+        conn.commit()
+
+    assert user_for_api_key(migrated, emitida["api_key"]) is None
+
+
+@pg
+def test_llave_sin_expiracion_se_puede_emitir(migrated, usuario):
+    from fierro_api.auth import issue_api_key, user_for_api_key
+
+    user_id, _ = usuario
+    emitida = issue_api_key(migrated, user_id=user_id, ttl_days=None)
+
+    assert emitida["expires_at"] is None
+    assert user_for_api_key(migrated, emitida["api_key"]) is not None
+
+
+@pg
+def test_no_se_revocan_llaves_ajenas(migrated, usuario, limpiar):
+    from fierro_api.auth import create_user, issue_api_key, revoke_api_key, user_for_api_key
+
+    user_id, _ = usuario
+    ajeno = f"otro-{uuid.uuid4().hex[:8]}@fierro.test"
+    limpiar.append(ajeno)
+    otro_id = create_user(
+        migrated, email=ajeno, password="clave-de-prueba", org_slug="valle-verde"
+    )
+    emitida = issue_api_key(migrated, user_id=otro_id)
+
+    assert revoke_api_key(migrated, user_id=user_id, key_id=emitida["id"]) is False
+    assert user_for_api_key(migrated, emitida["api_key"]) is not None
+
+
+@pg
+def test_cerrar_sesion_en_todos_los_dispositivos(migrated, usuario):
+    from fierro_api.auth import issue_api_key, revoke_all_api_keys, user_for_api_key
+
+    user_id, _ = usuario
+    llaves = [issue_api_key(migrated, user_id=user_id)["api_key"] for _ in range(3)]
+
+    assert revoke_all_api_keys(migrated, user_id) == 3
+    assert all(user_for_api_key(migrated, k) is None for k in llaves)
+
+
+@pg
+def test_el_listado_nunca_expone_la_llave(migrated, usuario):
+    from fierro_api.auth import issue_api_key, list_api_keys
+
+    user_id, _ = usuario
+    emitida = issue_api_key(migrated, user_id=user_id, name="telefono")
+
+    listado = list_api_keys(migrated, user_id)
+    assert emitida["api_key"] not in json.dumps(listado)
+    assert any(k["key_prefix"] == emitida["key_prefix"] for k in listado)
+
+
+@pg
+def test_usuario_solo_google_no_entra_con_contrasena(migrated, correo, limpiar):
+    """password_hash es NULL: no debe reventar, debe rechazar igual que siempre."""
     import psycopg
     from fierro_api.auth import authenticate, create_user
 
     limpiar.append(correo)
     create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
     with psycopg.connect(migrated) as conn, conn.cursor() as cur:
-        cur.execute("UPDATE users SET is_active = false WHERE lower(email) = lower(%s)", (correo,))
+        cur.execute("UPDATE users SET password_hash = NULL WHERE lower(email) = lower(%s)",
+                    (correo,))
         conn.commit()
 
-    with pytest.raises(AuthError, match="desactivada"):
+    with pytest.raises(AuthError, match="credenciales"):
         authenticate(migrated, correo, "clave-de-prueba")
 
 
 @pg
-def test_superusuario_no_necesita_organizacion(migrated, correo, limpiar):
-    from fierro_api.auth import authenticate, create_user
+def test_google_solo_deja_entrar_a_invitados(migrated, usuario):
+    from fierro_api.google_auth import user_for_identity
 
-    limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", is_superuser=True)
+    _, correo = usuario
+    user = user_for_identity(migrated, GoogleIdentity(sub="sub-1", email=correo))
+    assert user.email == correo
 
-    user = authenticate(migrated, correo, "clave-de-prueba")
-    assert user.is_superuser is True
-    assert user.org_slug is None
-
-
-@pg
-def test_usuario_normal_sin_organizacion_se_rechaza(migrated, correo):
-    """Un usuario sin organizacion no veria nada, o peor, lo veria todo."""
-    from fierro_api.auth import create_user
-
-    with pytest.raises(ValueError, match="organizacion"):
-        create_user(migrated, email=correo, password="clave-de-prueba")
+    with pytest.raises(AuthError, match="no tiene acceso"):
+        user_for_identity(migrated, GoogleIdentity(sub="sub-2", email="ajeno@gmail.com"))
 
 
 @pg
-def test_organizacion_inexistente_se_rechaza(migrated, correo):
-    from fierro_api.auth import create_user
-
-    with pytest.raises(ValueError, match="no existe"):
-        create_user(migrated, email=correo, password="clave-de-prueba", org_slug="no-existe")
-
-
-@pg
-def test_crear_dos_veces_actualiza_en_vez_de_duplicar(migrated, correo, limpiar):
-    from fierro_api.auth import authenticate, create_user
-
-    limpiar.append(correo)
-    primero = create_user(
-        migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos"
-    )
-    segundo = create_user(
-        migrated, email=correo, password="clave-nueva-distinta", org_slug="valle-verde"
-    )
-
-    assert primero == segundo
-    user = authenticate(migrated, correo, "clave-nueva-distinta")
-    assert user.org_slug == "valle-verde"
-
-
-@pg
-def test_se_registra_el_ultimo_acceso(migrated, correo, limpiar):
+def test_google_guarda_el_sub_la_primera_vez(migrated, usuario):
     import psycopg
-    from fierro_api.auth import authenticate, create_user
+    from fierro_api.google_auth import user_for_identity
 
-    limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
-    authenticate(migrated, correo, "clave-de-prueba")
+    user_id, correo = usuario
+    user_for_identity(migrated, GoogleIdentity(sub="sub-original", email=correo))
+    user_for_identity(migrated, GoogleIdentity(sub="sub-distinto", email=correo))
 
     with psycopg.connect(migrated) as conn, conn.cursor() as cur:
-        cur.execute("SELECT last_login_at FROM users WHERE lower(email) = lower(%s)", (correo,))
-        assert cur.fetchone()[0] is not None
+        cur.execute("SELECT google_sub FROM users WHERE id = %s", (user_id,))
+        # No se pisa un vinculo ya establecido.
+        assert cur.fetchone()[0] == "sub-original"
 
 
 # ---------------------------------------------------------------------------
@@ -296,7 +443,6 @@ def test_se_registra_el_ultimo_acceso(migrated, correo, limpiar):
 
 @pytest.fixture
 def client(migrated, monkeypatch):
-    """App apuntando a Postgres, con secreto conocido."""
     from dataclasses import replace
 
     from fastapi.testclient import TestClient
@@ -305,94 +451,97 @@ def client(migrated, monkeypatch):
     monkeypatch.setattr(
         main_module,
         "settings",
-        replace(main_module.settings, dsn=migrated, jwt_secret=SECRETO, jwt_ttl_minutes=60),
+        replace(main_module.settings, dsn=migrated, google_client_id=CLIENT_ID),
     )
     return TestClient(main_module.app)
 
 
 @pg
-def test_login_devuelve_token_y_usuario(client, migrated, correo, limpiar):
-    from fierro_api.auth import create_user
-
-    limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
-
+def test_login_devuelve_api_key(client, usuario):
+    _, correo = usuario
     resp = client.post("/v1/auth/login", json={"email": correo, "password": "clave-de-prueba"})
-    assert resp.status_code == 200
 
+    assert resp.status_code == 200
     body = resp.json()
-    assert body["token_type"] == "bearer"
-    assert body["expires_in"] == 3600
+    assert body["api_key"].startswith(KEY_PREFIX)
     assert body["user"]["org"] == "los-encinos"
-    # La respuesta nunca devuelve el hash.
-    assert "password" not in json.dumps(body)
+    assert body["expires_at"] is not None
 
 
 @pg
-def test_login_con_credenciales_malas_da_401(client, migrated, correo, limpiar):
-    from fierro_api.auth import create_user
+def test_la_api_key_abre_me(client, usuario):
+    _, correo = usuario
+    key = client.post(
+        "/v1/auth/login", json={"email": correo, "password": "clave-de-prueba"}
+    ).json()["api_key"]
 
-    limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
-
-    resp = client.post("/v1/auth/login", json={"email": correo, "password": "mala"})
-    assert resp.status_code == 401
-
-
-@pg
-def test_me_requiere_token(client):
-    assert client.get("/v1/auth/me").status_code == 401
-
-
-@pg
-def test_me_rechaza_token_basura(client):
-    resp = client.get("/v1/auth/me", headers={"Authorization": "Bearer no-es-un-token"})
-    assert resp.status_code == 401
-
-
-@pg
-def test_me_devuelve_al_usuario_del_token(client, migrated, correo, limpiar):
-    from fierro_api.auth import create_user
-
-    limpiar.append(correo)
-    create_user(
-        migrated,
-        email=correo,
-        password="clave-de-prueba",
-        org_slug="los-encinos",
-        full_name="Ana Ruiz",
-    )
-
-    login = client.post("/v1/auth/login", json={"email": correo, "password": "clave-de-prueba"})
-    token = login.json()["access_token"]
-
-    resp = client.get("/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    resp = client.get("/v1/auth/me", headers={"Authorization": f"Bearer {key}"})
     assert resp.status_code == 200
-    assert resp.json() == {
-        "id": login.json()["user"]["id"],
-        "email": correo,
-        "full_name": "Ana Ruiz",
-        "org": "los-encinos",
-        "is_superuser": False,
-    }
+    assert resp.json()["email"] == correo
 
 
 @pg
-def test_desactivar_al_usuario_invalida_su_token(client, migrated, correo, limpiar):
-    """La unica revocacion que existe con JWT: releer al usuario en cada request."""
-    import psycopg
-    from fierro_api.auth import create_user
-
-    limpiar.append(correo)
-    create_user(migrated, email=correo, password="clave-de-prueba", org_slug="los-encinos")
-    login = client.post("/v1/auth/login", json={"email": correo, "password": "clave-de-prueba"})
-    token = login.json()["access_token"]
-    cabeceras = {"Authorization": f"Bearer {token}"}
+def test_revocar_la_llave_corta_el_acceso_de_inmediato(client, usuario):
+    """La razon de ser de la API key frente a un JWT."""
+    _, correo = usuario
+    sesion = client.post(
+        "/v1/auth/login", json={"email": correo, "password": "clave-de-prueba"}
+    ).json()
+    cabeceras = {"Authorization": f"Bearer {sesion['api_key']}"}
 
     assert client.get("/v1/auth/me", headers=cabeceras).status_code == 200
 
-    with psycopg.connect(migrated) as conn, conn.cursor() as cur:
-        cur.execute("UPDATE users SET is_active = false WHERE lower(email) = lower(%s)", (correo,))
-        conn.commit()
+    borrado = client.delete(f"/v1/auth/keys/{sesion['id']}", headers=cabeceras)
+    assert borrado.status_code == 200
 
     assert client.get("/v1/auth/me", headers=cabeceras).status_code == 401
+
+
+@pg
+def test_logout_all_cierra_todas(client, usuario):
+    _, correo = usuario
+    primera = client.post(
+        "/v1/auth/login", json={"email": correo, "password": "clave-de-prueba"}
+    ).json()["api_key"]
+    segunda = client.post(
+        "/v1/auth/login", json={"email": correo, "password": "clave-de-prueba"}
+    ).json()["api_key"]
+
+    resp = client.post("/v1/auth/logout-all", headers={"Authorization": f"Bearer {primera}"})
+    assert resp.status_code == 200
+
+    for key in (primera, segunda):
+        cabeceras = {"Authorization": f"Bearer {key}"}
+        assert client.get("/v1/auth/me", headers=cabeceras).status_code == 401
+
+
+@pg
+def test_me_sin_credencial_da_401(client):
+    assert client.get("/v1/auth/me").status_code == 401
+    assert client.get(
+        "/v1/auth/me", headers={"Authorization": "Bearer no-es-una-llave"}
+    ).status_code == 401
+
+
+@pg
+def test_google_sin_configurar_da_503(migrated, monkeypatch):
+    from dataclasses import replace
+
+    from fastapi.testclient import TestClient
+    from fierro_api import main as main_module
+
+    monkeypatch.setattr(
+        main_module,
+        "settings",
+        replace(main_module.settings, dsn=migrated, google_client_id=""),
+    )
+    resp = TestClient(main_module.app).post("/v1/auth/google", json={"id_token": "lo-que-sea"})
+
+    assert resp.status_code == 503
+    assert "FIERRO_GOOGLE_CLIENT_ID" in resp.json()["detail"]
+
+
+@pg
+def test_google_con_token_invalido_da_401(client):
+    resp = client.post("/v1/auth/google", json={"id_token": "esto.no.es"})
+    assert resp.status_code == 401

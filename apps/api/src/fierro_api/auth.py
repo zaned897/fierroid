@@ -1,12 +1,13 @@
-"""Usuarios, contrasenas y tokens de acceso.
+"""Usuarios, credenciales y API keys.
 
-Decision tomada por el equipo: **JWT en localStorage**, no cookie de sesion.
+La credencial de sesion es una **API key revocable**, no un JWT. Un JWT no se
+puede invalidar antes de que expire; una API key vive como hash en la base, asi
+que cerrar sesion es borrar una fila. Eso tambien hace posible "cerrar sesion en
+todos los dispositivos" y cortar el acceso de alguien que se va del equipo.
 
-Consecuencia asumida, escrita aqui para que nadie la descubra despues:
-un XSS en la PWA puede leer el token, y no hay revocacion real — un token
-robado sirve hasta que expira. Se mitiga con vida corta y claims minimos.
-Cuando entre 2FA conviene reevaluarlo, porque 2FA sin poder cerrar sesiones
-existentes protege menos de lo que parece.
+El camino normal para entrar es Google (ver google_auth.py): nadie del equipo
+gestiona contrasenas de terceros. La contrasena queda como via de respaldo para
+cuentas administrativas y para las pruebas, y es opcional en el esquema.
 
 Solo Postgres: el modo SQLite es de laboratorio y de un solo inquilino.
 """
@@ -15,7 +16,9 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import hashlib
 import logging
+import secrets
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -32,13 +35,16 @@ _hasher = PasswordHasher()
 # Sin esto, la diferencia de latencia revela que cuentas estan registradas.
 _DUMMY_HASH = _hasher.hash("no-such-user-timing-guard")
 
-ALGORITHM = "HS256"
-
 logger = logging.getLogger(__name__)
+
+# Prefijo reconocible: si una llave se filtra en un log o en un repositorio,
+# es identificable de un vistazo y por los escaneres de secretos.
+KEY_PREFIX = "fierro_"
+KEY_PREFIX_VISIBLE = 14
 
 
 class AuthError(Exception):
-    """Credenciales invalidas o token no utilizable."""
+    """Credenciales invalidas o credencial no utilizable."""
 
 
 @dataclass(frozen=True)
@@ -61,7 +67,7 @@ class AuthUser:
 
 
 # ---------------------------------------------------------------------------
-# Contrasenas
+# Contrasenas (via de respaldo; el camino normal es Google)
 # ---------------------------------------------------------------------------
 
 
@@ -89,42 +95,143 @@ def verify_password(stored_hash: str, plain: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Tokens
+# API keys
 # ---------------------------------------------------------------------------
 
 
-def create_access_token(user: AuthUser, *, secret: str, ttl_minutes: int) -> tuple[str, int]:
-    """Devuelve (token, segundos_de_vida).
+def _hash_key(plain: str) -> str:
+    """SHA-256, no argon2.
 
-    Los claims son minimos y publicos: cualquiera con el token los lee. Nada
-    de nombre completo ni datos que no hagan falta para autorizar.
+    La llave son 256 bits aleatorios: no hay diccionario que la adivine, asi
+    que un hash lento no protege de nada. Y se verifica en CADA request, donde
+    argon2 costaria ~80 ms. argon2 es para secretos que elige un humano.
     """
-    import jwt
+    return hashlib.sha256(plain.encode()).hexdigest()
 
-    now = datetime.now(timezone.utc)
-    expires = now + timedelta(minutes=ttl_minutes)
-    claims = {
-        "sub": str(user.id),
-        "email": user.email,
-        "org": user.org_slug,
-        "su": user.is_superuser,
-        "iat": int(now.timestamp()),
-        "exp": int(expires.timestamp()),
+
+def generate_api_key() -> tuple[str, str, str]:
+    """Devuelve (llave_en_claro, hash, prefijo_visible)."""
+    plain = KEY_PREFIX + secrets.token_urlsafe(32)
+    return plain, _hash_key(plain), plain[:KEY_PREFIX_VISIBLE]
+
+
+def issue_api_key(
+    dsn: str, *, user_id: int, name: str | None = None, ttl_days: int | None = 90
+) -> dict[str, Any]:
+    """Emite una llave nueva. La version en claro se devuelve UNA sola vez."""
+    import psycopg
+
+    plain, key_hash, prefix = generate_api_key()
+    expires_at = (
+        datetime.now(timezone.utc) + timedelta(days=ttl_days) if ttl_days else None
+    )
+
+    with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO api_keys (user_id, key_hash, key_prefix, name, expires_at)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id, created_at
+            """,
+            (user_id, key_hash, prefix, name, expires_at),
+        )
+        key_id, created_at = cur.fetchone()
+        conn.commit()
+
+    return {
+        "api_key": plain,
+        "id": key_id,
+        "key_prefix": prefix,
+        "created_at": created_at.isoformat(),
+        "expires_at": expires_at.isoformat() if expires_at else None,
     }
-    return jwt.encode(claims, secret, algorithm=ALGORITHM), ttl_minutes * 60
 
 
-def decode_access_token(token: str, *, secret: str) -> dict[str, Any]:
-    import jwt
+def user_for_api_key(dsn: str, plain: str) -> AuthUser | None:
+    """Resuelve el usuario de una llave, o None si no sirve."""
+    import psycopg
+    from psycopg.rows import dict_row
 
-    try:
-        # algorithms explicito: aceptar el del token permitiria el ataque
-        # clasico de bajar el algoritmo a "none".
-        return jwt.decode(token, secret, algorithms=[ALGORITHM])
-    except jwt.ExpiredSignatureError as exc:
-        raise AuthError("el token expiro") from exc
-    except jwt.InvalidTokenError as exc:
-        raise AuthError("token invalido") from exc
+    with psycopg.connect(dsn, row_factory=dict_row) as conn, conn.cursor() as cur:
+        cur.execute(
+            _SELECT_USER
+            + """
+            JOIN api_keys k ON k.user_id = u.id
+            WHERE k.key_hash = %s
+              AND k.revoked_at IS NULL
+              AND (k.expires_at IS NULL OR k.expires_at > now())
+              AND u.is_active
+            """,
+            (_hash_key(plain),),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+
+        # Solo se escribe si pasaron 5 minutos: sin esto seria un UPDATE por
+        # cada request, y el dato no necesita ese detalle.
+        cur.execute(
+            """
+            UPDATE api_keys SET last_used_at = now()
+            WHERE key_hash = %s
+              AND (last_used_at IS NULL OR last_used_at < now() - interval '5 minutes')
+            """,
+            (_hash_key(plain),),
+        )
+        conn.commit()
+        return _row_to_user(row)
+
+
+def list_api_keys(dsn: str, user_id: int) -> list[dict[str, Any]]:
+    import psycopg
+    from psycopg.rows import dict_row
+
+    with psycopg.connect(dsn, row_factory=dict_row) as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, key_prefix, name, created_at, last_used_at, expires_at, revoked_at
+            FROM api_keys WHERE user_id = %s ORDER BY created_at DESC
+            """,
+            (user_id,),
+        )
+        return [
+            {
+                k: (v.isoformat() if isinstance(v, datetime) else v)
+                for k, v in dict(row).items()
+            }
+            for row in cur.fetchall()
+        ]
+
+
+def revoke_api_key(dsn: str, *, user_id: int, key_id: int) -> bool:
+    """Revoca una llave del propio usuario. Devuelve False si no era suya."""
+    import psycopg
+
+    with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE api_keys SET revoked_at = now()
+            WHERE id = %s AND user_id = %s AND revoked_at IS NULL
+            """,
+            (key_id, user_id),
+        )
+        revocadas = cur.rowcount
+        conn.commit()
+        return revocadas > 0
+
+
+def revoke_all_api_keys(dsn: str, user_id: int) -> int:
+    """Cerrar sesion en todos los dispositivos."""
+    import psycopg
+
+    with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE api_keys SET revoked_at = now() WHERE user_id = %s AND revoked_at IS NULL",
+            (user_id,),
+        )
+        total = cur.rowcount
+        conn.commit()
+        return total
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +268,12 @@ def authenticate(dsn: str, email: str, password: str) -> AuthUser:
 
         if row is None:
             # Gastar el mismo tiempo que una verificacion real.
+            verify_password(_DUMMY_HASH, password)
+            raise AuthError("credenciales invalidas")
+
+        if row["password_hash"] is None:
+            # Cuenta que solo entra por Google. Mismo mensaje generico: decir
+            # "esta cuenta usa Google" confirmaria que el correo existe.
             verify_password(_DUMMY_HASH, password)
             raise AuthError("credenciales invalidas")
 
