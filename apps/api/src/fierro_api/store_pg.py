@@ -93,19 +93,65 @@ class PostgresReadingStore:
             seen.add(event_id)
         return accepted, duplicates
 
-    def list_readings(self, limit: int = 50) -> list[dict[str, Any]]:
+    def list_readings(
+        self,
+        limit: int = 50,
+        *,
+        org_slug: str | None = None,
+        device_id: str | None = None,
+        tag_id: str | None = None,
+        cursor: tuple[str, str] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Lecturas mas recientes primero.
+
+        org_slug=None significa "sin restringir" y solo lo usa un superusuario.
+        Un usuario normal SIEMPRE llega aqui con su organizacion.
+
+        Las estaciones sin rancho asignado no pertenecen a nadie todavia, asi
+        que no aparecen bajo ninguna organizacion: sus lecturas se guardan
+        igual, pero no se le muestran a un inquilino que no es su dueno.
+        """
+        condiciones: list[str] = []
+        parametros: list[Any] = []
+
+        if org_slug is not None:
+            condiciones.append(
+                "d.ranch_id IS NOT NULL AND o.slug = %s"
+            )
+            parametros.append(org_slug)
+        if device_id:
+            condiciones.append("r.device_id = %s")
+            parametros.append(device_id)
+        if tag_id:
+            condiciones.append("r.tag_id = %s")
+            parametros.append(tag_id)
+        if cursor:
+            # Paginacion por (captured_at, event_id): captured_at solo no basta
+            # porque dos lecturas pueden compartir el mismo instante y una se
+            # perderia entre paginas.
+            condiciones.append("(r.captured_at, r.event_id) < (%s, %s)")
+            parametros.extend(cursor)
+
+        where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
+        parametros.append(limit)
+
         with self._pool.connection() as conn, conn.cursor() as cur:
             cur.execute(
-                """
-                SELECT event_id, device_id, tag_id, weight_kg, captured_at,
-                       stable, source, received_at
-                FROM readings
-                ORDER BY captured_at DESC
+                f"""
+                SELECT r.event_id, r.device_id, r.tag_id, r.weight_kg, r.captured_at,
+                       r.stable, r.source, r.received_at
+                FROM readings r
+                LEFT JOIN devices d ON d.device_id = r.device_id
+                LEFT JOIN ranches ra ON ra.id = d.ranch_id
+                LEFT JOIN organizations o ON o.id = ra.org_id
+                {where}
+                ORDER BY r.captured_at DESC, r.event_id DESC
                 LIMIT %s
                 """,
-                (limit,),
+                parametros,
             )
             rows = cur.fetchall()
+
         return [
             {
                 "event_id": row["event_id"],
@@ -142,14 +188,26 @@ class PostgresReadingStore:
                 (device_id, pending_count, agent_version, uptime_s),
             )
 
-    def list_devices(self) -> list[dict[str, Any]]:
+    def list_devices(self, *, org_slug: str | None = None) -> list[dict[str, Any]]:
+        """Estaciones visibles. org_slug=None solo para superusuario."""
+        where = ""
+        parametros: list[Any] = []
+        if org_slug is not None:
+            where = "WHERE d.ranch_id IS NOT NULL AND o.slug = %s"
+            parametros.append(org_slug)
+
         with self._pool.connection() as conn, conn.cursor() as cur:
             cur.execute(
-                """
-                SELECT device_id, pending_count, agent_version, uptime_s, last_seen
-                FROM devices
-                ORDER BY last_seen DESC
-                """
+                f"""
+                SELECT d.device_id, d.pending_count, d.agent_version,
+                       d.uptime_s, d.last_seen
+                FROM devices d
+                LEFT JOIN ranches ra ON ra.id = d.ranch_id
+                LEFT JOIN organizations o ON o.id = ra.org_id
+                {where}
+                ORDER BY d.last_seen DESC
+                """,
+                parametros,
             )
             rows = cur.fetchall()
         return [{**row, "last_seen": _iso(row["last_seen"])} for row in rows]

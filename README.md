@@ -174,9 +174,20 @@ heartbeat antes de que alguien la asigne, y sus lecturas se aceptan igual — el
 invariante raíz manda. `NULL` significa "sin asignar", no "inválida"; al
 asignarla, su historia completa aparece bajo la organización correcta.
 
-> ⚠️ **El esquema existe, pero la API todavía no filtra por organización.**
-> `GET /v1/readings` sigue devolviendo todo. El aislamiento real llega con el
-> ticket de filtrado por tenant, junto con auth. No expongas esto a internet.
+**El aislamiento está aplicado.** `GET /v1/readings` y `GET /v1/devices` exigen
+credencial y devuelven solo lo de la organización del usuario; el superusuario
+las ve todas. Filtrar por una estación ajena devuelve vacío, no error: el filtro
+no sirve para saltarse el alcance.
+
+| Parámetro | Uso |
+|---|---|
+| `limit` | 1–200, default 50 |
+| `cursor` | Paginación. Viene en `next_cursor`; `null` significa que no hay más |
+| `device_id`, `tag_id` | Filtros, siempre dentro del alcance del usuario |
+
+> `POST /v1/readings` y el heartbeat siguen **sin autenticación**: es el camino
+> de ingest de las estaciones y su API key propia todavía no existe (E0-T2).
+> Cerrarlo antes dejaría a las estaciones sin poder reportar.
 
 Sembrar la estructura (solo Postgres, es una operación administrativa):
 

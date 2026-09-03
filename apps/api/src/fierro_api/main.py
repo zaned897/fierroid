@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
@@ -151,7 +152,28 @@ def login(body: LoginIn) -> dict[str, Any]:
     return _session_response(dsn, user, "contrasena")
 
 
+# Usuario sintetico del modo laboratorio. Existe para que el flujo
+# hello-world del README siga funcionando sin Postgres ni usuarios.
+#
+# Es seguro porque settings.validate() prohibe SQLite en stage y production:
+# un entorno desplegado no puede caer aqui por accidente.
+LAB_USER = AuthUser(
+    id=0,
+    email="laboratorio@local",
+    org_id=None,
+    org_slug=None,
+    is_superuser=True,
+    full_name="Modo laboratorio",
+)
+
+
 def current_user(creds: BearerCreds) -> AuthUser:
+    if not settings.dsn:
+        # SQLite: sin tablas de usuarios ni de organizaciones. Exigir
+        # credencial aqui solo romperia el laboratorio sin proteger nada,
+        # porque tampoco hay varios inquilinos que separar.
+        return LAB_USER
+
     if creds is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -201,6 +223,49 @@ def logout_all(user: CurrentUser) -> dict[str, Any]:
     return {"ok": True, "revoked": revoke_all_api_keys(_require_postgres(), user.id)}
 
 
+# ---------------------------------------------------------------------------
+# Alcance por organizacion
+# ---------------------------------------------------------------------------
+
+
+def _scope(user: AuthUser) -> str | None:
+    """Organizacion a la que se acota la consulta. None = sin restringir.
+
+    Solo el superusuario recibe None. Un usuario normal sin organizacion
+    seria un None accidental, es decir acceso total: eso se corta aqui con un
+    403. No ver nada es infinitamente mejor que verlo todo.
+    """
+    if user.is_superuser:
+        return None
+    if not user.org_slug:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta no tiene organizacion asignada. Contacta a un administrador.",
+        )
+    return user.org_slug
+
+
+def _encode_cursor(row: dict[str, Any]) -> str:
+    crudo = f"{row['captured_at']}|{row['event_id']}"
+    return base64.urlsafe_b64encode(crudo.encode()).decode()
+
+
+def _decode_cursor(cursor: str | None) -> tuple[str, str] | None:
+    if not cursor:
+        return None
+    try:
+        captured_at, event_id = base64.urlsafe_b64decode(cursor).decode().split("|", 1)
+    except Exception as exc:  # noqa: BLE001 - cursor manipulado o de otra version
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cursor invalido"
+        ) from exc
+    return captured_at, event_id
+
+
+# Sin autenticacion a proposito: es el camino de ingest de las estaciones, y
+# todavia no existe la API key por device (ticket E0-T2). Cerrar esto antes
+# de que exista dejaria a las estaciones sin poder reportar, que es
+# exactamente lo que el invariante raiz prohibe.
 @app.post("/v1/readings")
 def post_readings(body: WeightReadingIn | ReadingsBatchIn) -> dict[str, Any]:
     if isinstance(body, WeightReadingIn):
@@ -216,8 +281,25 @@ def post_readings(body: WeightReadingIn | ReadingsBatchIn) -> dict[str, Any]:
 
 
 @app.get("/v1/readings")
-def get_readings(limit: int = Query(default=50, ge=1, le=500)) -> dict[str, Any]:
-    return {"readings": store.list_readings(limit=limit)}
+def get_readings(
+    user: CurrentUser,
+    limit: int = Query(default=50, ge=1, le=200),
+    cursor: str | None = Query(default=None),
+    device_id: str | None = Query(default=None),
+    tag_id: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Lecturas de la organizacion del usuario. El superusuario las ve todas."""
+    readings = store.list_readings(
+        limit=limit,
+        org_slug=_scope(user),
+        device_id=device_id,
+        tag_id=tag_id,
+        cursor=_decode_cursor(cursor),
+    )
+    # Solo hay siguiente pagina si la actual vino llena. Con menos filas que el
+    # limite, ya se llego al final.
+    siguiente = _encode_cursor(readings[-1]) if len(readings) == limit else None
+    return {"readings": readings, "next_cursor": siguiente}
 
 
 @app.post("/v1/devices/{device_id}/heartbeat")
@@ -232,8 +314,8 @@ def post_heartbeat(device_id: str, body: HeartbeatIn) -> dict[str, Any]:
 
 
 @app.get("/v1/devices")
-def get_devices() -> dict[str, Any]:
-    return {"devices": store.list_devices()}
+def get_devices(user: CurrentUser) -> dict[str, Any]:
+    return {"devices": store.list_devices(org_slug=_scope(user))}
 
 
 def main() -> None:
