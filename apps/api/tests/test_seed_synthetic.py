@@ -103,6 +103,13 @@ def test_no_se_pesan_animales_antes_de_nacer(seed_module, now):
         assert captured >= birth_by_tag[event["tag_id"]]
 
 
+def test_ningun_pesaje_en_el_futuro(seed_module, now):
+    """La ultima jornada esta a medias: no se inventan pesajes que no ocurrieron."""
+    _, events = build(seed_module, now, animals=30, days=45)
+    for event in events:
+        assert datetime.fromisoformat(event["captured_at"]) <= now
+
+
 def test_eventos_ordenados_por_fecha(seed_module, now):
     _, events = build(seed_module, now, animals=15, days=90)
     stamps = [e["captured_at"] for e in events]
