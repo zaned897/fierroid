@@ -257,6 +257,16 @@ puede invalidar antes de que expire.
 Auth requiere Postgres. En modo SQLite los endpoints devuelven `503` con un
 mensaje que lo dice.
 
+#### En la PWA
+
+El botón *Continuar con Google* usa `VITE_GOOGLE_CLIENT_ID`, que vive en el
+mismo `.env` de la raíz (Vite lo lee vía `envDir`). Es el mismo ID que la API:
+es público por diseño y viaja en el bundle.
+
+*Salir* no solo borra la sesión del navegador: **revoca la llave en el
+servidor**. Esa es la diferencia con un JWT, que seguiría sirviendo hasta
+expirar aunque el usuario cerrara sesión.
+
 ### Lint / test / build
 
 ```bash
