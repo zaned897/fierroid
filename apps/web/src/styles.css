@@ -80,12 +80,33 @@ body {
 
 button {
   appearance: none;
-  border: 1px solid var(--line);
-  background: transparent;
+  /* El borde estaba al 12% de opacidad: invisible con sol, que es justo la
+     condicion de uso. Y 36px de alto incumplia el minimo de 44px que pide
+     product-principles para manejarse con guantes. */
+  border: 1px solid rgba(242, 239, 230, 0.35);
+  background: rgba(242, 239, 230, 0.06);
   color: var(--ink);
   border-radius: 0.4rem;
-  padding: 0.4rem 0.7rem;
+  padding: 0.6rem 0.9rem;
+  min-height: 44px;
   font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mas {
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .muted {

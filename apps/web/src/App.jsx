@@ -26,6 +26,8 @@ function formatWhen(iso) {
 function Pesajes({ session, onExpired }) {
   const [readings, setReadings] = useState([]);
   const [devices, setDevices] = useState([]);
+  const [cursor, setCursor] = useState(null);
+  const [cargandoMas, setCargandoMas] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +38,7 @@ function Pesajes({ session, onExpired }) {
         apiFetch("/v1/devices", { session }),
       ]);
       setReadings(r.readings || []);
+      setCursor(r.next_cursor || null);
       setDevices(d.devices || []);
       setError(null);
     } catch (err) {
@@ -49,6 +52,23 @@ function Pesajes({ session, onExpired }) {
       setLoading(false);
     }
   }, [session, onExpired]);
+
+  const cargarMas = useCallback(async () => {
+    if (!cursor) return;
+    setCargandoMas(true);
+    try {
+      const mas = await apiFetch(`/v1/readings?limit=40&cursor=${cursor}`, { session });
+      // Se concatena en vez de reemplazar: el usuario esta leyendo hacia atras
+      // en el tiempo, no cambiando de pagina.
+      setReadings((previas) => [...previas, ...(mas.readings || [])]);
+      setCursor(mas.next_cursor || null);
+    } catch (err) {
+      if (err.unauthorized) onExpired();
+      else setError(err.message);
+    } finally {
+      setCargandoMas(false);
+    }
+  }, [cursor, session, onExpired]);
 
   useEffect(() => {
     refresh();
@@ -110,6 +130,11 @@ function Pesajes({ session, onExpired }) {
             </li>
           ))}
         </ul>
+        {cursor && (
+          <button type="button" className="mas" onClick={cargarMas} disabled={cargandoMas}>
+            {cargandoMas ? "Cargando…" : "Ver más antiguas"}
+          </button>
+        )}
       </section>
     </>
   );

@@ -68,16 +68,46 @@ class ReadingStore:
         self._conn.commit()
         return accepted, duplicates
 
-    def list_readings(self, limit: int = 50) -> list[dict[str, Any]]:
+    def list_readings(
+        self,
+        limit: int = 50,
+        *,
+        org_slug: str | None = None,  # noqa: ARG002 - ver docstring
+        device_id: str | None = None,
+        tag_id: str | None = None,
+        cursor: tuple[str, str] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Misma firma que el store Postgres, para que main.py no distinga.
+
+        org_slug se ignora a proposito: el modo SQLite es el laboratorio de un
+        solo inquilino y no tiene tablas de organizaciones. Implementar aqui
+        una segunda version de la separacion multi-cliente seria duplicar la
+        parte del sistema donde un error cuesta mas caro.
+        """
+        condiciones: list[str] = []
+        parametros: list[Any] = []
+        if device_id:
+            condiciones.append("device_id = ?")
+            parametros.append(device_id)
+        if tag_id:
+            condiciones.append("tag_id = ?")
+            parametros.append(tag_id)
+        if cursor:
+            condiciones.append("(captured_at, event_id) < (?, ?)")
+            parametros.extend(cursor)
+        where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
+        parametros.append(limit)
+
         rows = self._conn.execute(
-            """
+            f"""
             SELECT event_id, device_id, tag_id, weight_kg, captured_at,
                    stable, source, received_at
             FROM readings
-            ORDER BY captured_at DESC
+            {where}
+            ORDER BY captured_at DESC, event_id DESC
             LIMIT ?
             """,
-            (limit,),
+            parametros,
         ).fetchall()
         return [
             {
@@ -115,7 +145,8 @@ class ReadingStore:
         )
         self._conn.commit()
 
-    def list_devices(self) -> list[dict[str, Any]]:
+    def list_devices(self, *, org_slug: str | None = None) -> list[dict[str, Any]]:  # noqa: ARG002
+        """org_slug se ignora: SQLite es de un solo inquilino. Ver list_readings."""
         rows = self._conn.execute(
             """
             SELECT device_id, pending_count, agent_version, uptime_s, last_seen

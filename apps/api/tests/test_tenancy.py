@@ -105,11 +105,17 @@ def test_backfill_asigna_las_estaciones_previas_a_demo(conn):
 def test_sembrar_dos_veces_no_duplica(migrated):
     from fierro_api.tenancy import list_tenants, seed_tenants
 
+    def estructura(filas):
+        # Solo lo que la siembra controla. El conteo de lecturas cambia solo:
+        # el agent mock inserta cada pocos segundos, y compararlo hacia esta
+        # prueba fallar por motivos que no tienen que ver con lo que prueba.
+        return sorted((f["org"], f["ranch"], f["device_id"]) for f in filas)
+
     specs = build_specs(orgs=3, ranches_per_org=1, devices_per_ranch=2)
     seed_tenants(migrated, specs)
-    primera = list_tenants(migrated)
+    primera = estructura(list_tenants(migrated))
     seed_tenants(migrated, specs)
-    segunda = list_tenants(migrated)
+    segunda = estructura(list_tenants(migrated))
 
     assert primera == segunda
 
