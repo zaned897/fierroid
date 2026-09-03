@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
+import Login from "./Login.jsx";
+import {
+  apiFetch,
+  clearSession,
+  exchangeGoogleToken,
+  loadSession,
+  logout,
+  saveSession,
+} from "./auth.js";
 import { CowForTag, CowIcon } from "./icons/cows.jsx";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "";
-
-async function fetchJson(path) {
-  const res = await fetch(`${API_BASE}${path}`);
-  if (!res.ok) throw new Error(`${res.status} ${path}`);
-  return res.json();
-}
 
 function formatKg(kg) {
   return `${Number(kg).toFixed(1)} kg`;
@@ -22,7 +23,7 @@ function formatWhen(iso) {
   }
 }
 
-export default function App() {
+function Pesajes({ session, onExpired }) {
   const [readings, setReadings] = useState([]);
   const [devices, setDevices] = useState([]);
   const [error, setError] = useState(null);
@@ -31,18 +32,23 @@ export default function App() {
   const refresh = useCallback(async () => {
     try {
       const [r, d] = await Promise.all([
-        fetchJson("/v1/readings?limit=40"),
-        fetchJson("/v1/devices"),
+        apiFetch("/v1/readings?limit=40", { session }),
+        apiFetch("/v1/devices", { session }),
       ]);
       setReadings(r.readings || []);
       setDevices(d.devices || []);
       setError(null);
     } catch (err) {
+      if (err.unauthorized) {
+        // La credencial dejó de servir: no tiene caso seguir consultando.
+        onExpired();
+        return;
+      }
       setError(err.message || "Error de red");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session, onExpired]);
 
   useEffect(() => {
     refresh();
@@ -51,16 +57,7 @@ export default function App() {
   }, [refresh]);
 
   return (
-    <div className="page">
-      <header className="hero">
-        <div className="brand-row">
-          <CowIcon variant="frente" size={40} className="cow" />
-          <p className="brand">Fierro</p>
-        </div>
-        <h1>Pesajes</h1>
-        <p className="lede">Lecturas RFID + peso sincronizadas desde el corral.</p>
-      </header>
-
+    <>
       <section className="panel" aria-label="Dispositivos">
         <h2>Dispositivos</h2>
         {devices.length === 0 ? (
@@ -114,6 +111,55 @@ export default function App() {
           ))}
         </ul>
       </section>
+    </>
+  );
+}
+
+export default function App() {
+  const [session, setSession] = useState(loadSession);
+
+  const entrar = useCallback((nueva) => {
+    saveSession(nueva);
+    setSession(nueva);
+  }, []);
+
+  const salir = useCallback(async () => {
+    await logout(session);
+    setSession(null);
+  }, [session]);
+
+  // Credencial revocada o expirada desde otro lado: se limpia sin llamar al
+  // servidor, que ya nos dijo que no sirve.
+  const expirada = useCallback(() => {
+    clearSession();
+    setSession(null);
+  }, []);
+
+  if (!session) {
+    return <Login onSession={entrar} exchange={exchangeGoogleToken} />;
+  }
+
+  const usuario = session.user || {};
+
+  return (
+    <div className="page">
+      <header className="hero">
+        <div className="brand-row">
+          <CowIcon variant="frente" size={40} className="cow" />
+          <p className="brand">Fierro</p>
+          <button type="button" className="ghost" onClick={salir}>
+            Salir
+          </button>
+        </div>
+        <h1>Pesajes</h1>
+        <p className="lede">
+          {usuario.is_superuser ? "Todas las organizaciones" : usuario.org || "Sin organización"}
+          {" · "}
+          {usuario.email}
+        </p>
+      </header>
+
+      <Pesajes session={session} onExpired={expirada} />
     </div>
   );
 }
