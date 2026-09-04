@@ -245,14 +245,27 @@ tardes en correr estos pasos. La PWA tolera una API vieja a propósito — ver
 esa tolerancia se escribe caso por caso, así que un cambio de contrato que la
 PWA ya use rompe el login hasta que la API salga.
 
+### Se construye una vez, no una por entorno
+
+La regla: **una imagen por candidato a release.** Se construye desde el árbol de
+`stage`, se despliega ahí, y a `production` va **ese mismo digest**. Reconstruir
+para `production` produce otra imagen, y entonces `production` corre algo que
+`stage` nunca probó — que es exactamente lo que la cadena de promoción existe
+para impedir.
+
+No es teórico. Dos builds del mismo código dieron digests distintos aunque las
+nueve capas y el `created` fueran idénticos: la diferencia estaba en metadatos
+del build. Un digest distinto es un artefacto distinto aunque el contenido
+coincida, y para saberlo hubo que abrir las dos imágenes y comparar.
+
 ```bash
-git checkout production && git merge --ff-only origin/stage && git push
+git checkout stage && git merge --ff-only origin/main && git push
 ```
 
 Se construye desde ese árbol, no desde la rama en la que estabas:
 
 ```bash
-IMG=northamerica-south1-docker.pkg.dev/fierro-caw-scale/fierro/fierro-api:production
+IMG=northamerica-south1-docker.pkg.dev/fierro-caw-scale/fierro/fierro-api:stage
 docker build -f apps/api/Dockerfile -t "$IMG" .
 docker push "$IMG"
 ```
@@ -264,17 +277,26 @@ pasó desplegar una imagen que compilaba y a la que le faltaba una dependencia:
 docker run --rm --entrypoint python "$IMG" -c "import fierro_api.main"
 ```
 
-El `push` imprime el digest. Va a `production.tfvars`, en `api_image`, con
-`@sha256:...` en lugar de `:production`. **Con la etiqueta móvil Terraform no ve
+El `push` imprime el digest. Va a **los dos** `.tfvars`, en `api_image`, con
+`@sha256:...` en lugar de la etiqueta. **Con la etiqueta móvil Terraform no ve
 ningún cambio y Cloud Run se queda con la imagen anterior**, sin decir nada.
 
+Primero `stage`, y ahí se prueba:
+
 ```bash
+terraform "-chdir=infra/terraform" apply "-var-file=stage.tfvars"
+```
+
+Después `production`, con el mismo digest y sin reconstruir:
+
+```bash
+git checkout production && git merge --ff-only origin/stage && git push
 terraform "-chdir=infra/terraform" apply "-var-file=production.tfvars"
 ```
 
-Sale `2 to change, 0 to destroy`: el servicio y el job. Si hay migraciones
-nuevas, además `gcloud run jobs execute fierro-migrate-production --region
-northamerica-south1 --wait`.
+Cada `apply` sale `2 to change, 0 to destroy`: el servicio y el job. Si hay
+migraciones nuevas, además `gcloud run jobs execute fierro-migrate-<entorno>
+--region northamerica-south1 --wait`.
 
 Se verifica contra el origen que usa el navegador, no contra `*.run.app`, que
 es el que puede estar mal:
