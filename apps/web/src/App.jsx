@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import Animales from "./Animales.jsx";
+import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import {
   apiFetch,
@@ -141,19 +142,51 @@ function Pesajes({ session, onExpired }) {
   );
 }
 
+/**
+ * Rutas minimas, sin router.
+ *
+ * Son dos pantallas publicas. Una libreria de enrutamiento pesa mas en el
+ * bundle -que se descarga en el corral, con senal mala- de lo que ahorra
+ * frente a pushState y un listener de popstate.
+ */
+function useRuta() {
+  const [ruta, setRuta] = useState(() => window.location.pathname);
+
+  useEffect(() => {
+    const alVolver = () => setRuta(window.location.pathname);
+    window.addEventListener("popstate", alVolver);
+    return () => window.removeEventListener("popstate", alVolver);
+  }, []);
+
+  const ir = useCallback((destino) => {
+    window.history.pushState(null, "", destino);
+    setRuta(destino);
+  }, []);
+
+  return [ruta, ir];
+}
+
 export default function App() {
   const [session, setSession] = useState(loadSession);
   const [vista, setVista] = useState("pesajes");
+  const [ruta, ir] = useRuta();
 
-  const entrar = useCallback((nueva) => {
-    saveSession(nueva);
-    setSession(nueva);
-  }, []);
+  const entrar = useCallback(
+    (nueva) => {
+      saveSession(nueva);
+      setSession(nueva);
+      // La URL deja de decir /entrar cuando ya entraste: recargar ahi no
+      // debe devolver a una pantalla de login que ya no aplica.
+      ir("/");
+    },
+    [ir],
+  );
 
   const salir = useCallback(async () => {
     await logout(session);
     setSession(null);
-  }, [session]);
+    ir("/");
+  }, [session, ir]);
 
   // Credencial revocada o expirada desde otro lado: se limpia sin llamar al
   // servidor, que ya nos dijo que no sirve.
@@ -163,7 +196,11 @@ export default function App() {
   }, []);
 
   if (!session) {
-    return <Login onSession={entrar} exchange={exchangeGoogleToken} />;
+    return ruta === "/entrar" ? (
+      <Login onSession={entrar} exchange={exchangeGoogleToken} onInicio={() => ir("/")} />
+    ) : (
+      <Home onEntrar={() => ir("/entrar")} />
+    );
   }
 
   const usuario = session.user || {};

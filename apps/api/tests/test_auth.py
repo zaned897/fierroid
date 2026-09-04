@@ -594,6 +594,7 @@ def test_config_expone_el_client_id(client):
     assert body["google_client_id"] == CLIENT_ID
     assert body["google_enabled"] is True
     assert body["env"] == "dev"
+    assert body["providers"] == [{"id": "google", "name": "Google"}]
 
 
 @pg
@@ -610,7 +611,7 @@ def test_config_no_filtra_nada_secreto(client):
 
     assert "postgresql://" not in crudo
     assert "password" not in crudo.lower()
-    assert set(json.loads(crudo)) == {"google_client_id", "google_enabled", "env"}
+    assert set(json.loads(crudo)) == {"providers", "google_client_id", "google_enabled", "env"}
 
 
 @pg
@@ -628,3 +629,5 @@ def test_config_avisa_cuando_google_no_esta_configurado(migrated, monkeypatch):
 
     assert body["google_client_id"] == ""
     assert body["google_enabled"] is False
+    # Sin configurar, no se anuncia: un boton que falla es peor que ninguno.
+    assert body["providers"] == []

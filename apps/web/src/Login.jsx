@@ -1,47 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { CowIcon } from "./icons/cows.jsx";
+import Shell from "./Shell.jsx";
 
 const GSI_SRC = "https://accounts.google.com/gsi/client";
-
-/**
- * El client ID lo sirve la API, no lo inyecta el build.
- *
- * Antes venía de `import.meta.env.VITE_GOOGLE_CLIENT_ID`, que Vite resuelve al
- * construir. Eso significaba el mismo valor configurado en dos lugares, y que
- * un despliegue del front sin esa variable produce un bundle donde el botón
- * ni siquiera se intenta dibujar — el minificador elimina el efecto entero
- * porque puede probar que siempre retorna. Falla en silencio y solo se ve
- * leyendo el bundle compilado.
- *
- * Pidiéndolo en tiempo de ejecución hay una sola fuente y el error, si lo hay,
- * es visible: una petición que falla.
- */
-function useClientId() {
-  const [estado, setEstado] = useState({ cargando: true, clientId: null, error: null });
-
-  useEffect(() => {
-    let vivo = true;
-    fetch("/v1/auth/config")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((cfg) => {
-        if (!vivo) return;
-        setEstado({
-          cargando: false,
-          clientId: cfg.google_client_id || null,
-          error: cfg.google_client_id ? null : "La API no tiene configurado el inicio de sesión con Google.",
-        });
-      })
-      .catch((err) => {
-        if (vivo) setEstado({ cargando: false, clientId: null, error: `No se pudo contactar la API: ${err.message}` });
-      });
-    return () => {
-      vivo = false;
-    };
-  }, []);
-
-  return estado;
-}
+const ULTIMO = "fierro.ultimo-proveedor";
 
 /** Carga el script de Google una sola vez, aunque el componente se remonte. */
 function useGoogleScript() {
@@ -60,9 +22,7 @@ function useGoogleScript() {
     }
 
     const alCargar = () => setListo(true);
-    const alFallar = () =>
-      setError("No se pudo cargar el inicio de sesión de Google. Revisa tu conexión.");
-
+    const alFallar = () => setError("No se pudo cargar el inicio de sesión de Google.");
     script.addEventListener("load", alCargar);
     script.addEventListener("error", alFallar);
     return () => {
@@ -74,22 +34,116 @@ function useGoogleScript() {
   return { listo, error };
 }
 
-export default function Login({ onSession, exchange }) {
+/**
+ * Qué proveedores existen lo decide la API, no el bundle.
+ *
+ * Antes el client ID venía de una variable de build. Cuando el build no la
+ * veía, el minificador eliminaba el efecto que dibuja el botón —podía probar
+ * que siempre retornaba— y la página se veía bien, sin botón y sin error.
+ * Pedirlo en tiempo de ejecución convierte ese fallo silencioso en una
+ * petición que falla a la vista.
+ */
+function useProveedores() {
+  const [estado, setEstado] = useState({ cargando: true, config: null, error: null });
+
+  useEffect(() => {
+    let vivo = true;
+    fetch("/v1/auth/config")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((config) => {
+        if (vivo) setEstado({ cargando: false, config, error: null });
+      })
+      .catch((err) => {
+        if (vivo) {
+          setEstado({
+            cargando: false,
+            config: null,
+            error: `No se pudo contactar la API: ${err.message}`,
+          });
+        }
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  return estado;
+}
+
+function leerUltimo() {
+  try {
+    return localStorage.getItem(ULTIMO);
+  } catch {
+    return null;
+  }
+}
+
+function guardarUltimo(id) {
+  try {
+    localStorage.setItem(ULTIMO, id);
+  } catch {
+    // Recordar el proveedor es una comodidad, no un requisito.
+  }
+}
+
+/** Botón de Google, dibujado por Google. */
+function BotonGoogle({ clientId, onCredencial, ancho }) {
   const contenedor = useRef(null);
-  const { listo, error: errorScript } = useGoogleScript();
-  const { cargando, clientId, error: errorConfig } = useClientId();
+  const { listo, error } = useGoogleScript();
+
+  useEffect(() => {
+    if (!listo || !clientId || !contenedor.current) return;
+
+    window.google.accounts.id.initialize({ client_id: clientId, callback: onCredencial });
+    // Lo dibuja Google y no nosotros: sus lineamientos de marca lo exigen, y un
+    // botón propio se rompe cada vez que cambian el flujo por dentro.
+    window.google.accounts.id.renderButton(contenedor.current, {
+      theme: "filled_black",
+      size: "large",
+      shape: "rectangular",
+      text: "continue_with",
+      locale: "es",
+      width: ancho,
+    });
+  }, [listo, clientId, onCredencial, ancho]);
+
+  return (
+    <>
+      <div ref={contenedor} className="gsi" />
+      {error && <p className="error">{error}</p>}
+    </>
+  );
+}
+
+export default function Login({ onSession, exchange, onInicio }) {
+  const { cargando, config, error: errorConfig } = useProveedores();
   const [error, setError] = useState(null);
   const [entrando, setEntrando] = useState(false);
+  const [ancho, setAncho] = useState(320);
+  const columna = useRef(null);
+  const ultimo = leerUltimo();
+
+  // Google dibuja su botón con un ancho en píxeles, no con CSS.
+  useEffect(() => {
+    const medir = () => {
+      const w = columna.current?.getBoundingClientRect().width;
+      if (w) setAncho(Math.round(Math.min(Math.max(w, 200), 400)));
+    };
+    medir();
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, [cargando]);
 
   const alRecibirCredencial = useCallback(
     async (respuesta) => {
       setEntrando(true);
       setError(null);
       try {
-        onSession(await exchange(respuesta.credential));
+        const sesion = await exchange(respuesta.credential);
+        guardarUltimo("google");
+        onSession(sesion);
       } catch (err) {
-        // El caso más común no es un fallo técnico: es alguien que no está
-        // dado de alta. El mensaje del servidor ya lo explica.
+        // El caso común no es un fallo técnico: es alguien sin invitación.
         setError(err.message);
       } finally {
         setEntrando(false);
@@ -98,39 +152,44 @@ export default function Login({ onSession, exchange }) {
     [exchange, onSession],
   );
 
-  useEffect(() => {
-    if (!listo || !clientId || !contenedor.current) return;
-
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: alRecibirCredencial,
-    });
-    window.google.accounts.id.renderButton(contenedor.current, {
-      theme: "filled_black",
-      size: "large",
-      shape: "pill",
-      text: "signin_with",
-      locale: "es",
-    });
-  }, [listo, clientId, alRecibirCredencial]);
+  const proveedores = config?.providers ?? [];
 
   return (
-    <div className="page login">
-      <CowIcon variant="frente" size={72} className="cow" />
-      <p className="brand">Fierro</p>
-      <p className="lede">Pesajes de ganado, del corral a tu bolsillo.</p>
+    <Shell lema="Del corral a tu bolsillo.">
+      <button type="button" className="volver" onClick={onInicio}>
+        ← Inicio
+      </button>
 
-      <div ref={contenedor} className="gsi" />
+      <h1 className="titulo">Entrar a Fierro</h1>
+      <p className="subtitulo">Continúa con:</p>
 
-      {cargando && <p className="muted">Cargando…</p>}
+      <div className="proveedores" ref={columna}>
+        {cargando && <p className="muted">Cargando…</p>}
+
+        {proveedores.map((p) => (
+          <div key={p.id} className="proveedor">
+            {ultimo === p.id && <span className="ultimo">Última vez</span>}
+            {p.id === "google" && (
+              <BotonGoogle
+                clientId={config.google_client_id}
+                onCredencial={alRecibirCredencial}
+                ancho={ancho}
+              />
+            )}
+          </div>
+        ))}
+
+        {!cargando && proveedores.length === 0 && !errorConfig && (
+          <p className="error">
+            La API no tiene configurado ningún proveedor de inicio de sesión.
+          </p>
+        )}
+      </div>
+
       {entrando && <p className="muted">Entrando…</p>}
-      {(error || errorScript || errorConfig) && (
-        <p className="error">{error || errorScript || errorConfig}</p>
-      )}
+      {(error || errorConfig) && <p className="error">{error || errorConfig}</p>}
 
-      <p className="muted fine">
-        El acceso es por invitación: tu correo debe estar dado de alta.
-      </p>
-    </div>
+      <p className="pie">El acceso es por invitación: tu correo debe estar dado de alta.</p>
+    </Shell>
   );
 }
