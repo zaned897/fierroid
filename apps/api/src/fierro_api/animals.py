@@ -77,7 +77,8 @@ def _org_id(cur: "Cursor[Any]", org_slug: str) -> int:
     fila = cur.fetchone()
     if fila is None:
         raise ValueError(f"la organizacion {org_slug!r} no existe")
-    return fila[0] if not isinstance(fila, dict) else fila["id"]
+    # El cursor puede venir con dict_row o sin el, segun quien llame.
+    return int(fila["id"] if isinstance(fila, dict) else fila[0])
 
 
 def upsert_animal(

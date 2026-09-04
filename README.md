@@ -310,7 +310,7 @@ expirar aunque el usuario cerrara sesión.
 ```bash
 source .venv/bin/activate
 ruff check apps scripts
-mypy apps/api/src apps/device-agent/src scripts
+mypy apps/api/src apps/device-agent/src scripts   # strict
 pytest apps/device-agent apps/api -q
 cd apps/web && pnpm lint && pnpm build
 ```

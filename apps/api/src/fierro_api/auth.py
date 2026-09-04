@@ -347,7 +347,9 @@ def create_user(
             """,
             (email, password_hash, full_name, org_id, is_superuser),
         )
-        user_id = require_row(cur.fetchone(), "crear usuario")[0]
+        # int() y no cast(): convierte de verdad, asi que si algun dia la
+        # columna deja de ser entera, falla aqui y no tres capas arriba.
+        user_id = int(require_row(cur.fetchone(), "crear usuario")[0])
         conn.commit()
         return user_id
 
