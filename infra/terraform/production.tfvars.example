@@ -18,3 +18,7 @@ db_dsn_direct = "postgresql://USUARIO:CLAVE@ep-XXXX.REGION.aws.neon.tech/fierro?
 # encendido siempre. Vale la pena cuando alguien lo note; antes no.
 min_instances = 0
 max_instances = 4
+
+# Este entorno es el dueno del Artifact Registry del proyecto. Exactamente
+# un .tfvars debe traerlo en true.
+crea_registro = true

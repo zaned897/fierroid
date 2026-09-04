@@ -1,6 +1,17 @@
 # Registro de imagenes, identidad y el servicio de Cloud Run.
 
+# El registro es uno para el proyecto, no uno por entorno, y esta config se
+# aplica una vez por entorno. Sin el count, el segundo workspace intenta crear
+# un repositorio que ya existe y falla; e importarlo seria peor, porque un
+# `destroy` en stage se llevaria las imagenes desde las que corre production.
+#
+# Compartirlo y no partirlo en dos es a proposito: `docs/environments.md` dice
+# que nada entra a production sin pasar por stage, y eso solo se puede cumplir
+# de verdad promoviendo el mismo digest que stage validó. Con un registro por
+# entorno habria que reconstruir, y reconstruir es otra imagen.
 resource "google_artifact_registry_repository" "images" {
+  count = var.crea_registro ? 1 : 0
+
   location      = var.region
   repository_id = "fierro"
   format        = "DOCKER"
@@ -13,6 +24,30 @@ resource "google_artifact_registry_repository" "images" {
       keep_count = 20
     }
   }
+}
+
+# Agregar count reindexa la direccion del recurso. Sin esto, el estado de
+# production sigue apuntando a `.images` mientras la config declara `.images[0]`,
+# y el plan sale con un destroy del registro con las imagenes dentro.
+moved {
+  from = google_artifact_registry_repository.images
+  to   = google_artifact_registry_repository.images[0]
+}
+
+data "google_artifact_registry_repository" "images" {
+  count = var.crea_registro ? 0 : 1
+
+  location      = var.region
+  repository_id = "fierro"
+}
+
+locals {
+  registro_id = one(
+    concat(
+      google_artifact_registry_repository.images[*].repository_id,
+      data.google_artifact_registry_repository.images[*].repository_id,
+    )
+  )
 }
 
 # Identidad propia del servicio. Sin esto usaria la cuenta por defecto de
