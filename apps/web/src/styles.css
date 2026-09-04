@@ -168,6 +168,16 @@ button:disabled {
   flex: none;
 }
 
+/* El PNG de la marca entra como mascara, no como imagen: el trazo lo pone el
+   archivo y el color la paleta. Ver Marca.jsx. */
+.marca-fierro {
+  display: inline-block;
+  flex: none;
+  background-color: var(--accent);
+  -webkit-mask: url("/icon.png") center / contain no-repeat;
+  mask: url("/icon.png") center / contain no-repeat;
+}
+
 .brand-row {
   display: flex;
   align-items: center;
