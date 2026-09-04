@@ -14,11 +14,13 @@ import struct
 import zlib
 from pathlib import Path
 
-VERDE = (26, 46, 26)      # --bg de la marca, el mismo del icon.svg que sustituye
-ORO = (196, 163, 90)      # --accent
+RGB = tuple[int, int, int]
+
+VERDE: RGB = (26, 46, 26)     # --bg de la marca, el mismo del icon.svg que sustituye
+ORO: RGB = (196, 163, 90)     # --accent
 
 
-def leer_rgba(ruta):
+def leer_rgba(ruta: str) -> tuple[int, int, bytearray]:
     b = Path(ruta).read_bytes()
     w, h, prof, tipo = struct.unpack(">IIBB", b[16:26])
     assert (prof, tipo) == (8, 6)
@@ -57,13 +59,13 @@ def leer_rgba(ruta):
     return w, h, pix
 
 
-def escribir_rgba(ruta, w, h, pix):
+def escribir_rgba(ruta: str, w: int, h: int, pix: bytearray) -> None:
     crudo = bytearray()
     for y in range(h):
         crudo.append(0)                       # filtro 0: sin filtrar
         crudo += pix[y * w * 4:(y + 1) * w * 4]
 
-    def trozo(etq, datos):
+    def trozo(etq: bytes, datos: bytes) -> bytes:
         return (struct.pack(">I", len(datos)) + etq + datos
                 + struct.pack(">I", zlib.crc32(etq + datos) & 0xFFFFFFFF))
 
@@ -75,7 +77,7 @@ def escribir_rgba(ruta, w, h, pix):
     )
 
 
-def caja_alfa(w, h, pix):
+def caja_alfa(w: int, h: int, pix: bytearray) -> tuple[int, int, int, int]:
     """La caja de lo que realmente se pinta, ignorando el relleno transparente."""
     xs, ys = [], []
     for y in range(h):
@@ -87,7 +89,9 @@ def caja_alfa(w, h, pix):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def recortar_cuadrado(w, h, pix, margen=0.08):
+def recortar_cuadrado(
+    w: int, h: int, pix: bytearray, margen: float = 0.08
+) -> tuple[int, bytearray]:
     x0, y0, x1, y1 = caja_alfa(w, h, pix)
     lado = max(x1 - x0 + 1, y1 - y0 + 1)
     lado = int(lado * (1 + 2 * margen))
@@ -106,7 +110,7 @@ def recortar_cuadrado(w, h, pix, margen=0.08):
     return lado, salida
 
 
-def reducir(lado, pix, destino):
+def reducir(lado: int, pix: bytearray, destino: int) -> bytearray:
     """Promedio por caja. Solo reduce, que es lo unico que hace falta."""
     k = lado / destino
     salida = bytearray(destino * destino * 4)
@@ -136,14 +140,16 @@ def reducir(lado, pix, destino):
     return salida
 
 
-def recolorear(lado, pix, rgb):
+def recolorear(pix: bytearray, rgb: RGB) -> bytearray:
     salida = bytearray(pix)
     for i in range(0, len(salida), 4):
         salida[i], salida[i + 1], salida[i + 2] = rgb
     return salida
 
 
-def sobre_fondo(lado, marca, rgb_fondo, escala=0.62):
+def sobre_fondo(
+    lado: int, marca: bytearray, rgb_fondo: RGB, escala: float = 0.62
+) -> bytearray:
     """Icono maskable: fondo a sangre y la marca dentro de la zona segura."""
     fondo = bytearray()
     for _ in range(lado * lado):
@@ -170,7 +176,7 @@ print(f"original {w}x{h}  ->  recortado y cuadrado {lado}x{lado}")
 marca512 = reducir(lado, cuadrado, 512)
 escribir_rgba("apps/web/public/icon.png", 512, 512, marca512)
 
-maskable = sobre_fondo(512, recolorear(512, marca512, ORO), VERDE)
+maskable = sobre_fondo(512, recolorear(marca512, ORO), VERDE)
 escribir_rgba("apps/web/public/icon-maskable.png", 512, 512, maskable)
 
 for n in ("icon.png", "icon-maskable.png"):
