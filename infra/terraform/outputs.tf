@@ -5,7 +5,7 @@ output "api_url" {
 
 output "registro_docker" {
   description = "Destino de las imagenes. Cloud Run no despliega desde GHCR."
-  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${local.registro_id}"
 }
 
 output "job_migraciones" {

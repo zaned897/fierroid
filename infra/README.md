@@ -155,8 +155,19 @@ pieza.
 cd infra/terraform
 terraform init
 terraform workspace new production
-terraform apply "-var-file=production.tfvars" -target=google_artifact_registry_repository.images
+terraform apply "-var-file=production.tfvars" -target='google_artifact_registry_repository.images[0]'
 ```
+
+El `[0]` no es un detalle de escritura: **el registro es uno solo para el
+proyecto**, y esta config se aplica una vez por entorno. Lo crea el entorno cuyo
+`.tfvars` trae `crea_registro = true` —hoy `production`— y el resto lo leen con
+un data source. Si los dos lo declararan como recurso, el segundo fallaría al
+crear algo que ya existe; y si se importara, un `destroy` en `stage` se llevaría
+las imágenes desde las que corre `production`.
+
+Compartirlo en vez de dar uno a cada entorno es a propósito: `environments.md`
+dice que nada entra a `production` sin pasar por `stage`, y eso solo se cumple
+de verdad promoviendo **el mismo digest** que `stage` validó.
 
 Después se construye y sube la imagen. **Directo desde el código, sin pasar por
 GHCR**: los paquetes de GHCR nacen privados y haría falta autenticarse contra
@@ -181,7 +192,7 @@ terraform apply "-var-file=production.tfvars"
 a crear y cuánto va a costar.
 
 Para el otro entorno, el mismo ciclo con `terraform workspace new stage` y
-`stage.tfvars`.
+`stage.tfvars`, **sin** el paso del registro: `stage` no lo crea, lo lee.
 
 > Si la región `northamerica-south1` no aceptara alguno de los servicios, el
 > `plan` lo dirá. La alternativa es `us-central1`, más lejos pero con todo

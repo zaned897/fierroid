@@ -101,3 +101,19 @@ variable "max_instances" {
   type        = number
   default     = 4
 }
+
+variable "crea_registro" {
+  description = <<-EOT
+    Si este entorno es el dueno del Artifact Registry del proyecto.
+
+    Hay un solo registro para todo el proyecto, pero esta config se aplica una
+    vez por entorno. Exactamente un .tfvars debe traer true; los demas lo leen
+    con un data source.
+
+    Hoy lo tiene production, por ser el primero que se aplico. Si algun dia se
+    destruye production, hay que pasarle el true a otro entorno ANTES, o el
+    registro se va con las imagenes dentro.
+  EOT
+  type        = bool
+  default     = false
+}
