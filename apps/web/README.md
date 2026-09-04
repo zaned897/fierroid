@@ -40,9 +40,20 @@ El destino ya apunta a la API de production. Si la URL de Cloud Run cambia
 
 ### Variables en Vercel
 
-| Variable | Valor |
-|---|---|
-| `VITE_GOOGLE_CLIENT_ID` | El mismo ID de cliente OAuth de la API. Es público por diseño |
+| Variable | Valor | Tipo |
+|---|---|---|
+| `VITE_GOOGLE_CLIENT_ID` | El mismo ID de cliente OAuth de la API | **Config**, no Secret |
+
+Vercel advierte que el prefijo `VITE_` expone el valor al navegador. Eso es
+correcto y buscado: un client ID de OAuth es público por diseño y viaja en el
+bundle de cualquier app con Google Sign-In. Marcarla como **Config** es la
+respuesta; lo secreto es el *client secret*, que este proyecto no usa en ningún
+lado.
+
+> Vite inyecta las variables `VITE_*` **al construir**, no en tiempo de
+> ejecución. Agregarlas o cambiarlas después de un deploy no surte efecto hasta
+> el siguiente build, y un redeploy con caché puede reutilizar el bundle viejo.
+> La comprobación honesta es que el hash del archivo en `dist/assets/` cambie.
 
 `VITE_API_BASE` se deja **vacía**: con el rewrite, la API cuelga del mismo
 origen y una base absoluta rompería justamente esa ventaja.
