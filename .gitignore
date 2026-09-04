@@ -19,5 +19,7 @@ apps/web/.vite/
 .terraform/
 *.tfstate
 *.tfstate.*
+# Un plan guardado lleva las cadenas de conexion en claro, igual que el estado.
+*.tfplan
 .terraform.lock.hcl
 crash.log

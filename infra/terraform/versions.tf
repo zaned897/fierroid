@@ -1,5 +1,9 @@
 terraform {
-  required_version = ">= 1.9"
+  # 1.16 y no 1.9: el estado de production lo escribio un 1.16.1, y Terraform
+  # se niega a operar un estado que escribio una version mas nueva. Con el
+  # limite bajo, un binario viejo pasaba esta comprobacion y fallaba despues
+  # con un error sobre el estado, que no dice que hay que actualizar.
+  required_version = ">= 1.16"
 
   required_providers {
     google = {
