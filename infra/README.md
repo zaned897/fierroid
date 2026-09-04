@@ -10,8 +10,11 @@ Cada pieza donde es más barata:
 
 Terraform cubre solo la parte de Google. Neon y Vercel se crean a mano una vez.
 
-> ⚠️ **`terraform apply` crea recursos que se cobran.** Nada de este directorio
-> se ha aplicado: son archivos, no infraestructura viva.
+> ⚠️ **`terraform apply` crea recursos que se cobran.**
+>
+> **`production` está aplicada y viva** desde el 4 de septiembre de 2026:
+> <https://fierro-api-production-yj7cs5a7aq-pv.a.run.app>. **`stage` no** — su
+> workspace no existe todavía, aunque `stage.tfvars` sí.
 
 ---
 
@@ -96,12 +99,31 @@ aplique por ser un producto comercial.
 **Terraform 1.16 o mayor.** El estado de `production` lo escribió un 1.16.1 y
 Terraform se niega a operar un estado escrito por una versión más nueva que la
 suya. Un binario más viejo falla con un error sobre el estado que no menciona
-la palabra *actualizar*:
+la palabra *actualizar*.
+
+`winget` no sirve para esto: su manifiesto de `Hashicorp.Terraform` va detrás
+de lo que HashiCorp publica, y a septiembre de 2026 topa en 1.15.8. Se baja
+directo y se verifica la firma, porque es un binario que va a manejar
+infraestructura:
 
 ```bash
-terraform version          # >= 1.16
-winget upgrade Hashicorp.Terraform
+curl -sLO https://releases.hashicorp.com/terraform/1.16.1/terraform_1.16.1_windows_amd64.zip
+curl -sL https://releases.hashicorp.com/terraform/1.16.1/terraform_1.16.1_SHA256SUMS | grep windows_amd64
+sha256sum terraform_1.16.1_windows_amd64.zip
 ```
+
+### PowerShell parte los argumentos con `=`
+
+Todos los comandos de abajo llevan `-var-file=...`. PowerShell lo corta en el
+`=` y le pasa `.tfvars` suelto a Terraform, que responde
+`Failed to load ".tfvars" as a plan file` — un error que no se parece en nada a
+la causa. **Van entre comillas:**
+
+```bash
+terraform "-chdir=infra/terraform" apply "-var-file=production.tfvars"
+```
+
+En bash o zsh las comillas sobran y tampoco estorban.
 
 ### 1. Neon (la base)
 
@@ -116,11 +138,12 @@ la que no. Ambas hacen falta, y no van al mismo lugar — ver arriba.
 ```bash
 gcloud projects create fierro-XXXXXX
 gcloud config set project fierro-XXXXXX
-gcloud services enable run.googleapis.com sqladmin.googleapis.com \
+gcloud services enable run.googleapis.com \
   artifactregistry.googleapis.com secretmanager.googleapis.com
 ```
 
-Hace falta una cuenta de facturación asociada; sin ella Cloud SQL no se crea.
+Hace falta una cuenta de facturación asociada aunque todo apunte a cero: sin
+ella Artifact Registry no acepta imágenes.
 
 ### 3. La primera imagen
 
@@ -132,7 +155,7 @@ pieza.
 cd infra/terraform
 terraform init
 terraform workspace new production
-terraform apply -var-file=production.tfvars -target=google_artifact_registry_repository.images
+terraform apply "-var-file=production.tfvars" -target=google_artifact_registry_repository.images
 ```
 
 Después se construye y sube la imagen. **Directo desde el código, sin pasar por
@@ -150,8 +173,8 @@ docker push "$IMG"
 ### 4. Aplicar todo lo demás
 
 ```bash
-terraform plan  -var-file=production.tfvars
-terraform apply -var-file=production.tfvars
+terraform plan  "-var-file=production.tfvars"
+terraform apply "-var-file=production.tfvars"
 ```
 
 **Leer el `plan` antes del `apply`.** Es el único momento en que se ve qué se va
@@ -196,6 +219,58 @@ Detalles en [`apps/web/README.md`](../apps/web/README.md).
 Falta un paso fuera de aquí: agregar el dominio de Vercel a los **orígenes
 autorizados** del cliente OAuth en Google, o el botón de inicio de sesión no
 renderiza.
+
+---
+
+## Desplegar una versión nueva de la API
+
+Lo de arriba es el arranque, se hace una vez. Esto es lo de cada vez, y es
+manual mientras no exista Workload Identity Federation.
+
+**La PWA no entra aquí:** Vercel la despliega sola al mergear a `main`. Eso
+significa que el front siempre va **por delante** de la API durante el rato que
+tardes en correr estos pasos. La PWA tolera una API vieja a propósito — ver
+`normalizar()` en [`apps/web/src/Login.jsx`](../apps/web/src/Login.jsx) — pero
+esa tolerancia se escribe caso por caso, así que un cambio de contrato que la
+PWA ya use rompe el login hasta que la API salga.
+
+```bash
+git checkout production && git merge --ff-only origin/stage && git push
+```
+
+Se construye desde ese árbol, no desde la rama en la que estabas:
+
+```bash
+IMG=northamerica-south1-docker.pkg.dev/fierro-caw-scale/fierro/fierro-api:production
+docker build -f apps/api/Dockerfile -t "$IMG" .
+docker push "$IMG"
+```
+
+**Comprobar el código dentro de la imagen, no que el build pasara.** Ya nos
+pasó desplegar una imagen que compilaba y a la que le faltaba una dependencia:
+
+```bash
+docker run --rm --entrypoint python "$IMG" -c "import fierro_api.main"
+```
+
+El `push` imprime el digest. Va a `production.tfvars`, en `api_image`, con
+`@sha256:...` en lugar de `:production`. **Con la etiqueta móvil Terraform no ve
+ningún cambio y Cloud Run se queda con la imagen anterior**, sin decir nada.
+
+```bash
+terraform "-chdir=infra/terraform" apply "-var-file=production.tfvars"
+```
+
+Sale `2 to change, 0 to destroy`: el servicio y el job. Si hay migraciones
+nuevas, además `gcloud run jobs execute fierro-migrate-production --region
+northamerica-south1 --wait`.
+
+Se verifica contra el origen que usa el navegador, no contra `*.run.app`, que
+es el que puede estar mal:
+
+```bash
+curl -s https://fierroid.vercel.app/v1/auth/config
+```
 
 ## Lo que NO incluye
 
