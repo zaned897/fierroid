@@ -35,6 +35,26 @@ function useGoogleScript() {
 }
 
 /**
+ * Rellena `providers` cuando la API todavía no lo manda.
+ *
+ * La PWA se despliega sola al mergear y la API a mano, así que siempre hay una
+ * ventana con el front adelante. Sin esto, esa ventana deja a todo el mundo
+ * fuera: la lista llega vacía y la pantalla dice que no hay proveedores, lo
+ * cual es falso. Hay uno; la API es vieja.
+ *
+ * Se apoya en `google_enabled`, que es el mismo dato con el que el servidor
+ * arma la lista. Se puede borrar cuando ninguna API desplegada conteste sin
+ * `providers`.
+ */
+function normalizar(config) {
+  if (Array.isArray(config.providers)) return config;
+  return {
+    ...config,
+    providers: config.google_enabled ? [{ id: "google", name: "Google" }] : [],
+  };
+}
+
+/**
  * Qué proveedores existen lo decide la API, no el bundle.
  *
  * Antes el client ID venía de una variable de build. Cuando el build no la
@@ -51,7 +71,7 @@ function useProveedores() {
     fetch("/v1/auth/config")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((config) => {
-        if (vivo) setEstado({ cargando: false, config, error: null });
+        if (vivo) setEstado({ cargando: false, config: normalizar(config), error: null });
       })
       .catch((err) => {
         if (vivo) {
