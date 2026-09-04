@@ -93,6 +93,16 @@ aplique por ser un producto comercial.
 
 ## Cómo aplicarlo
 
+**Terraform 1.16 o mayor.** El estado de `production` lo escribió un 1.16.1 y
+Terraform se niega a operar un estado escrito por una versión más nueva que la
+suya. Un binario más viejo falla con un error sobre el estado que no menciona
+la palabra *actualizar*:
+
+```bash
+terraform version          # >= 1.16
+winget upgrade Hashicorp.Terraform
+```
+
 ### 1. Neon (la base)
 
 Crear un proyecto en [neon.tech](https://neon.tech), región cercana a México.
