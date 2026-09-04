@@ -37,21 +37,29 @@ variable "api_image" {
   type        = string
 }
 
-variable "db_tier" {
+variable "db_dsn" {
   description = <<-EOT
-    Tamano de la instancia Cloud SQL.
+    Cadena de conexion de Neon CON pooler, para la API.
 
-    db-f1-micro alcanza para el piloto. Es de nucleo compartido, asi que no
-    tiene SLA: aceptable para stage, discutible para production con clientes.
+    La da Neon en su panel: es la que lleva `-pooler` en el host.
+
+    Nunca se escribe en un archivo commiteado. Va en un .tfvars local, que
+    esta en .gitignore, y de ahi a Secret Manager.
   EOT
   type        = string
-  default     = "db-f1-micro"
+  sensitive   = true
 }
 
-variable "db_disk_gb" {
-  description = "Disco de la base, en GB. Crece solo si se habilita autoresize."
-  type        = number
-  default     = 10
+variable "db_dsn_direct" {
+  description = <<-EOT
+    Cadena de conexion de Neon SIN pooler, solo para migraciones.
+
+    `fierro-api-migrate` toma un advisory lock, que es de sesion. El pooler de
+    Neon es transaccional y no conserva estado de sesion entre sentencias, asi
+    que por ahi el lock no protegeria nada.
+  EOT
+  type        = string
+  sensitive   = true
 }
 
 variable "cors_origins" {

@@ -22,15 +22,16 @@ resource "google_service_account" "api" {
   display_name = "Fierro API (${var.environment})"
 }
 
-resource "google_project_iam_member" "api_cloudsql" {
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.api.email}"
-}
-
 # Acceso al secreto concreto, no a todos los del proyecto.
 resource "google_secret_manager_secret_iam_member" "api_dsn" {
   secret_id = google_secret_manager_secret.dsn.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.api.email}"
+}
+
+# El job de migraciones lee la cadena directa, que es otro secreto.
+resource "google_secret_manager_secret_iam_member" "migrate_dsn" {
+  secret_id = google_secret_manager_secret.dsn_directo.id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.api.email}"
 }
@@ -60,13 +61,6 @@ resource "google_cloud_run_v2_service" "api" {
     scaling {
       min_instance_count = var.min_instances
       max_instance_count = var.max_instances
-    }
-
-    volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [google_sql_database_instance.principal.connection_name]
-      }
     }
 
     containers {
@@ -101,11 +95,6 @@ resource "google_cloud_run_v2_service" "api" {
             version = "latest"
           }
         }
-      }
-
-      volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
       }
 
       startup_probe {
@@ -154,22 +143,16 @@ resource "google_cloud_run_v2_job" "migrate" {
       service_account = google_service_account.api.email
       max_retries     = 1
 
-      volumes {
-        name = "cloudsql"
-        cloud_sql_instance {
-          instances = [google_sql_database_instance.principal.connection_name]
-        }
-      }
-
       containers {
         image   = var.api_image
         command = ["fierro-api-migrate"]
 
+        # La directa, no la del pooler: el advisory lock es de sesion.
         env {
           name = "FIERRO_API_DSN"
           value_source {
             secret_key_ref {
-              secret  = google_secret_manager_secret.dsn.secret_id
+              secret  = google_secret_manager_secret.dsn_directo.secret_id
               version = "latest"
             }
           }
@@ -186,16 +169,12 @@ resource "google_cloud_run_v2_job" "migrate" {
           value = var.cors_origins
         }
 
-        volume_mounts {
-          name       = "cloudsql"
-          mount_path = "/cloudsql"
-        }
       }
     }
   }
 
   depends_on = [
-    google_secret_manager_secret_version.dsn,
-    google_secret_manager_secret_iam_member.api_dsn,
+    google_secret_manager_secret_version.dsn_directo,
+    google_secret_manager_secret_iam_member.migrate_dsn,
   ]
 }

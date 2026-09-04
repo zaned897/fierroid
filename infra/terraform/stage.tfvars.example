@@ -10,9 +10,10 @@ api_image = "northamerica-south1-docker.pkg.dev/fierro-XXXXXX/fierro/fierro-api:
 cors_origins     = "https://stage.fierro.mx"
 google_client_id = "XXXXXX.apps.googleusercontent.com"
 
-# Nucleo compartido: sin SLA, suficiente para stage.
-db_tier    = "db-f1-micro"
-db_disk_gb = 10
+# Cadenas de Neon. NO se commitean: este archivo es .example, el real esta
+# en .gitignore. La primera lleva "-pooler" en el host, la segunda no.
+db_dsn        = "postgresql://USUARIO:CLAVE@ep-XXXX-pooler.REGION.aws.neon.tech/fierro?sslmode=require"
+db_dsn_direct = "postgresql://USUARIO:CLAVE@ep-XXXX.REGION.aws.neon.tech/fierro?sslmode=require"
 
 # Escala a cero: stage pasa la mayor parte del tiempo sin nadie usandolo.
 min_instances = 0

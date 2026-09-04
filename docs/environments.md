@@ -89,9 +89,12 @@ más común de desplegar algo roto.
 
 ## Dónde se despliegan
 
-**Google Cloud: Cloud Run + Cloud SQL**, con Terraform en
-[`infra/terraform/`](../infra/terraform). El motivo de fondo fue el costo en un
-piloto: Cloud Run escala a cero, así que una API ociosa no se cobra.
+Cada pieza donde es más barata: **PWA en Vercel**, **Postgres en Neon**,
+**API en Google Cloud Run**. Terraform (en [`infra/terraform/`](../infra/terraform))
+cubre solo la parte de Google; Neon y Vercel se crean a mano una vez.
+
+El costo estaba casi todo en la base de datos, no en la API: Cloud Run escala a
+cero y cae en el nivel gratuito con tráfico de piloto.
 
 El razonamiento completo, el costo aproximado y los pasos están en
 [`infra/README.md`](../infra/README.md).

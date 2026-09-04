@@ -9,10 +9,10 @@ api_image = "northamerica-south1-docker.pkg.dev/fierro-XXXXXX/fierro/fierro-api@
 cors_origins     = "https://app.fierro.mx"
 google_client_id = "XXXXXX.apps.googleusercontent.com"
 
-# db-f1-micro es de nucleo compartido y no tiene SLA. Alcanza para el piloto;
-# con clientes reales conviene db-g1-small o superior.
-db_tier    = "db-f1-micro"
-db_disk_gb = 20
+# Cadenas de Neon. NO se commitean: este archivo es .example, el real esta
+# en .gitignore. La primera lleva "-pooler" en el host, la segunda no.
+db_dsn        = "postgresql://USUARIO:CLAVE@ep-XXXX-pooler.REGION.aws.neon.tech/fierro?sslmode=require"
+db_dsn_direct = "postgresql://USUARIO:CLAVE@ep-XXXX.REGION.aws.neon.tech/fierro?sslmode=require"
 
 # min_instances = 1 elimina el arranque en frio a cambio de pagar un contenedor
 # encendido siempre. Vale la pena cuando alguien lo note; antes no.
