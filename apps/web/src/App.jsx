@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Animales from "./Animales.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
+import Marca from "./Marca.jsx";
 import {
   apiFetch,
   clearSession,
@@ -209,7 +210,7 @@ export default function App() {
     <div className="page">
       <header className="hero">
         <div className="brand-row">
-          <CowIcon variant="frente" size={40} className="cow" />
+          <Marca size={40} />
           <p className="brand">Fierro</p>
           <button type="button" className="ghost" onClick={salir}>
             Salir

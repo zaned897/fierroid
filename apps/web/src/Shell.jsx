@@ -1,4 +1,4 @@
-import { CowIcon } from "./icons/cows.jsx";
+import Marca from "./Marca.jsx";
 
 /**
  * Estructura de las pantallas públicas: marca a un lado, contenido al otro.
@@ -12,7 +12,7 @@ export default function Shell({ lema, children }) {
     <div className="shell">
       <aside className="marca" aria-hidden="true">
         <div className="marca-contenido">
-          <CowIcon variant="frente" size={56} className="cow" />
+          <Marca size={56} />
           <p className="marca-lema">{lema}</p>
         </div>
       </aside>
