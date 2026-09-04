@@ -121,9 +121,19 @@ def auth_config() -> dict[str, Any]:
     al construir el front, deja una sola fuente de verdad y hace que cambiarlo
     no requiera reconstruir ni redesplegar la PWA.
     """
+    # La lista de proveedores la decide la API, no el front. Agregar uno es
+    # implementar su verificacion aqui y anadirlo a esta lista; la PWA dibuja
+    # los que reciba. Nunca se anuncia uno que no funcione: un boton que falla
+    # es peor que un boton que no esta.
+    google_listo = bool(settings.google_client_id and settings.dsn)
+    providers = []
+    if google_listo:
+        providers.append({"id": "google", "name": "Google"})
+
     return {
+        "providers": providers,
         "google_client_id": settings.google_client_id,
-        "google_enabled": bool(settings.google_client_id and settings.dsn),
+        "google_enabled": google_listo,
         "env": settings.env,
     }
 

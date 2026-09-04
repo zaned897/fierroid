@@ -212,27 +212,8 @@ button:disabled {
   text-align: center;
 }
 
-.login {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  min-height: 100vh;
-  text-align: center;
-}
-
-.login .lede {
-  margin-bottom: 0.75rem;
-}
-
 .gsi {
   min-height: 44px;
-}
-
-.fine {
-  font-size: 0.8rem;
-  max-width: 22rem;
 }
 
 .brand-row .ghost {
@@ -371,4 +352,161 @@ button.animal:hover {
 .acciones button {
   flex: 1;
   min-width: 8rem;
+}
+
+/* --- Pantallas publicas: portada y login -------------------------------- */
+
+/* Dos columnas: marca a la izquierda, lo accionable a la derecha. La marca no
+   ocupa la mitad porque la mitad de la pantalla no es lo que la persona vino a
+   hacer aqui. */
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 32%) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.marca {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 2.5rem;
+  border-right: 1px solid var(--line);
+  /* Mas oscuro que el panel derecho: si los dos pesan igual, la division se
+     lee como un error de maquetado y no como una decision. */
+  background: linear-gradient(180deg, rgba(10, 18, 13, 0.35) 0%, rgba(10, 18, 13, 0.7) 100%);
+}
+
+/* Trama de puntos: la unica decoracion de la pantalla. Se desvanece hacia
+   arriba para que el texto de la marca se lea sobre fondo limpio. */
+.marca::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--accent) 1.2px, transparent 1.2px);
+  background-size: 9px 9px;
+  -webkit-mask-image: linear-gradient(to top, black, transparent 78%);
+  mask-image: linear-gradient(to top, black, transparent 78%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.marca-contenido {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.marca-lema {
+  margin: 0;
+  max-width: 14rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.shell-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+}
+
+/* 22rem: el ancho al que el boton de Google se ve deliberado y no estirado. */
+.shell-columna {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.titulo {
+  margin: 0 0 0.5rem;
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.subtitulo {
+  margin: 0 0 1.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.primario {
+  width: 100%;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg0);
+}
+
+.primario:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg0);
+}
+
+.volver {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.3rem 0;
+  min-height: auto;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+}
+
+.volver:hover {
+  border-color: transparent;
+  color: var(--ink);
+}
+
+/* Cada proveedor ocupa una fila entera y del mismo alto. Al agregar el
+   segundo, la columna no se reacomoda. */
+.proveedores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.proveedor {
+  position: relative;
+}
+
+/* La marca de "ya entraste por aqui" evita la duda de cual de tres botones era
+   el tuyo. Es un dato local del navegador, no del servidor. */
+.ultimo {
+  position: absolute;
+  top: -0.55rem;
+  right: 0.6rem;
+  z-index: 1;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.3rem;
+  background: var(--bg0);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.pie {
+  margin: 2rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* En un celular en el corral, media pantalla de decoracion es media pantalla
+   menos de lo que la persona vino a hacer. */
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .marca {
+    display: none;
+  }
 }
