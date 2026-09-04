@@ -47,6 +47,7 @@ Docs de detalle:
 | Frontend | React 19, Vite 6, PWA | UI mobile-first |
 | Tooling | uv, pnpm, ruff, mypy, pytest, ESLint | `scripts/install-deps.sh` |
 | Infra local | Docker Compose | Postgres + API + agent mock reproducibles |
+| Infra nube | Terraform → Google Cloud Run + Cloud SQL | [`infra/`](infra/README.md). Sin aplicar todavía |
 | CI | GitHub Actions | ruff, pytest con Postgres, build web, smoke de compose |
 | Entornos | Ramas `stage` / `production` + GHCR | Promoción por fast-forward; imágenes solo si CI pasó |
 | Cloud Agents | `.cursor/Dockerfile` + `environment.json` | Install idempotente con uv |

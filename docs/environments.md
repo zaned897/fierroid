@@ -87,19 +87,25 @@ más común de desplegar algo roto.
 > Hay que hacerlos públicos una vez desde la página del paquete, o el `docker pull`
 > pedirá credenciales.
 
-## Lo que falta
+## Dónde se despliegan
 
-**No hay proveedor de nube elegido**, así que la cadena se detiene en la imagen
-publicada. Falta:
+**Google Cloud: Cloud Run + Cloud SQL**, con Terraform en
+[`infra/terraform/`](../infra/terraform). El motivo de fondo fue el costo en un
+piloto: Cloud Run escala a cero, así que una API ociosa no se cobra.
 
-- [ ] Elegir dónde viven stage y producción (Fly.io / Render / AWS / GCP)
-- [ ] Provisionar un Postgres por entorno
-- [ ] Un job de deploy que haga `pull` de la imagen y actualice el servicio
-- [ ] Secretos por entorno en los GitHub Environments (`FIERRO_API_DSN`, orígenes CORS)
-- [ ] Terraform, si el proveedor lo amerita
+El razonamiento completo, el costo aproximado y los pasos están en
+[`infra/README.md`](../infra/README.md).
 
-Esa lista es intencionalmente el último paso: todo lo de arriba es
-independiente del proveedor y no hay que rehacerlo cuando se decida.
+> ⚠️ **Nada se ha aplicado todavía.** Son archivos, no infraestructura viva.
+> `terraform apply` crea recursos que se cobran.
+
+Lo que sigue faltando, y está listado en el README de `infra/`:
+
+- [ ] Hospedaje de la PWA y dominio propio
+- [ ] Credenciales de CI hacia Google (Workload Identity Federation) para que
+      las imágenes lleguen solas a Artifact Registry
+- [ ] Monitoreo, alertas y presupuesto de gasto
+- [ ] Backend remoto del estado de Terraform
 
 ## Relacionados
 
