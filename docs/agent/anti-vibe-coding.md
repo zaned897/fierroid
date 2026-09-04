@@ -65,11 +65,18 @@ que el front deja de funcionar.
 
 ### Los tipos son parte del contrato
 
-`mypy` corre en pre-commit y en CI sobre `apps/` y `scripts/`, con
-`disallow_untyped_defs`. Una función nueva sin anotar no pasa.
+`mypy --strict` corre en pre-commit y en CI sobre `apps/` y `scripts/`. Una
+función sin anotar, un genérico sin parámetros o un `Any` que se escapa de un
+retorno tipado no pasan.
 
-No está en `strict` todavía: hoy dejaría 12 errores, y un gate que nace en rojo
-se desactiva a la semana. Subirlo es un ticket aparte.
+La única concesión es `ignore_missing_imports`, para no tener que escribir stubs
+de `psycopg_pool` y `argon2` antes de poder verificar código propio. Las pruebas
+quedan fuera: su valor ya lo da que pasen.
+
+> `Any` que se escapa es la fuga más común. `json.load()` y una fila de base de
+> datos devuelven `Any`, y si sale por un `return` tipado, contamina el tipo de
+> todo lo que llame a esa función. Anotar la variable antes de devolverla, o
+> convertir con `int(...)`, lo corta donde nace.
 
 ### El esquema va antes que la lógica
 

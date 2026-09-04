@@ -27,6 +27,7 @@ import urllib.request
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 # ISO 3166 numerico de Mexico. En ISO 11784 son los 3 primeros digitos del arete.
 DEFAULT_COUNTRY_CODE = 484
@@ -117,9 +118,9 @@ def generate_events(
     days: int,
     interval_days: int,
     now: datetime,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Jornadas de pesaje cada `interval_days`; no todo el hato pasa por la manga."""
-    events: list[dict] = []
+    events: list[dict[str, Any]] = []
     for offset in range(days, -1, -interval_days):
         session_day = now - timedelta(days=offset)
         device = rng.choice(devices)
@@ -155,7 +156,7 @@ def generate_events(
     return events
 
 
-def post_batch(api: str, batch: list[dict], timeout: float) -> dict:
+def post_batch(api: str, batch: list[dict[str, Any]], timeout: float) -> dict[str, Any]:
     payload = json.dumps({"readings": batch}).encode("utf-8")
     request = urllib.request.Request(
         f"{api.rstrip('/')}/v1/readings",
@@ -164,10 +165,15 @@ def post_batch(api: str, batch: list[dict], timeout: float) -> dict:
         method="POST",
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.load(response)
+        # Anotar antes de devolver: json.load produce Any, y dejarlo salir asi
+        # contamina el tipo de todo lo que llame a esta funcion.
+        respuesta: dict[str, Any] = json.load(response)
+    return respuesta
 
 
-def push(api: str, events: list[dict], batch_size: int, timeout: float) -> tuple[int, int]:
+def push(
+    api: str, events: list[dict[str, Any]], batch_size: int, timeout: float
+) -> tuple[int, int]:
     accepted = 0
     duplicates = 0
     total_batches = (len(events) + batch_size - 1) // batch_size
@@ -185,7 +191,7 @@ def push(api: str, events: list[dict], batch_size: int, timeout: float) -> tuple
     return accepted, duplicates
 
 
-def dump(path: str, herd: list[Animal], events: list[dict]) -> None:
+def dump(path: str, herd: list[Animal], events: list[dict[str, Any]]) -> None:
     payload = {
         "herd": [
             {
