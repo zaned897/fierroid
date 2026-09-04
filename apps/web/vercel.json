@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "https://REEMPLAZAR-CON-LA-URL-DE-CLOUD-RUN/v1/:path*"
+      "destination": "https://fierro-api-production-yj7cs5a7aq-pv.a.run.app/v1/:path*"
     }
   ],
   "headers": [

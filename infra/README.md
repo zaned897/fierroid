@@ -114,41 +114,53 @@ Hace falta una cuenta de facturación asociada; sin ella Cloud SQL no se crea.
 
 ### 3. La primera imagen
 
-Cloud Run solo despliega desde Artifact Registry. El repositorio lo crea
-Terraform, así que la primera vez el orden es: aplicar, subir la imagen,
-aplicar de nuevo con `api_image` apuntando a ella.
+Aquí hay un huevo-y-gallina: Cloud Run solo despliega desde Artifact Registry,
+pero el repositorio lo crea Terraform. Se resuelve aplicando primero solo esa
+pieza.
+
+```bash
+cd infra/terraform
+terraform init
+terraform workspace new production
+terraform apply -var-file=production.tfvars -target=google_artifact_registry_repository.images
+```
+
+Después se construye y sube la imagen. **Directo desde el código, sin pasar por
+GHCR**: los paquetes de GHCR nacen privados y haría falta autenticarse contra
+dos registros en vez de uno.
 
 ```bash
 gcloud auth configure-docker northamerica-south1-docker.pkg.dev
-docker pull ghcr.io/zaned897/fierro-api:production
-docker tag ghcr.io/zaned897/fierro-api:production \
-  northamerica-south1-docker.pkg.dev/fierro-XXXXXX/fierro/fierro-api:production
-docker push northamerica-south1-docker.pkg.dev/fierro-XXXXXX/fierro/fierro-api:production
+
+IMG=northamerica-south1-docker.pkg.dev/fierro-caw-scale/fierro/fierro-api:production
+docker build -f apps/api/Dockerfile -t "$IMG" .
+docker push "$IMG"
 ```
 
-### 4. Aplicar
+### 4. Aplicar todo lo demás
 
 ```bash
-cp stage.tfvars.example stage.tfvars   # y editarlo
-terraform init
-terraform plan  -var-file=stage.tfvars
-terraform apply -var-file=stage.tfvars
+terraform plan  -var-file=production.tfvars
+terraform apply -var-file=production.tfvars
 ```
 
 **Leer el `plan` antes del `apply`.** Es el único momento en que se ve qué se va
 a crear y cuánto va a costar.
 
-Los entornos se separan con workspaces:
+Para el otro entorno, el mismo ciclo con `terraform workspace new stage` y
+`stage.tfvars`.
+
+> Si la región `northamerica-south1` no aceptara alguno de los servicios, el
+> `plan` lo dirá. La alternativa es `us-central1`, más lejos pero con todo
+> disponible.
+
+### 5. Dar de alta al primer usuario
+
+Las migraciones **ya están aplicadas** en las dos ramas de Neon. El job de
+Cloud Run queda para los cambios de esquema futuros:
 
 ```bash
-terraform workspace new stage
-terraform workspace new production
-```
-
-### 5. Migrar y dar de alta al primer usuario
-
-```bash
-gcloud run jobs execute fierro-migrate-stage --region northamerica-south1 --wait
+gcloud run jobs execute fierro-migrate-production --region northamerica-south1 --wait
 ```
 
 El acceso es por invitación, así que sin un usuario dado de alta nadie entra:

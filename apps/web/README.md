@@ -31,8 +31,12 @@ cross-origin y CORS deja de ser algo que configurar y mantener sincronizado.
 Las estaciones del corral no pasan por aquí: pegan directo a Cloud Run, y como
 no son navegadores, CORS no les aplica.
 
-Hay que reemplazar `REEMPLAZAR-CON-LA-URL-DE-CLOUD-RUN` por la salida `api_url`
-de Terraform.
+El destino ya apunta a la API de production. Si la URL de Cloud Run cambia
+—porque se recree el servicio— hay que actualizarla aquí.
+
+> Las *preview deployments* de Vercel usan este mismo `vercel.json`, así que
+> apuntan a la API de **production**. Cuando exista `stage`, la salida limpia es
+> un proyecto de Vercel aparte para esa rama, no condicionales aquí.
 
 ### Variables en Vercel
 
