@@ -1,0 +1,20 @@
+# cp production.tfvars.example production.tfvars  y ajustar.
+
+project_id  = "fierro-XXXXXX"
+environment = "production"
+
+# Digest, no etiqueta. Una etiqueta se reescribe y deja de saberse que corre.
+api_image = "northamerica-south1-docker.pkg.dev/fierro-XXXXXX/fierro/fierro-api@sha256:..."
+
+cors_origins     = "https://app.fierro.mx"
+google_client_id = "XXXXXX.apps.googleusercontent.com"
+
+# db-f1-micro es de nucleo compartido y no tiene SLA. Alcanza para el piloto;
+# con clientes reales conviene db-g1-small o superior.
+db_tier    = "db-f1-micro"
+db_disk_gb = 20
+
+# min_instances = 1 elimina el arranque en frio a cambio de pagar un contenedor
+# encendido siempre. Vale la pena cuando alguien lo note; antes no.
+min_instances = 0
+max_instances = 4

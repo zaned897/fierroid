@@ -1,0 +1,19 @@
+# cp stage.tfvars.example stage.tfvars  y ajustar. Los .tfvars estan en .gitignore.
+
+project_id  = "fierro-XXXXXX"
+environment = "stage"
+
+# Se obtiene tras el primer push a Artifact Registry. En stage una etiqueta
+# movil es aceptable; en production no.
+api_image = "northamerica-south1-docker.pkg.dev/fierro-XXXXXX/fierro/fierro-api:stage"
+
+cors_origins     = "https://stage.fierro.mx"
+google_client_id = "XXXXXX.apps.googleusercontent.com"
+
+# Nucleo compartido: sin SLA, suficiente para stage.
+db_tier    = "db-f1-micro"
+db_disk_gb = 10
+
+# Escala a cero: stage pasa la mayor parte del tiempo sin nadie usandolo.
+min_instances = 0
+max_instances = 2

@@ -12,3 +12,12 @@ apps/web/.vite/
 .env
 .env.*
 !.env.example
+
+# Terraform: el estado lleva la contrasena de la base en claro.
+*.tfvars
+!*.tfvars.example
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
