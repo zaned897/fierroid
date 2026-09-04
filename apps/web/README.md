@@ -40,23 +40,21 @@ El destino ya apunta a la API de production. Si la URL de Cloud Run cambia
 
 ### Variables en Vercel
 
-| Variable | Valor | Tipo |
-|---|---|---|
-| `VITE_GOOGLE_CLIENT_ID` | El mismo ID de cliente OAuth de la API | **Config**, no Secret |
+**Ninguna.** El client ID lo sirve la API en `GET /v1/auth/config` y la PWA lo
+pide al cargar.
 
-Vercel advierte que el prefijo `VITE_` expone el valor al navegador. Eso es
-correcto y buscado: un client ID de OAuth es público por diseño y viaja en el
-bundle de cualquier app con Google Sign-In. Marcarla como **Config** es la
-respuesta; lo secreto es el *client secret*, que este proyecto no usa en ningún
-lado.
+Antes venía de `VITE_GOOGLE_CLIENT_ID`, resuelto al construir. Eso significaba
+el mismo valor en dos lugares y un modo de falla desagradable: si el build no
+ve la variable, el minificador **elimina el efecto entero** que dibuja el botón
+—puede probar que siempre retorna— y la página se ve bien, sin botón y sin
+error en consola. Solo se detecta leyendo el bundle compilado.
 
-> Vite inyecta las variables `VITE_*` **al construir**, no en tiempo de
-> ejecución. Agregarlas o cambiarlas después de un deploy no surte efecto hasta
-> el siguiente build, y un redeploy con caché puede reutilizar el bundle viejo.
-> La comprobación honesta es que el hash del archivo en `dist/assets/` cambie.
+Pidiéndolo en tiempo de ejecución hay una sola fuente de verdad, cambiarlo no
+requiere reconstruir la PWA, y si algo falla se ve como lo que es: una petición
+que falla.
 
 `VITE_API_BASE` se deja **vacía**: con el rewrite, la API cuelga del mismo
-origen y una base absoluta rompería justamente esa ventaja.
+origen y una base absoluta rompería esa ventaja.
 
 ### Orígenes autorizados en Google
 

@@ -577,3 +577,54 @@ def test_google_sin_configurar_da_503(migrated, monkeypatch):
 def test_google_con_token_invalido_da_401(client):
     resp = client.post("/v1/auth/google", json={"id_token": "esto.no.es"})
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Configuracion publica
+# ---------------------------------------------------------------------------
+
+
+@pg
+def test_config_expone_el_client_id(client):
+    """La PWA lo pide en tiempo de ejecucion en vez de recibirlo del build."""
+    resp = client.get("/v1/auth/config")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["google_client_id"] == CLIENT_ID
+    assert body["google_enabled"] is True
+    assert body["env"] == "dev"
+
+
+@pg
+def test_config_no_exige_credencial(client):
+    """Se consulta antes de que nadie haya entrado; pedir credencial seria un ciclo."""
+    assert "authorization" not in {k.lower() for k in client.headers}
+    assert client.get("/v1/auth/config").status_code == 200
+
+
+@pg
+def test_config_no_filtra_nada_secreto(client):
+    """El client ID es publico; el DSN y el secreto de OAuth no deben asomarse."""
+    crudo = json.dumps(client.get("/v1/auth/config").json())
+
+    assert "postgresql://" not in crudo
+    assert "password" not in crudo.lower()
+    assert set(json.loads(crudo)) == {"google_client_id", "google_enabled", "env"}
+
+
+@pg
+def test_config_avisa_cuando_google_no_esta_configurado(migrated, monkeypatch):
+    """google_enabled es lo que la PWA usa para explicar por que no hay boton."""
+    from dataclasses import replace
+
+    from fastapi.testclient import TestClient
+    from fierro_api import main as main_module
+
+    monkeypatch.setattr(
+        main_module, "settings", replace(main_module.settings, dsn=migrated, google_client_id="")
+    )
+    body = TestClient(main_module.app).get("/v1/auth/config").json()
+
+    assert body["google_client_id"] == ""
+    assert body["google_enabled"] is False
