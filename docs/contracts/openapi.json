@@ -563,6 +563,27 @@
         "summary": "Post Animal Photo"
       }
     },
+    "/v1/auth/config": {
+      "get": {
+        "description": "Configuracion publica que la PWA necesita antes de que alguien entre.\n\nEl client ID de OAuth es publico por diseno: viaja en el bundle de\ncualquier app con Google Sign-In. Servirlo desde aqui, en vez de inyectarlo\nal construir el front, deja una sola fuente de verdad y hace que cambiarlo\nno requiera reconstruir ni redesplegar la PWA.",
+        "operationId": "auth_config_v1_auth_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Auth Config V1 Auth Config Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Config"
+      }
+    },
     "/v1/auth/google": {
       "post": {
         "description": "Cambia un ID token de Google por una API key nuestra.\n\nGoogle solo confirma el correo. El alta es por invitacion: si ese correo no\nesta dado de alta, no hay acceso aunque la cuenta de Google sea valida.",

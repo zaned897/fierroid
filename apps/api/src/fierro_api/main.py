@@ -112,6 +112,22 @@ def _session_response(dsn: str, user: AuthUser, origen: str) -> dict[str, Any]:
     return {**key, "token_type": "bearer", "user": user.to_public()}
 
 
+@app.get("/v1/auth/config")
+def auth_config() -> dict[str, Any]:
+    """Configuracion publica que la PWA necesita antes de que alguien entre.
+
+    El client ID de OAuth es publico por diseno: viaja en el bundle de
+    cualquier app con Google Sign-In. Servirlo desde aqui, en vez de inyectarlo
+    al construir el front, deja una sola fuente de verdad y hace que cambiarlo
+    no requiera reconstruir ni redesplegar la PWA.
+    """
+    return {
+        "google_client_id": settings.google_client_id,
+        "google_enabled": bool(settings.google_client_id and settings.dsn),
+        "env": settings.env,
+    }
+
+
 @app.post("/v1/auth/google")
 def login_google(body: GoogleLoginIn) -> dict[str, Any]:
     """Cambia un ID token de Google por una API key nuestra.
