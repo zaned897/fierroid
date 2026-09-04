@@ -31,12 +31,28 @@ cross-origin y CORS deja de ser algo que configurar y mantener sincronizado.
 Las estaciones del corral no pasan por aquí: pegan directo a Cloud Run, y como
 no son navegadores, CORS no les aplica.
 
-El destino ya apunta a la API de production. Si la URL de Cloud Run cambia
-—porque se recree el servicio— hay que actualizarla aquí.
+Si alguna URL de Cloud Run cambia —porque se recree el servicio— hay que
+actualizarla aquí.
 
-> Las *preview deployments* de Vercel usan este mismo `vercel.json`, así que
-> apuntan a la API de **production**. Cuando exista `stage`, la salida limpia es
-> un proyecto de Vercel aparte para esa rama, no condicionales aquí.
+#### La regla nombra production y todo lo demás cae en stage
+
+Hay dos reglas y el orden importa: **solo el host exacto `fierroid.vercel.app`
+llega a la API de production**; cualquier otro host —el alias de rama de stage,
+las URLs únicas por deployment, los previews de cada PR— va a la de stage.
+
+Está al revés a propósito. La regla natural sería nombrar stage y dejar el
+resto en production, pero entonces cada preview de PR hablaría con production
+—y `POST /v1/readings` **no tiene autenticación** todavía (ticket E0-T2), así
+que un preview podría escribir pesajes en la base real. Con este orden, el caso
+que no previmos aterriza en el entorno desechable.
+
+El costo es el opuesto: si algún día production se sirve además desde otro
+dominio, ese dominio habla con stage hasta que se agregue a la lista. Es un
+fallo visible —datos que no son— y no una escritura silenciosa donde no debe.
+
+> Falta un paso fuera de este repo: el host de stage tiene que estar en los
+> **orígenes autorizados** del cliente OAuth en Google, o el botón de Google no
+> se dibuja ahí.
 
 ### Variables en Vercel
 
