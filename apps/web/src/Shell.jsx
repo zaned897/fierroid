@@ -18,7 +18,12 @@ export default function Shell({ lema, children }) {
       </aside>
 
       <main className="shell-panel">
-        <div className="shell-columna">{children}</div>
+        <div className="shell-columna">
+          {/* Bajo 900px el panel de marca no existe, y sin esto la pantalla se
+              queda sin logotipo justo en el dispositivo donde más se usa. */}
+          <Marca size={40} className="marca-movil" />
+          {children}
+        </div>
       </main>
     </div>
   );
