@@ -10,7 +10,14 @@ corepack pnpm dev
 ```
 
 El proxy de `vite.config.js` manda `/v1` y `/health` a `http://127.0.0.1:8000`,
-así que la API local se ve como si fuera el mismo origen.
+así que la API local se ve como si fuera el mismo origen. Sin la API levantada,
+el home se ve completo pero el login dice que no pudo contactarla — que es lo
+que debe decir.
+
+[`.claude/launch.json`](../../.claude/launch.json) arranca lo mismo desde el
+panel de vista previa de un agente. Va por `corepack` y no por `pnpm` pelado
+porque `pnpm` no está en el PATH; y el directorio va como `-C apps/web`, no como
+`--root`, que Vite 6 rechaza con `Unknown option`.
 
 Las variables salen del `.env` de la raíz del repo, no de este directorio: Vite
 está configurado con `envDir: "../.."` para que la PWA y la API compartan un
