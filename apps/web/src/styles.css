@@ -8,7 +8,11 @@
   --danger: #e07a5f;
   /* Recortes internos de los iconos de vaca: fingen el fondo del panel. */
   --cow-detail: #142018;
-  font-family: "Segoe UI", "Avenir Next", "Helvetica Neue", sans-serif;
+  /* Inter va en el bundle (ver main.jsx). El stack de respaldo importa: si la
+     fuente tarda, el texto se pinta con la del sistema en vez de quedarse
+     invisible. */
+  --fuente: "Inter Variable", "Segoe UI", "Avenir Next", "Helvetica Neue", sans-serif;
+  font-family: var(--fuente);
   color: var(--ink);
   background:
     radial-gradient(1200px 600px at 10% -10%, #2a4030 0%, transparent 55%),
@@ -371,7 +375,7 @@ button.animal:hover {
    hacer aqui. */
 .shell {
   display: grid;
-  grid-template-columns: minmax(0, 32%) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -387,17 +391,39 @@ button.animal:hover {
   background: linear-gradient(180deg, rgba(10, 18, 13, 0.35) 0%, rgba(10, 18, 13, 0.7) 100%);
 }
 
-/* Trama de puntos: la unica decoracion de la pantalla. Se desvanece hacia
-   arriba para que el texto de la marca se lea sobre fondo limpio. */
+/* La foto, muy apagada. No es el tema de la pantalla: da temperatura y se
+   queda atras. Va como background y no como <img> porque es decoracion —
+   `aria-hidden` cubre todo el panel. */
+.marca::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/img/home-hero.webp") center / cover no-repeat;
+  opacity: 0.07;
+  filter: grayscale(0.85);
+  pointer-events: none;
+}
+
+/* Trama de puntos con degradado, como la referencia. Los puntos no pueden
+   llevar degradado por si mismos, asi que el degradado es el fondo y los
+   puntos son la mascara. La segunda mascara desvanece hacia arriba, para que
+   el texto de la marca se lea sobre fondo limpio; `intersect` aplica las dos. */
 .marca::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(var(--accent) 1.2px, transparent 1.2px);
-  background-size: 9px 9px;
-  -webkit-mask-image: linear-gradient(to top, black, transparent 78%);
-  mask-image: linear-gradient(to top, black, transparent 78%);
-  opacity: 0.55;
+  background-image: linear-gradient(15deg, var(--accent) 15%, var(--danger) 55%, var(--accent) 90%);
+  -webkit-mask-image:
+    radial-gradient(black 1.2px, transparent 1.3px),
+    linear-gradient(to top, black, transparent 78%);
+  mask-image:
+    radial-gradient(black 1.2px, transparent 1.3px),
+    linear-gradient(to top, black, transparent 78%);
+  -webkit-mask-size: 9px 9px, 100% 100%;
+  mask-size: 9px 9px, 100% 100%;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  opacity: 0.6;
   pointer-events: none;
 }
 
@@ -415,6 +441,11 @@ button.animal:hover {
   font-size: 1.05rem;
   line-height: 1.45;
   color: var(--muted);
+}
+
+.marca-movil {
+  display: none;
+  margin-bottom: 1.5rem;
 }
 
 .shell-panel {
@@ -509,6 +540,33 @@ button.animal:hover {
   line-height: 1.5;
 }
 
+/* Lo unico que se mueve en la portada. Aparece y sube un poco, una sola vez.
+   El estado final es el normal: si la animacion no corre -motor viejo, motion
+   reducido- el contenido ya esta donde debe, visible. Nunca al reves. */
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+}
+
+.shell-columna,
+.marca-contenido {
+  animation: entrar 420ms ease-out both;
+}
+
+/* La marca entra despues que el contenido: el orden de lectura manda. */
+.marca-contenido {
+  animation-delay: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-columna,
+  .marca-contenido {
+    animation: none;
+  }
+}
+
 /* En un celular en el corral, media pantalla de decoracion es media pantalla
    menos de lo que la persona vino a hacer. */
 @media (max-width: 900px) {
@@ -518,5 +576,9 @@ button.animal:hover {
 
   .marca {
     display: none;
+  }
+
+  .marca-movil {
+    display: inline-block;
   }
 }
