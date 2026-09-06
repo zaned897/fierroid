@@ -50,11 +50,27 @@ function Ficha({ animal, session, onCerrar, onCambio }) {
   const [ocupado, setOcupado] = useState(null);
   const [recarga, setRecarga] = useState(0);
 
+  /**
+   * La organización va en cada escritura, siempre.
+   *
+   * Un superusuario no tiene organización propia, así que la API se niega a
+   * escribir sin que se le diga cuál — adivinarla sería escribir en el rancho
+   * equivocado. No hace falta preguntársela a nadie: la lista ya trae el `org`
+   * de cada animal, y ese es el correcto por definición.
+   *
+   * Para quien no es superusuario, la API ignora este parámetro y usa su propia
+   * organización, así que mandarlo no abre ninguna puerta.
+   */
+  const conOrg = useCallback(
+    (ruta) => `${ruta}?org=${encodeURIComponent(animal.org)}`,
+    [animal.org],
+  );
+
   const guardar = useCallback(async () => {
     setOcupado("datos");
     setError(null);
     try {
-      await apiFetch(`/v1/animals/${encodeURIComponent(animal.tag_id)}`, {
+      await apiFetch(conOrg(`/v1/animals/${encodeURIComponent(animal.tag_id)}`), {
         session,
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -66,7 +82,7 @@ function Ficha({ animal, session, onCerrar, onCambio }) {
     } finally {
       setOcupado(null);
     }
-  }, [alias, notes, animal.tag_id, session, onCambio]);
+  }, [alias, notes, animal.tag_id, session, onCambio, conOrg]);
 
   const subirFoto = useCallback(
     async (evento) => {
@@ -79,7 +95,7 @@ function Ficha({ animal, session, onCerrar, onCambio }) {
         const cuerpo = new FormData();
         cuerpo.append("file", await reducirImagen(elegido));
 
-        const res = await fetch(`/v1/animals/${encodeURIComponent(animal.tag_id)}/photo`, {
+        const res = await fetch(conOrg(`/v1/animals/${encodeURIComponent(animal.tag_id)}/photo`), {
           method: "POST",
           headers: { Authorization: `Bearer ${session.api_key}` },
           body: cuerpo,
@@ -98,7 +114,7 @@ function Ficha({ animal, session, onCerrar, onCambio }) {
         evento.target.value = "";
       }
     },
-    [animal.tag_id, session, onCambio],
+    [animal.tag_id, session, onCambio, conOrg],
   );
 
   return (
