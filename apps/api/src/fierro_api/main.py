@@ -10,11 +10,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from fierro_api import __version__, google_auth
+from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
 from fierro_api.auth import (
     AuthError,
     AuthUser,
     authenticate,
+    create_user,
     issue_api_key,
     list_api_keys,
     revoke_all_api_keys,
@@ -65,6 +67,28 @@ class GoogleLoginIn(BaseModel):
 class AnimalIn(BaseModel):
     alias: str | None = None
     notes: str | None = None
+
+
+class OrgIn(BaseModel):
+    slug: str = Field(min_length=2, max_length=60)
+    name: str = Field(min_length=2, max_length=120)
+
+
+class RanchIn(BaseModel):
+    slug: str = Field(min_length=2, max_length=60)
+    name: str = Field(min_length=2, max_length=120)
+
+
+class DeviceIn(BaseModel):
+    org: str
+    ranch: str
+
+
+class UserIn(BaseModel):
+    email: str = Field(min_length=3, max_length=200)
+    full_name: str | None = None
+    org: str | None = None
+    is_superuser: bool = False
 
 
 class HeartbeatIn(BaseModel):
@@ -226,6 +250,24 @@ def current_user(creds: BearerCreds) -> AuthUser:
 
 
 CurrentUser = Annotated[AuthUser, Depends(current_user)]
+
+
+def superuser(user: CurrentUser) -> AuthUser:
+    """Solo superusuarios. Un 403 explicito, no un 404 que confunda.
+
+    Devolver 404 para esconder que la ruta existe suena prudente y no lo es:
+    quien administra necesita distinguir "no tengo permiso" de "escribi mal la
+    URL", y la ruta no es un secreto.
+    """
+    if not user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo un superusuario puede administrar organizaciones y usuarios",
+        )
+    return user
+
+
+SuperUser = Annotated[AuthUser, Depends(superuser)]
 
 
 @app.get("/v1/auth/me")
@@ -463,6 +505,93 @@ def post_heartbeat(device_id: str, body: HeartbeatIn) -> dict[str, Any]:
 @app.get("/v1/devices")
 def get_devices(user: CurrentUser) -> dict[str, Any]:
     return {"devices": store.list_devices(org_slug=_scope(user))}
+
+
+# ---------------------------------------------------------------------------
+# Administracion: organizacion -> rancho -> estacion, y usuarios
+#
+# Todo esto solo existia por CLI, lo que obligaba a tener acceso directo a la
+# base para dar de alta a alguien. Solo superusuarios.
+# ---------------------------------------------------------------------------
+
+
+def _datos(exc: admin_mod.ErrorDeDatos) -> HTTPException:
+    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@app.get("/v1/orgs")
+def get_orgs(user: SuperUser) -> dict[str, Any]:
+    return admin_mod.listar_orgs(_require_postgres())
+
+
+@app.post("/v1/orgs", status_code=status.HTTP_201_CREATED)
+def post_org(body: OrgIn, user: SuperUser) -> dict[str, Any]:
+    try:
+        return admin_mod.crear_org(_require_postgres(), slug=body.slug, name=body.name)
+    except admin_mod.ErrorDeDatos as exc:
+        raise _datos(exc) from exc
+
+
+@app.post("/v1/orgs/{org_slug}/ranches", status_code=status.HTTP_201_CREATED)
+def post_ranch(org_slug: str, body: RanchIn, user: SuperUser) -> dict[str, Any]:
+    try:
+        return admin_mod.crear_rancho(
+            _require_postgres(), org_slug=org_slug, slug=body.slug, name=body.name
+        )
+    except admin_mod.ErrorDeDatos as exc:
+        raise _datos(exc) from exc
+
+
+@app.put("/v1/devices/{device_id}")
+def put_device(device_id: str, body: DeviceIn, user: SuperUser) -> dict[str, Any]:
+    """Registra o mueve una estacion.
+
+    La respuesta dice cuantas lecturas cambiaron de dueno. Mover una estacion
+    arrastra toda su historia, y hacerlo en silencio seria cambiarle los datos a
+    alguien sin avisarle.
+    """
+    try:
+        return admin_mod.asignar_estacion(
+            _require_postgres(), device_id=device_id, org_slug=body.org, ranch_slug=body.ranch
+        )
+    except admin_mod.ErrorDeDatos as exc:
+        raise _datos(exc) from exc
+
+
+@app.get("/v1/users")
+def get_users(user: SuperUser) -> dict[str, Any]:
+    return {"users": admin_mod.listar_usuarios(_require_postgres())}
+
+
+@app.post("/v1/users", status_code=status.HTTP_201_CREATED)
+def post_user(body: UserIn, user: SuperUser) -> dict[str, Any]:
+    """Alta idempotente por correo. Sin contrasena: se entra por Google."""
+    dsn = _require_postgres()
+    try:
+        create_user(
+            dsn,
+            email=body.email,
+            full_name=body.full_name,
+            org_slug=body.org,
+            is_superuser=body.is_superuser,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {"email": body.email, "org": body.org, "is_superuser": body.is_superuser}
+
+
+@app.delete("/v1/users/{email}")
+def delete_user(email: str, user: SuperUser) -> dict[str, Any]:
+    """Desactiva y revoca sus llaves. Nunca borra la fila."""
+    if email == user.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No puedes desactivar tu propia cuenta",
+        )
+    try:
+        return admin_mod.desactivar_usuario(_require_postgres(), email=email)
+    except admin_mod.ErrorDeDatos as exc:
+        raise _datos(exc) from exc
 
 
 def main() -> None:

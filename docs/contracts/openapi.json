@@ -43,6 +43,24 @@
         "title": "Body_post_animal_photo_v1_animals__tag_id__photo_post",
         "type": "object"
       },
+      "DeviceIn": {
+        "properties": {
+          "org": {
+            "title": "Org",
+            "type": "string"
+          },
+          "ranch": {
+            "title": "Ranch",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "ranch"
+        ],
+        "title": "DeviceIn",
+        "type": "object"
+      },
       "GoogleLoginIn": {
         "properties": {
           "id_token": {
@@ -120,6 +138,50 @@
         "title": "LoginIn",
         "type": "object"
       },
+      "OrgIn": {
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 60,
+            "minLength": 2,
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "OrgIn",
+        "type": "object"
+      },
+      "RanchIn": {
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 60,
+            "minLength": 2,
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "RanchIn",
+        "type": "object"
+      },
       "ReadingsBatchIn": {
         "properties": {
           "readings": {
@@ -131,6 +193,48 @@
           }
         },
         "title": "ReadingsBatchIn",
+        "type": "object"
+      },
+      "UserIn": {
+        "properties": {
+          "email": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "is_superuser": {
+            "default": false,
+            "title": "Is Superuser",
+            "type": "boolean"
+          },
+          "org": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Org"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "UserIn",
         "type": "object"
       },
       "ValidationError": {
@@ -814,6 +918,63 @@
         "summary": "Get Devices"
       }
     },
+    "/v1/devices/{device_id}": {
+      "put": {
+        "description": "Registra o mueve una estacion.\n\nLa respuesta dice cuantas lecturas cambiaron de dueno. Mover una estacion\narrastra toda su historia, y hacerlo en silencio seria cambiarle los datos a\nalguien sin avisarle.",
+        "operationId": "put_device_v1_devices__device_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "title": "Device Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Put Device V1 Devices  Device Id  Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Put Device"
+      }
+    },
     "/v1/devices/{device_id}/heartbeat": {
       "post": {
         "operationId": "post_heartbeat_v1_devices__device_id__heartbeat_post",
@@ -863,6 +1024,130 @@
           }
         },
         "summary": "Post Heartbeat"
+      }
+    },
+    "/v1/orgs": {
+      "get": {
+        "operationId": "get_orgs_v1_orgs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Orgs V1 Orgs Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Orgs"
+      },
+      "post": {
+        "operationId": "post_org_v1_orgs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Post Org V1 Orgs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Post Org"
+      }
+    },
+    "/v1/orgs/{org_slug}/ranches": {
+      "post": {
+        "operationId": "post_ranch_v1_orgs__org_slug__ranches_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RanchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Post Ranch V1 Orgs  Org Slug  Ranches Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Post Ranch"
       }
     },
     "/v1/readings": {
@@ -1007,6 +1292,122 @@
           }
         },
         "summary": "Post Readings"
+      }
+    },
+    "/v1/users": {
+      "get": {
+        "operationId": "get_users_v1_users_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Users V1 Users Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Users"
+      },
+      "post": {
+        "description": "Alta idempotente por correo. Sin contrasena: se entra por Google.",
+        "operationId": "post_user_v1_users_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Post User V1 Users Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Post User"
+      }
+    },
+    "/v1/users/{email}": {
+      "delete": {
+        "description": "Desactiva y revoca sus llaves. Nunca borra la fila.",
+        "operationId": "delete_user_v1_users__email__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "title": "Email",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Delete User V1 Users  Email  Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete User"
       }
     }
   }
