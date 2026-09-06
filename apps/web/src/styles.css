@@ -582,3 +582,234 @@ button.animal:hover {
     display: inline-block;
   }
 }
+
+/* --- Secciones de producto, bajo el pliegue ----------------------------- */
+
+.secciones {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.seccion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 3rem;
+  padding: 4.5rem 0;
+  border-top: 1px solid var(--line);
+}
+
+/* La foto cambia de lado en secciones alternas. Es lo unico que rompe la
+   monotonia de una columna de texto tras otra. */
+.seccion.invertida .seccion-texto {
+  order: 2;
+}
+
+.seccion-ancha,
+.cierre {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: center;
+}
+
+.seccion-ancha .seccion-texto,
+.cierre .seccion-texto {
+  max-width: 34rem;
+}
+
+.seccion-texto h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.seccion-texto p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.foto {
+  margin: 0;
+  min-width: 0;
+}
+
+.foto img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.6rem;
+  border: 1px solid var(--line);
+}
+
+/* El credito no es decorativo: tres de las fotos son CC BY 2.0 y la licencia
+   exige que se vea. Discreto, pero presente. */
+.credito {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.credito a {
+  color: inherit;
+}
+
+/* --- El diagrama de la outbox ------------------------------------------- */
+
+.diagrama {
+  width: 100%;
+  max-width: 44rem;
+}
+
+.pasos {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.paso {
+  position: relative;
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.1rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: rgba(242, 239, 230, 0.03);
+}
+
+/* El paso donde la lectura ya esta a salvo. Es el punto del diagrama. */
+.paso.salvo {
+  border-color: var(--accent);
+  background: rgba(196, 163, 90, 0.08);
+}
+
+.paso-num {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.paso.salvo .paso-num {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.paso h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.paso p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* El corte del enlace, entre la outbox y la nube. */
+.corte {
+  position: absolute;
+  top: 50%;
+  right: -0.375rem;
+  transform: translate(50%, -50%);
+  z-index: 1;
+  padding: 0.1rem 0.4rem;
+  border: 1px dashed var(--danger);
+  border-radius: 0.3rem;
+  background: var(--bg0);
+  color: var(--danger);
+  font-size: 0.62rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.diagrama-pie {
+  margin: 1.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.cierre-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.cierre-acciones .primario {
+  width: auto;
+  min-width: 10rem;
+}
+
+/* --- Aparicion al entrar en viewport ------------------------------------ */
+
+/* Ocultar lo hace JavaScript anadiendo `con-revelado` (ver Secciones.jsx). Sin
+   JS esta regla no existe y las secciones se leen tal cual. */
+.secciones.con-revelado [data-revelar] {
+  opacity: 0;
+  transform: translateY(1.25rem);
+}
+
+.secciones.con-revelado [data-revelar].visible {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 500ms ease-out,
+    transform 500ms ease-out;
+}
+
+/* Cinturon y tirantes: el efecto ya se desactiva en JS, pero si alguien anade
+   la clase por otra via, aqui no se mueve nada. */
+@media (prefers-reduced-motion: reduce) {
+  .secciones.con-revelado [data-revelar] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .seccion,
+  .seccion.invertida {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
+    padding: 3rem 0;
+  }
+
+  /* En una columna, la foto siempre va despues del texto. */
+  .seccion.invertida .seccion-texto {
+    order: 0;
+  }
+
+  /* El diagrama pasa a columna en vez de encogerse: horizontal a 375px deja
+     el texto ilegible. */
+  .pasos {
+    flex-direction: column;
+  }
+
+  .corte {
+    top: auto;
+    right: auto;
+    bottom: -0.375rem;
+    left: 2.5rem;
+    transform: translateY(50%);
+  }
+}
