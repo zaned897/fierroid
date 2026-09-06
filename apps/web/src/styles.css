@@ -583,85 +583,173 @@ button.animal:hover {
   }
 }
 
-/* --- Secciones de producto, bajo el pliegue ----------------------------- */
+/* --- Secciones de producto ---------------------------------------------- */
 
-.secciones {
-  max-width: 68rem;
-  margin: 0 auto;
-  padding: 0 1.5rem 4rem;
+/* Las bandas van a sangre; solo el contenido se limita. Antes todo compartia
+   una caja de 68rem y por eso las cinco secciones se veian iguales. */
+.bloque {
+  padding: 5rem 1.5rem;
 }
 
-.seccion {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 3rem;
-  padding: 4.5rem 0;
-  border-top: 1px solid var(--line);
-}
-
-/* La foto cambia de lado en secciones alternas. Es lo unico que rompe la
-   monotonia de una columna de texto tras otra. */
-.seccion.invertida .seccion-texto {
-  order: 2;
-}
-
-.seccion-ancha,
-.cierre {
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: center;
+.bloque-cabeza {
+  max-width: 34rem;
+  margin: 0 auto 2.5rem;
   text-align: center;
 }
 
-.seccion-ancha .seccion-texto,
-.cierre .seccion-texto {
-  max-width: 34rem;
-}
-
-.seccion-texto h2 {
+.bloque h2 {
   margin: 0 0 0.75rem;
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   font-weight: 600;
   letter-spacing: -0.015em;
 }
 
-.seccion-texto p {
+.bloque p {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
 }
 
-.foto {
-  margin: 0;
-  min-width: 0;
+/* 1. Declaracion: una frase grande, sin nada que la acompane. */
+.declaracion {
+  border-top: 1px solid var(--line);
 }
 
-.foto img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 0.6rem;
-  border: 1px solid var(--line);
+.declaracion-texto {
+  max-width: 44rem;
+  margin: 0 auto;
+  color: var(--ink) !important;
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+  text-align: center;
+  text-wrap: balance;
 }
 
-/* El credito no es decorativo: tres de las fotos son CC BY 2.0 y la licencia
-   exige que se vea. Discreto, pero presente. */
-.credito {
-  margin-top: 0.5rem;
-  color: var(--muted);
-  font-size: 0.72rem;
-  opacity: 0.75;
+/* 2. Banda oscura: hunde la seccion del diagrama respecto al resto. */
+.banda-oscura {
+  background: rgba(6, 12, 8, 0.45);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.credito a {
-  color: inherit;
+.banda-oscura .diagrama {
+  margin: 0 auto;
 }
 
-/* --- El diagrama de la outbox ------------------------------------------- */
+/* 3. Dato: la grafica manda, el texto la acompana. */
+.dato {
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 3rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.dato h2 {
+  margin-bottom: 0.9rem;
+}
+
+.dato-texto p + p {
+  margin-top: 0.9rem;
+}
+
+.dato-apunte {
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--accent);
+  font-size: 0.92rem;
+}
+
+/* 4. Banda clara: el golpe de la pagina. Redefinir los tokens aqui hace que
+   todo lo de dentro -incluidos los creditos de las fotos- se adapte solo. */
+.banda-clara {
+  --ink: #142018;
+  --muted: #46563f;
+  --line: rgba(20, 32, 24, 0.18);
+  background: #efeadb;
+  color: var(--ink);
+}
+
+.tira {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tira:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.tira .foto {
+  flex: 0 0 min(22rem, 78vw);
+  scroll-snap-align: start;
+}
+
+.tira .foto img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* 5. Cierre a sangre: la unica imagen que llega a 1600px de ancho. */
+.cierre-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 7rem 1.5rem;
+  text-align: center;
+  background: url("/img/home-hero.webp") center / cover no-repeat;
+}
+
+/* El velo no es estetico: sin el, el texto blanco cae sobre un brahman blanco
+   y deja de leerse. */
+.cierre-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 18, 13, 0.78), rgba(10, 18, 13, 0.92));
+}
+
+.cierre-contenido {
+  position: relative;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.cierre-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+/* Alto contraste, sin el dorado: sobre la foto el oro se pierde y aqui hace
+   falta que el boton gane. */
+button.contraste {
+  min-width: 11rem;
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #101a13;
+  font-weight: 600;
+}
+
+button.contraste:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #101a13;
+}
+
+/* --- El diagrama de la outbox -------------------------------------------- */
 
 .diagrama {
   width: 100%;
-  max-width: 44rem;
+  max-width: 46rem;
 }
 
 .pasos {
@@ -687,7 +775,7 @@ button.animal:hover {
 /* El paso donde la lectura ya esta a salvo. Es el punto del diagrama. */
 .paso.salvo {
   border-color: var(--accent);
-  background: rgba(196, 163, 90, 0.08);
+  background: rgba(196, 163, 90, 0.1);
 }
 
 .paso-num {
@@ -739,27 +827,153 @@ button.animal:hover {
 }
 
 .diagrama-pie {
-  margin: 1.5rem 0 0;
+  max-width: 34rem;
+  margin: 1.5rem auto 0;
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.6;
+  text-align: center;
 }
 
-.cierre-acciones {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.75rem;
+/* --- La grafica de peso -------------------------------------------------- */
+
+.grafica {
+  margin: 0;
+  min-width: 0;
 }
 
-.cierre-acciones .primario {
-  width: auto;
-  min-width: 10rem;
+.grafica-titulo {
+  margin-bottom: 0.9rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
-/* --- Aparicion al entrar en viewport ------------------------------------ */
+.grafica-nota {
+  display: block;
+  opacity: 0.75;
+  font-size: 0.78rem;
+}
+
+.grafica-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.grafica-rejilla {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.grafica-eje {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.grafica-linea {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.grafica-punto {
+  fill: var(--accent);
+}
+
+/* La lectura dudosa: circulo hueco y mas grande, ademas del color. El
+   validador da 4.1 de delta E entre el oro y el terracota en deuteranopia, asi
+   que el color no puede ser la unica pista. */
+.grafica-punto.inestable {
+  fill: var(--bg0);
+  stroke: var(--danger);
+  stroke-width: 2.5;
+}
+
+.grafica-blanco {
+  fill: transparent;
+}
+
+.grafica-valor {
+  fill: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grafica-aviso {
+  fill: var(--danger);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.grafica-cruz {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.grafica-tabla {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.grafica-tabla summary {
+  cursor: pointer;
+}
+
+.grafica-tabla table {
+  width: 100%;
+  margin-top: 0.75rem;
+  border-collapse: collapse;
+}
+
+.grafica-tabla caption {
+  padding-bottom: 0.5rem;
+  text-align: left;
+  opacity: 0.75;
+}
+
+.grafica-tabla th,
+.grafica-tabla td {
+  padding: 0.3rem 0.5rem 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: 400;
+}
+
+/* --- Fotos y creditos ---------------------------------------------------- */
+
+.foto {
+  margin: 0;
+  min-width: 0;
+}
+
+.foto img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.6rem;
+  border: 1px solid var(--line);
+}
+
+/* El credito no es decorativo: dos de las fotos son CC BY 2.0 y la licencia
+   exige que se vea. Discreto, pero presente. */
+.credito {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.credito a {
+  color: inherit;
+}
+
+/* --- Aparicion al entrar en viewport ------------------------------------- */
 
 /* Ocultar lo hace JavaScript anadiendo `con-revelado` (ver Secciones.jsx). Sin
    JS esta regla no existe y las secciones se leen tal cual. */
@@ -787,16 +1001,22 @@ button.animal:hover {
 }
 
 @media (max-width: 900px) {
-  .seccion,
-  .seccion.invertida {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.75rem;
-    padding: 3rem 0;
+  .bloque {
+    padding: 3.5rem 1.25rem;
   }
 
-  /* En una columna, la foto siempre va despues del texto. */
-  .seccion.invertida .seccion-texto {
-    order: 0;
+  .declaracion-texto {
+    font-size: 1.25rem;
+  }
+
+  /* La grafica pasa debajo del texto y ocupa el ancho. */
+  .dato {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .cierre-hero {
+    padding: 4.5rem 1.25rem;
   }
 
   /* El diagrama pasa a columna en vez de encogerse: horizontal a 375px deja

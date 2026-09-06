@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import Diagrama from "./Diagrama.jsx";
 import Foto from "./Foto.jsx";
+import GraficaPeso from "./GraficaPeso.jsx";
 
 /** Si el observador no ha revelado nada para entonces, se revela todo. */
 const RESCATE_MS = 1500;
@@ -33,13 +34,12 @@ function useRevelar() {
     nodo.classList.add("con-revelado");
 
     const objetivos = [...nodo.querySelectorAll("[data-revelar]")];
-    const revelar = (el) => el.classList.add("visible");
 
     const observador = new IntersectionObserver(
       (entradas) => {
         entradas.forEach((entrada) => {
           if (!entrada.isIntersecting) return;
-          revelar(entrada.target);
+          entrada.target.classList.add("visible");
           // Una vez visible se deja en paz: no es un efecto que deba repetirse
           // cada vez que la persona sube y baja.
           observador.unobserve(entrada.target);
@@ -70,33 +70,31 @@ function useRevelar() {
   return raiz;
 }
 
-function Seccion({ titulo, children, foto, invertida = false }) {
-  return (
-    <section className={invertida ? "seccion invertida" : "seccion"} data-revelar>
-      <div className="seccion-texto">
-        <h2>{titulo}</h2>
-        {children}
-      </div>
-      {foto && <Foto nombre={foto} />}
-    </section>
-  );
-}
-
+/**
+ * Cinco secciones, cinco registros distintos.
+ *
+ * Antes eran el mismo bloque cinco veces —foto a un lado, texto al otro, misma
+ * altura— y la página se leía como una lista. Ahora ninguna repite el patrón de
+ * la anterior: declaración, diagrama, dato, contraste invertido, y una a sangre
+ * para cerrar.
+ */
 export default function Secciones({ onEntrar, onArriba }) {
   const raiz = useRevelar();
 
   return (
     <div className="secciones" ref={raiz}>
-      <Seccion titulo="La libreta se moja" foto="seccion-corral">
-        <p>
+      {/* 1. Declaración. Abre con una frase, no con una imagen. */}
+      <section className="bloque declaracion" data-revelar>
+        <p className="declaracion-texto">
           El peso se apunta a mano, el arete se lee mal, la hoja se traspapela.
           Cuando alguien pregunta cuánto pesaba ese animal hace tres meses, la
           respuesta es un cálculo de memoria.
         </p>
-      </Seccion>
+      </section>
 
-      <section className="seccion seccion-ancha" data-revelar>
-        <div className="seccion-texto">
+      {/* 2. Diagrama sobre banda más oscura. */}
+      <section className="bloque banda-oscura" data-revelar>
+        <div className="bloque-cabeza">
           <h2>Sigue funcionando sin señal</h2>
           <p>
             Es lo que separa a Fierro de una hoja de cálculo. La estación no
@@ -107,32 +105,55 @@ export default function Secciones({ onEntrar, onArriba }) {
         <Diagrama />
       </section>
 
-      <Seccion titulo="Cada rancho ve lo suyo" foto="seccion-hato" invertida>
-        <p>
-          Organizaciones, ranchos y estaciones. Quien entra ve el hato de su
-          organización y nada más — el aislamiento no es una vista filtrada, es
-          una condición en cada consulta.
-        </p>
-      </Seccion>
+      {/* 3. Dato. La gráfica manda y el texto la acompaña. */}
+      <section className="bloque dato" data-revelar>
+        <div className="dato-texto">
+          <h2>El historial de cada animal</h2>
+          <p>
+            Del arete al peso, a lo largo del tiempo. Cuánto ganó entre una
+            pasada y la siguiente, y cuándo dejó de ganar.
+          </p>
+          <p className="dato-apunte">
+            Fíjate en el 27 de agosto: la báscula no se estabilizó y esa lectura
+            queda marcada. Se guarda igual, señalada — un dato dudoso avisado es
+            útil; uno maquillado, no.
+          </p>
+        </div>
+        <GraficaPeso />
+      </section>
 
-      <Seccion titulo="El historial de cada animal" foto="seccion-arete">
-        <p>
-          Del arete al peso, a lo largo del tiempo. Cuántas veces pasó por la
-          manga, cuánto ganó entre una y otra, cuándo dejó de ganar. Eso es lo
-          que la libreta no da.
-        </p>
-      </Seccion>
+      {/* 4. Contraste invertido. Es el golpe de la página. */}
+      <section className="bloque banda-clara" data-revelar>
+        <div className="bloque-cabeza">
+          <h2>Cada rancho ve lo suyo</h2>
+          <p>
+            Organizaciones, ranchos y estaciones. Quien entra ve el hato de su
+            organización y nada más — el aislamiento no es una vista filtrada,
+            es una condición en cada consulta.
+          </p>
+        </div>
 
-      <section className="seccion cierre" data-revelar>
-        <div className="seccion-texto">
+        {/* Tira con scroll en vez de carrusel: mismo recorrido, sin quitarle
+            el control a quien lee ni romper el teclado. */}
+        <div className="tira" tabIndex={0} role="group" aria-label="El trabajo de rancho">
+          <Foto nombre="seccion-corral" />
+          <Foto nombre="seccion-manga" />
+          <Foto nombre="seccion-arete" />
+          <Foto nombre="seccion-hato" />
+        </div>
+      </section>
+
+      {/* 5. Cierre a sangre. La única foto que llega a 1600px. */}
+      <section className="bloque cierre-hero" data-revelar>
+        <div className="cierre-contenido">
           <h2>El acceso es por invitación</h2>
           <p>
-            No hay registro abierto. Damos de alta los correos de cada rancho
-            uno por uno, porque cada cuenta ve datos de un negocio real y
-            preferimos saber de quién es cada una.
+            No hay registro abierto. Damos de alta los correos de cada rancho uno
+            por uno, porque cada cuenta ve datos de un negocio real y preferimos
+            saber de quién es cada una.
           </p>
           <div className="cierre-acciones">
-            <button type="button" className="primario" onClick={onEntrar}>
+            <button type="button" className="contraste" onClick={onEntrar}>
               Entrar
             </button>
             <button type="button" className="volver" onClick={onArriba}>
