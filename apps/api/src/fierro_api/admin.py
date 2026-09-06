@@ -174,7 +174,11 @@ def asignar_estacion(
             (device_id, destino["id"]),
         )
         cur.execute("SELECT count(*) AS n FROM readings WHERE device_id = %s", (device_id,))
-        movidas = require_row(cur.fetchone(), "contar lecturas")["n"]
+        # La anotacion no es adorno: `cur` viene de `_conectar`, que devuelve
+        # `Any`, asi que mypy no puede resolver el generico de `require_row` e
+        # indexar el resultado falla. Decirle el tipo aqui lo fija.
+        conteo: dict[str, Any] = require_row(cur.fetchone(), "contar lecturas")
+        movidas: int = conteo["n"]
         conn.commit()
 
     return {
