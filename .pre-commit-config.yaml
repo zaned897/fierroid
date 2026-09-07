@@ -45,6 +45,17 @@ repos:
         pass_filenames: false
         files: ^apps/api/src/
 
+      # Va antes que mypy y ruff a proposito: si el entorno no coincide con los
+      # pins, lo que digan esos dos no significa nada. Un mypy 2.3.1 local
+      # aprobo codigo que el 1.15.0 de CI rechazo, y el fallo aparecio en CI en
+      # vez de aqui.
+      - id: pins
+        name: versiones fijadas
+        entry: python scripts/verificar_pins.py
+        language: system
+        pass_filenames: false
+        files: ^(apps|scripts)/.*\.py$|^requirements-dev\.txt$
+
       # Tipos. La configuracion vive en pyproject.toml, no aqui, para que no
       # se separe de la que usa CI.
       - id: mypy
