@@ -31,7 +31,7 @@ def main() -> None:
     parser.add_argument(
         "--salida",
         type=Path,
-        default=Path(__file__).resolve().parent / "rfid-prototipo",
+        default=Path(__file__).resolve().parent / "rfid-mfrc522",
     )
     args = parser.parse_args()
 
