@@ -1,0 +1,10 @@
+== Fierro proto — pesaje por evento ==
+lineas: W,<uid>,<adc> | H,<millis> | # diagnostico
+RC522 version: 0x92
+cfg estable_ms=800
+cfg banda_adc=8
+cfg timeout_ms=8000
+cfg ausencia_ms=400
+cfg heartbeat_ms=10000
+Listo. Presenta una tarjeta...
+H,10014
