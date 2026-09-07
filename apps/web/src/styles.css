@@ -813,3 +813,147 @@ button.animal:hover {
     transform: translateY(50%);
   }
 }
+
+/* --- Panel de administracion -------------------------------------------- */
+
+.aviso {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.4rem;
+  background: rgba(196, 163, 90, 0.1);
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.org {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.org h3,
+.panel h3 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ranchos,
+.usuarios,
+.sueltas {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.ranchos li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.usuarios li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.usuarios li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.usuarios li.inactivo {
+  opacity: 0.55;
+}
+
+/* Las estaciones sueltas se marcan, no se esconden: sus pesajes entran a la
+   base y no salen en ninguna vista, sin dar un solo error. */
+.sueltas li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--danger);
+  border-radius: 0.5rem;
+  background: rgba(224, 122, 95, 0.07);
+}
+
+.suelta-accion {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.suelta-accion .campo {
+  flex: 1;
+  min-width: 12rem;
+  margin-bottom: 0;
+}
+
+.alta {
+  display: grid;
+  gap: 0 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.alta.compacta {
+  margin-top: 0.5rem;
+}
+
+.alta button {
+  margin-bottom: 0.9rem;
+}
+
+.campo select {
+  font: inherit;
+  color: var(--ink);
+  background: rgba(242, 239, 230, 0.06);
+  border: 1px solid rgba(242, 239, 230, 0.35);
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.7rem;
+  min-height: 44px;
+}
+
+.campo select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.campo select:disabled {
+  opacity: 0.5;
+}
+
+/* La casilla es un blanco de toque tambien: la etiqueta entera. */
+.marca-check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  margin-bottom: 0.9rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.marca-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}

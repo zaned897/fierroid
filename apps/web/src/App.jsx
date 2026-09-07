@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import Admin from "./Admin.jsx";
 import Animales from "./Animales.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
@@ -239,12 +240,25 @@ export default function App() {
         >
           Animales
         </button>
+        {/* No se renderiza para quien no es superusuario, en vez de ocultarla
+            con CSS: un control escondido sigue estando en el DOM y sigue
+            siendo pulsable con el teclado. El permiso de verdad lo decide la
+            API, que responde 403. */}
+        {usuario.is_superuser && (
+          <button
+            type="button"
+            className={vista === "admin" ? "activa" : ""}
+            onClick={() => setVista("admin")}
+          >
+            Administrar
+          </button>
+        )}
       </nav>
 
-      {vista === "pesajes" ? (
-        <Pesajes session={session} onExpired={expirada} />
-      ) : (
-        <Animales session={session} onExpired={expirada} />
+      {vista === "pesajes" && <Pesajes session={session} onExpired={expirada} />}
+      {vista === "animales" && <Animales session={session} onExpired={expirada} />}
+      {vista === "admin" && usuario.is_superuser && (
+        <Admin session={session} onExpired={expirada} />
       )}
     </div>
   );
