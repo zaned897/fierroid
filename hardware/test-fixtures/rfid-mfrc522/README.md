@@ -31,10 +31,13 @@ python hardware/test-fixtures/captura_serial.py COM5 --baudios 9600 \
 
 | Archivo | Cómo provocarla | Nota de una línea |
 |---|---|---|
-| captura limpia | un solo tag apoyado en la antena, sin mover | pendiente |
-| dos tags seguidos | apoyar tag A, retirar, apoyar tag B | pendiente |
+| captura limpia | un solo tag apoyado en la antena, sin mover | `transcripcion-consola-ide.txt` — W,025854D3 (bin pendiente de repetir) |
+| dos tags seguidos | apoyar tag A, retirar, apoyar tag B | misma transcripción: 025854D3, retirar, BEDE50D3 |
 | trama partida | no ocurre a nivel PC: líneas ASCII de ~20 bytes a 115200 llegan casi siempre completas (capturas de chunks lo demuestran); el driver igual lleva buffer de línea | contestado por análisis |
 | ruido sin tag | antena encendida, sin ningún tag cerca | `captura-20260906-223853` — banner + latidos H, sin datos |
+
+Pendiente cuando el hardware vuelva al banco: repetir las dos capturas de tarjeta en `.bin` con el
+harness (la transcripción del IDE es evidencia válida pero de texto). No bloquea el driver.
 
 ## Preguntas que el spike contesta por escrito
 

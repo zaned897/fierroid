@@ -1,0 +1,40 @@
+# Procedencia: transcripcion textual pegada por el operador (Eduardo) desde el
+# monitor serie del IDE Arduino, sesion real del banco el 2026-09-08.
+# No es archivo .bin del harness: evidencia en forma de texto. El contenido
+# bajo la linea de corte es verbatim, sin ediciones.
+# Cubre: banner tras reset, latidos, dos tags seguidos (025854D3, BEDE50D3),
+# cada uno con su W. Capturas .bin equivalentes: pendientes de repetir cuando
+# el hardware vuelva al banco.
+----- inicio transcripcion verbatim -----
+== Fierro proto — pesaje por evento ==lineas: W,<uid>,<adc> | H,<millis> | # diagnostico
+RC522 version: 0x92
+cfg estable_ms=800
+cfg banda_adc=8
+cfg timeout_ms=8000
+cfg ausencia_ms=400
+cfg heartbeat_ms=10000
+Listo. Presenta una tarjeta...
+H,10014
+H,20015
+H,30015
+H,40015
+H,50017
+H,60017
+H,70018
+H,80018
+H,90018
+H,100019
+# sesion 025854D3 esperando peso...
+W,025854D3,5
+H,110041
+# sesion BEDE50D3 esperando peso...
+H,120041
+W,BEDE50D3,4
+H,130061
+H,140062
+H,150063
+H,160063
+H,170064
+H,180065
+H,190065
+H,200067
