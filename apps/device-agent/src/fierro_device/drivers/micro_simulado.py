@@ -11,6 +11,7 @@ lives apart for exactly that reason.
 
 from __future__ import annotations
 
+import random
 import time
 from collections.abc import Callable
 
@@ -26,6 +27,8 @@ BANNER_MICRO = (
     b"Listo. Presenta una tarjeta...\r\n"
 )
 
+UIDS_AUTO = ("04A3B1C2", "05D4E3F2", "04B7C8D9", "05E1F2A3")
+
 
 class MicroSimulado:
     """TransporteSerie implementation: bytes in, W/H/# lines out."""
@@ -35,14 +38,17 @@ class MicroSimulado:
         *,
         heartbeats: bool = True,
         intervalo_heartbeat_s: float = 10.0,
+        auto_intervalo_s: float = 0.0,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._cola = bytearray()
         self._heartbeats = heartbeats
         self._intervalo = intervalo_heartbeat_s
+        self._auto_intervalo = auto_intervalo_s
         self._clock = clock
         self._inicio = clock()
         self._ultimo_heartbeat = float("-inf")
+        self._ultimo_auto = float("-inf")
         self._abierto = False
 
     def abrir(self) -> None:
@@ -66,6 +72,7 @@ class MicroSimulado:
         if not self._abierto:
             raise RuntimeError("micro simulado no abierto")
         self._latido_si_toca()
+        self._auto_si_toca()
         salida = bytes(self._cola[:n])
         del self._cola[:n]
         return salida
@@ -79,3 +86,12 @@ class MicroSimulado:
         self._ultimo_heartbeat = ahora
         millis = int((ahora - self._inicio) * 1000)
         self._cola.extend(f"H,{millis}\r\n".encode("ascii"))
+
+    def _auto_si_toca(self) -> None:
+        if self._auto_intervalo <= 0:
+            return
+        ahora = self._clock()
+        if ahora - self._ultimo_auto < self._auto_intervalo:
+            return
+        self._ultimo_auto = ahora
+        self.presentar(random.choice(UIDS_AUTO), random.randint(150, 950))

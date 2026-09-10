@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import random
 import time
 from dataclasses import dataclass
@@ -67,6 +68,10 @@ def build_hardware(
     rfid_port: str,
     mock_interval_s: float,
 ) -> HardwareBackend:
+    if os.getenv("FIERRO_HW_BACKEND") == "prototipo":
+        from fierro_device.drivers.prototipo import construir_prototipo
+
+        return construir_prototipo(mock=mock, rfid_port=rfid_port)
     if mock:
         return MockHardware(interval_s=mock_interval_s)
     return SerialHardware(scale_port=scale_port, rfid_port=rfid_port)
