@@ -127,17 +127,30 @@ def test_cada_organizacion_ve_solo_sus_estaciones(migrated):
     specs = build_specs(orgs=3, ranches_per_org=1, devices_per_ranch=2)
     seed_tenants(migrated, specs)
 
+    # La base puede tener datos previos (stage, otra corrida): seed_tenants
+    # reutiliza la organizacion por slug y hereda estaciones que esta prueba
+    # no creo. Lo que se afirma es sobre lo propio: cada estacion sembrada
+    # queda en su organizacion y en ninguna otra.
     por_org: dict[str, set[str]] = {}
     for row in list_tenants(migrated):
         if row["device_id"]:
             por_org.setdefault(row["org"], set()).add(row["device_id"])
 
-    for spec in specs:
-        assert por_org[spec.slug] == set(spec.device_ids)
+    sembradas = {spec.slug: set(spec.device_ids) for spec in specs}
+    for slug, devices in sembradas.items():
+        for device in devices:
+            assert device in por_org.get(slug, set()), (
+                f"{device} no aparece bajo {slug}"
+            )
+            for otra_slug, otras in por_org.items():
+                if otra_slug != slug:
+                    assert device not in otras, (
+                        f"{device} de {slug} aparece bajo {otra_slug}"
+                    )
 
-    # Ninguna estacion aparece bajo dos organizaciones.
+    # Ninguna estacion sembrada aqui aparece bajo dos organizaciones.
     vistos: set[str] = set()
-    for devices in por_org.values():
+    for devices in sembradas.values():
         assert not (vistos & devices)
         vistos |= devices
 
@@ -197,12 +210,34 @@ def test_borrar_un_rancho_desasigna_pero_no_borra_la_estacion(conn):
 
 @pg
 def test_no_se_puede_borrar_una_organizacion_con_ranchos(conn):
-    """RESTRICT: borrar una organizacion poblada debe doler, no ser silencioso."""
+    """RESTRICT: borrar una organizacion poblada debe doler, no ser silencioso.
+
+    La organizacion es propia y desechable: en stage `demo` puede quedarse
+    sin ranchos y el DELETE no doleria, y la prueba dependeria del estado
+    global en vez de de lo que ella misma construye.
+    """
     import psycopg
 
+    slug = f"tmp-org-{uuid.uuid4().hex[:8]}"
     with conn.cursor() as cur:
-        cur.execute("SELECT id FROM organizations WHERE slug = 'demo'")
+        cur.execute(
+            "INSERT INTO organizations (slug, name) VALUES (%s, %s) RETURNING id",
+            (slug, "Desechable"),
+        )
         org_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO ranches (org_id, slug, name) VALUES (%s, %s, %s) RETURNING id",
+            (org_id, "tmp-rancho", "Temporal"),
+        )
+        cur.fetchone()
+        conn.commit()
+
         with pytest.raises(psycopg.errors.ForeignKeyViolation):
             cur.execute("DELETE FROM organizations WHERE id = %s", (org_id,))
     conn.rollback()
+
+    # Limpieza: la organizacion desechable no debe quedar en la base.
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM ranches WHERE org_id = %s", (org_id,))
+        cur.execute("DELETE FROM organizations WHERE id = %s", (org_id,))
+    conn.commit()
