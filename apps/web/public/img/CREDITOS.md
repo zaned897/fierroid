@@ -8,6 +8,8 @@
 | `home-corral-ia.png` | OpenAI image_gen, generación para Fierro | 1536 × 1024 | Contexto de manejo en corral |
 | `home-consulta-ia.png` | OpenAI image_gen, generación para Fierro | 1536 × 1024 | Consulta del celular |
 
+El archivo home-paisaje-ia.webp es un derivado WebP optimizado (1536 × 1024) del PNG de paisaje para servirlo en la portada.
+
 Son ilustraciones fotorrealistas generadas por IA, no fotografías documentales
 ni imágenes de clientes. No se les atribuye una licencia Creative Commons.
 Conservar la indicación de imagen ilustrativa al publicarlas. Los originales

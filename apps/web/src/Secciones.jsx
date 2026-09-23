@@ -82,7 +82,7 @@ export default function Secciones({ onEntrar, onArriba }) {
   const raiz = useRevelar();
 
   return (
-    <div className="secciones" ref={raiz}>
+    <div className="secciones" id="como-funciona" ref={raiz}>
       {/* 1. Declaración. Abre con una frase, no con una imagen. */}
       <section className="bloque declaracion" data-revelar>
         <p className="declaracion-texto">

@@ -14,7 +14,7 @@
 
 export const imagenes = {
   "home-paisaje-ia": {
-    src: "/img/home-paisaje-ia.png",
+    src: "/img/home-paisaje-ia.webp",
     width: 1536,
     height: 1024,
     alt: "Ganado en un potrero con cercas, árboles y montañas al fondo",
