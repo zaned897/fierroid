@@ -11,6 +11,7 @@ Los agentes deben leer esto **antes** de implementar cambios no triviales.
 | Documento | Contenido |
 |-----------|-----------|
 | [`product-principles.md`](product-principles.md) | **Empieza aquí.** Elegancia sobre estado del arte, multi-idioma, entrega por etapas, causa raíz, diseño, LoRaWAN |
+| [`frontend-self-driven.md`](frontend-self-driven.md) | Desarrollo de frontend por ciclos pequeños, verificables y reanudables |
 | [`anti-vibe-coding.md`](anti-vibe-coding.md) | Consultar el grafo antes de escribir, contrato versionado, trabajo atómico, barreras de calidad |
 | [`engineering-rules.md`](engineering-rules.md) | Pilares: pragmatismo, robustez, escala, estándares industriales |
 | [`edge-reliability.md`](edge-reliability.md) | Que la RPi no falle: apagones, corrupción de SD, watchdog, reloj, OTA |
@@ -38,6 +39,7 @@ Ambos directorios son **espejos idénticos**. Al editar uno, sincronizar el otro
 
 ```bash
 rm -rf .claude/skills && cp -r .cursor/skills .claude/skills
+| [`fierro-frontend-self-driven`](../../.cursor/skills/fierro-frontend-self-driven/SKILL.md) | Implementación incremental desde una especificación aprobada |
 ```
 
 | Skill | Uso |
