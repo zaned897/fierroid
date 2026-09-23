@@ -7,6 +7,7 @@ Skills equivalentes, espejadas en `.cursor/skills/` (Cursor) y `.claude/skills/`
 | Skill | Cuándo |
 |-------|--------|
 | `fierro-engineering-rules` | Antes de cualquier cambio no trivial o decisión de diseño |
+| `fierro-frontend-self-driven` | Implementar frontend por ciclos pequeños desde una especificación aprobada |
 | `fierro-edge-reliability` | Device agent, storage, energía, systemd, deploy a RPi |
 | `fierro-hardware-boundary` | Drivers serial, RFID/báscula, PCB, gabinete, BOM |
 | `fierro-unblock` | En cuanto el desarrollo se estanca |
