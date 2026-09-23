@@ -9,7 +9,7 @@ Cada unidad se revisa y sube por separado a stage.
 | 0. Recursos | Inventario, generación, créditos y catálogo de imágenes | Terminada |
 | 1. Encabezado y portada | Marca, acceso, H1, acciones, paleta y adaptación móvil | Implementada; revisión visual manual pendiente |
 | 2. Vista de ejemplo | Tarjeta de Pesajes, paisaje WebP y rótulos de ejemplo | Integrada; revisión visual manual pendiente |
-| 3. Cómo funciona | Tres pasos y ancla como-funciona | Pendiente |
+| 3. Cómo funciona | Tres pasos y ancla como-funciona | Implementada; revisión visual manual pendiente |
 | 4. Beneficios | Durante el pesaje y Después de la jornada | Pendiente |
 | 5. Historial | Fotografía, gráfica y tabla accesible | Pendiente |
 | 6. Privacidad y FAQ | Banda de privacidad y acordeón accesible | Pendiente |
@@ -34,7 +34,9 @@ Resultado:
 - Paisaje convertido de PNG de 2.8 MB a WebP de aproximadamente 224 KB.
 - Enlace Saltar al contenido, focos visibles y controles de al menos 44 px.
 - Estilos limitados al home; Shell, login y panel privado no cambian.
-- Las secciones antiguas conservan temporalmente su tema oscuro.
+- La primera sección antigua fue sustituida por Cómo funciona con lista ordenada,
+  tres pasos canónicos y composición responsive.
+- Las demás secciones antiguas conservan temporalmente su tema.
 
 Validación:
 

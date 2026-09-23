@@ -1695,3 +1695,161 @@ button.home-entrar:focus-visible {
   border-radius: 0.45rem 0.45rem 0 0;
   transform: translateX(-50%);
 }
+/* --- Cómo funciona: docs/design/home/02-funcionamiento-beneficios.png --- */
+
+.como-funciona {
+  scroll-margin-top: 1rem;
+  padding-block: clamp(4.5rem, 8vw, 7rem);
+  border: 0;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(23, 101, 117, 0.32), transparent 24rem),
+    #143c2d;
+  color: #f7f8f3;
+}
+
+.como-funciona .bloque-cabeza {
+  max-width: 45rem;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+
+.como-funciona .seccion-etiqueta {
+  margin-bottom: 0.8rem;
+  color: #76c4d0;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.como-funciona h2 {
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.como-funciona .bloque-cabeza > p:last-child {
+  max-width: 34rem;
+  margin-inline: auto;
+  color: rgba(247, 248, 243, 0.74);
+}
+
+.como-funciona .diagrama-home {
+  max-width: 72rem;
+}
+
+.como-funciona .pasos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.como-funciona .paso {
+  position: relative;
+  display: block;
+  min-height: 15rem;
+  padding: 1.75rem;
+  border: 1px solid rgba(247, 248, 243, 0.18);
+  border-radius: 0.75rem;
+  background: rgba(247, 248, 243, 0.055);
+}
+
+.como-funciona .paso::after {
+  content: "→";
+  position: absolute;
+  top: 50%;
+  right: -0.78rem;
+  z-index: 1;
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #176575;
+  color: #fff;
+  font-size: 0.8rem;
+  transform: translateY(-50%);
+}
+
+.como-funciona .paso:last-child::after {
+  display: none;
+}
+
+.como-funciona .paso-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.como-funciona .paso-icono {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  place-items: center;
+  border: 1px solid rgba(118, 196, 208, 0.55);
+  border-radius: 50%;
+  background: rgba(23, 101, 117, 0.38);
+  color: #d9f5f8;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.como-funciona .paso-num {
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  color: rgba(247, 248, 243, 0.42);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+}
+
+.como-funciona .paso h3 {
+  margin-bottom: 0.65rem;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.como-funciona .paso p {
+  color: rgba(247, 248, 243, 0.72);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 760px) {
+  .como-funciona {
+    padding-block: 4rem;
+  }
+
+  .como-funciona .bloque-cabeza {
+    text-align: left;
+  }
+
+  .como-funciona .bloque-cabeza > p:last-child {
+    margin-inline: 0;
+  }
+
+  .como-funciona .pasos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .como-funciona .paso {
+    min-height: 0;
+    padding: 1.4rem;
+  }
+
+  .como-funciona .paso-cabecera {
+    margin-bottom: 1.5rem;
+  }
+
+  .como-funciona .paso::after {
+    top: auto;
+    right: auto;
+    bottom: -0.8rem;
+    left: 2.25rem;
+    transform: rotate(90deg);
+  }
+}
