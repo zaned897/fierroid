@@ -1177,3 +1177,183 @@ button.contraste:hover {
   height: 20px;
   accent-color: var(--accent);
 }
+
+/* --- Home público: encabezado y portada -------------------------------- */
+
+.home-publica {
+  --home-bosque: #143c2d;
+  --home-marfil: #f7f8f3;
+  --home-petroleo: #176575;
+  --home-texto: #102b22;
+  --home-muted: #52645d;
+  min-height: 100vh;
+  background: var(--home-marfil);
+  color: var(--home-texto);
+}
+
+.home-saltar {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 20;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.35rem;
+  background: var(--home-bosque);
+  color: #fff;
+  transform: translateY(-180%);
+}
+
+.home-saltar:focus {
+  transform: none;
+}
+
+.home-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(100% - 3rem, 72rem);
+  min-height: 4.75rem;
+  margin: 0 auto;
+}
+
+.home-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--home-bosque);
+  font-size: 1.1rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.home-marca .marca-fierro {
+  background-color: currentColor;
+}
+
+button.home-entrar {
+  min-height: 44px;
+  border-color: var(--home-petroleo);
+  background: var(--home-petroleo);
+  color: #fff;
+  font-weight: 650;
+}
+
+button.home-entrar:hover {
+  border-color: var(--home-bosque);
+  background: var(--home-bosque);
+  color: #fff;
+}
+
+.home-marca:focus-visible,
+button.home-entrar:focus-visible {
+  outline: 3px solid var(--home-petroleo);
+  outline-offset: 3px;
+}
+
+.home-portada {
+  display: grid;
+  align-items: center;
+  min-height: min(38rem, calc(100vh - 4.75rem));
+  padding: clamp(3.5rem, 9vw, 7rem) max(1.5rem, calc((100% - 72rem) / 2));
+  border-top: 1px solid rgba(20, 60, 45, 0.12);
+  background:
+    radial-gradient(circle at 85% 20%, rgba(23, 101, 117, 0.12), transparent 28rem),
+    var(--home-marfil);
+}
+
+.home-portada-contenido {
+  max-width: 42rem;
+}
+
+.home-lema {
+  margin: 0 0 1rem;
+  color: var(--home-petroleo);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-portada h1 {
+  max-width: 13ch;
+  margin: 0;
+  color: var(--home-bosque);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 680;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.home-descripcion {
+  max-width: 37rem;
+  margin: 1.5rem 0 0;
+  color: var(--home-muted);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.6;
+}
+
+.home-acciones {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.home-acciones .home-entrar {
+  min-width: 10.5rem;
+}
+
+.home-nota {
+  margin: 0.8rem 0 0;
+  color: var(--home-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 600px) {
+  .home-encabezado {
+    width: min(100% - 2rem, 72rem);
+    min-height: 4.25rem;
+  }
+
+  .home-marca {
+    gap: 0.45rem;
+    font-size: 0.95rem;
+  }
+
+  .home-entrar-cabecera {
+    padding-inline: 0.7rem;
+  }
+
+  .home-portada {
+    min-height: 0;
+    padding: 4rem 1rem 4.5rem;
+  }
+
+  .home-portada h1 {
+    font-size: clamp(2.4rem, 13vw, 3.6rem);
+  }
+
+  .home-acciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-acciones .home-entrar {
+    width: 100%;
+  }
+}
+/* Las secciones antiguas conservan temporalmente su tema hasta ser sustituidas
+   una por una. Evita texto claro sobre el fondo marfil de la nueva portada. */
+.home-publica .secciones {
+  --bg0: #142018;
+  --ink: #f2efe6;
+  --muted: #a8b5a8;
+  --accent: #c4a35a;
+  --line: rgba(242, 239, 230, 0.12);
+  --danger: #e07a5f;
+  background: var(--bg0);
+  color: var(--ink);
+}
