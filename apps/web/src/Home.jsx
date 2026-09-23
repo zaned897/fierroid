@@ -19,7 +19,8 @@ export default function Home({ onEntrar }) {
           <a href="#como-funciona">Cómo funciona</a>
         </nav>
         <button type="button" className="home-entrar home-entrar-cabecera" onClick={onEntrar}>
-          Iniciar sesión
+          <span className="home-entrar-largo">Iniciar sesión</span>
+          <span className="home-entrar-corto">Entrar</span>
         </button>
       </header>
 

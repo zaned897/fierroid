@@ -1212,7 +1212,7 @@ button.contraste:hover {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  width: min(100% - 3rem, 72rem);
+  width: min(calc(100% - 3rem), 72rem);
   min-height: 4.75rem;
   margin: 0 auto;
 }
@@ -1314,7 +1314,7 @@ button.home-entrar:focus-visible {
 
 @media (max-width: 600px) {
   .home-encabezado {
-    width: min(100% - 2rem, 72rem);
+    width: min(calc(100% - 2rem), 72rem);
     min-height: 4.25rem;
   }
 
@@ -1400,7 +1400,7 @@ button.home-entrar:focus-visible {
   grid-template-columns: minmax(0, 0.9fr) minmax(28rem, 1.15fr);
   align-items: center;
   gap: clamp(2.5rem, 6vw, 5.5rem);
-  width: min(100% - 3rem, 72rem);
+  width: min(calc(100% - 3rem), 72rem);
   margin: 0 auto;
   padding: clamp(4rem, 8vw, 7rem) 0 2.5rem;
 }
@@ -1592,7 +1592,7 @@ button.home-entrar:focus-visible {
 
 .home-paisaje {
   position: relative;
-  width: min(100% - 3rem, 76rem);
+  width: min(calc(100% - 3rem), 76rem);
   height: clamp(12rem, 22vw, 18rem);
   margin: 0 auto;
   overflow: hidden;
@@ -1634,7 +1634,7 @@ button.home-entrar:focus-visible {
   .home-portada-principal {
     grid-template-columns: minmax(0, 1fr);
     gap: 2rem;
-    width: min(100% - 2rem, 34rem);
+    width: min(calc(100% - 2rem), 34rem);
     padding: 3rem 0 2.5rem;
   }
 
@@ -1851,5 +1851,216 @@ button.home-entrar:focus-visible {
     bottom: -0.8rem;
     left: 2.25rem;
     transform: rotate(90deg);
+  }
+}
+/* Corrección fiel a la lámina 02: pasos abiertos sobre fotografía, no cards. */
+.como-funciona {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(10, 68, 49, 0.98) 0%, rgba(10, 68, 49, 0.93) 56%, rgba(10, 68, 49, 0.48) 100%),
+    url("/img/home-hero.webp") right 42% / cover no-repeat;
+}
+
+.como-funciona::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(5, 38, 27, 0.06), rgba(5, 38, 27, 0.3));
+  pointer-events: none;
+}
+
+.como-funciona .bloque-cabeza {
+  width: min(100%, 72rem);
+  max-width: none;
+  margin-inline: auto;
+  text-align: left;
+}
+
+.como-funciona .bloque-cabeza > p:last-child {
+  display: none;
+}
+
+.como-funciona .diagrama-home {
+  width: min(78%, 58rem);
+  max-width: none;
+  margin: 0 auto 0 max(0px, calc((100% - 72rem) / 2));
+}
+
+.como-funciona .pasos {
+  gap: 0;
+}
+
+.como-funciona .paso {
+  min-height: 0;
+  padding: 0 1.4rem 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.como-funciona .paso::after {
+  content: "";
+  top: 1.35rem;
+  right: 0.7rem;
+  width: calc(100% - 4.2rem);
+  height: 1px;
+  border-radius: 0;
+  background: rgba(183, 227, 232, 0.7);
+  transform: translateX(50%);
+}
+
+.como-funciona .paso-senal {
+  position: relative;
+  display: flex;
+  min-height: 7.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+  margin-bottom: 0.9rem;
+}
+
+.como-funciona .paso-num {
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #b7e3e8;
+  color: #143c2d;
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.como-funciona .paso-icono {
+  width: 3rem;
+  height: 3rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 0.82rem;
+}
+
+.como-funciona .paso h3 {
+  margin-bottom: 0.45rem;
+  font-size: 1.05rem;
+}
+
+.como-funciona .paso p {
+  max-width: 14rem;
+  margin-inline: auto;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 760px) {
+  .como-funciona {
+    background:
+      linear-gradient(rgba(10, 68, 49, 0.94), rgba(10, 68, 49, 0.96)),
+      url("/img/home-hero.webp") 62% center / cover no-repeat;
+  }
+
+  .como-funciona .diagrama-home {
+    width: 100%;
+    margin: 0;
+  }
+
+  .como-funciona .pasos {
+    gap: 0;
+  }
+
+  .como-funciona .paso {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0 0 2rem;
+    text-align: left;
+  }
+
+  .como-funciona .paso::after {
+    top: 2.7rem;
+    right: auto;
+    bottom: auto;
+    left: 1.3rem;
+    width: 1px;
+    height: calc(100% - 1.8rem);
+    transform: none;
+  }
+
+  .como-funciona .paso-senal {
+    min-height: 0;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  .como-funciona .paso-num {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .como-funciona .paso-icono {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .como-funciona .paso-texto {
+    padding-top: 3.15rem;
+  }
+
+  .como-funciona .paso h3 {
+    font-size: 1rem;
+  }
+
+  .como-funciona .paso p {
+    max-width: 18rem;
+    margin-inline: 0;
+  }
+}
+.home-entrar-corto {
+  display: none;
+}
+
+.home-demo,
+.home-demo-marco,
+.home-demo-panel {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.home-demo-fila {
+  grid-template-columns: minmax(0, 1.35fr) minmax(4rem, 0.8fr) minmax(3rem, 0.6fr);
+}
+
+@media (max-width: 760px) {
+  .home-entrar-largo {
+    display: none;
+  }
+
+  .home-entrar-corto {
+    display: inline;
+  }
+
+  .home-entrar-cabecera {
+    flex: none;
+    min-width: 5.4rem;
+  }
+
+  .home-demo-ultimo {
+    gap: 0.5rem;
+  }
+
+  .home-demo-ultimo time {
+    padding-left: 0.55rem;
+    font-size: 0.68rem;
+  }
+
+  .home-demo-fila {
+    gap: 0.3rem;
+    font-size: 0.62rem;
   }
 }

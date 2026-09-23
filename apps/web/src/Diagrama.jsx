@@ -22,14 +22,14 @@ export default function Diagrama() {
       <ol className="pasos">
         {PASOS.map((paso, indice) => (
           <li key={paso.titulo} className="paso">
-            <div className="paso-cabecera">
-              <span className="paso-icono" aria-hidden="true">
-                {paso.icono}
-              </span>
-              <span className="paso-num">0{indice + 1}</span>
+            <div className="paso-senal" aria-hidden="true">
+              <span className="paso-num">{indice + 1}</span>
+              <span className="paso-icono">{paso.icono}</span>
             </div>
-            <h3>{paso.titulo}</h3>
-            <p>{paso.texto}</p>
+            <div className="paso-texto">
+              <h3>{paso.titulo}</h3>
+              <p>{paso.texto}</p>
+            </div>
           </li>
         ))}
       </ol>
