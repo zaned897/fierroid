@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-23",
+  "tool": "image_gen (herramienta integrada)",
+  "prompts": [
+    {
+      "asset": "home-paisaje-ia",
+      "prompt": "Use case: photorealistic-natural. Asset type: website homepage landscape photograph for FIERRO cattle weighing application. Generate a single natural editorial photograph, wide landscape 1536x1024. A modest working cattle ranch in rural Mexico, green-gray foothills and scattered oak-like trees, a simple weathered fence in lower third and a small group of healthy cattle in a paddock. Animals predominantly lower half, clear unobstructed pale overcast sky upper third, peaceful practical rural atmosphere. Composition should tolerate a wide 3:1 horizontal crop centered at 65 percent height, no close foreground subjects cut at edges. Natural neutral daylight, forest greens, cool blue-gray distance, no golden-hour ochre or brown color grade. Realistic anatomy and fencing, unbranded contemporary photography, no text, logo, interface, watermark, people or invented electronic hardware. This is illustrative scenery not documentary evidence of a real Fierro installation."
+    },
+    {
+      "asset": "home-corral-ia",
+      "prompt": "Use case: photorealistic-natural. Asset type: FIERRO homepage 'Durante el pesaje' benefit image. Single natural editorial photograph landscape 1536x1024. Contemporary modest Mexican cattle handling corral, calm healthy light gray Brahman-cross cow standing naturally in a straight steel handling race with sensible simple gate construction. One adult ranch worker in plain dark petroleum-blue work shirt and jeans standing safely OUTSIDE the rails, three-quarter back view, observing the animal without touching it. Show no weighing readout or branded electronics; image depicts handling context, not proof of installed weighing hardware. Unreadable plain small livestock ear tag acceptable. Focal animal and worker within central 70 percent, suitable 4:3 crop. Neutral soft daylight, forest green surroundings and cool gray metal, real dust and ordinary materials, respectful unposed working atmosphere, anatomically correct animal and person. No phone pointed at animal, no handheld RFID claims, no text logos watermarks, no golden brown cinematic tint, no injuries. Match a clean ivory/forest green/petroleum blue site."
+    },
+    {
+      "asset": "home-consulta-ia",
+      "prompt": "Use case: photorealistic-natural. Asset type: FIERRO homepage 'Después de la jornada' benefit image. Single editorial realistic photograph landscape 1536x1024. An adult ranch worker wearing plain petroleum-blue long-sleeved work shirt, sitting quietly on a shaded simple ranch porch after work, holding a smartphone naturally and looking down at it. Medium over-the-shoulder side view, PHONE SCREEN FACING AWAY FROM CAMERA so no screen content or invented UI is visible; show only phone back and natural grip. Fence and a few cattle softly blurred well away in background. Person and phone center frame within central 70 percent, useful for 4:3 responsive crop. Relaxed genuine practical moment, normal human hands and proportions, soft neutral daylight, cool greens, understated colors, no warm brown/gold treatment. No logos text watermark, no pretend RFID scanning, no equipment brand, no success metric or staged testimonial. Illustrative scene not actual customer photograph."
+    }
+  ]
+}
