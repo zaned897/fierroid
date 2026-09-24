@@ -2,6 +2,15 @@
 
 ## Unidades de implementación
 
+### 2026-09-24 — Transición del paisaje de portada
+
+Se aumentó la altura de la franja para suavizar el recorte y se añadió un
+fundido inferior al marfil, seguido de espacio antes de Cómo funciona.
+El crédito permanece por encima del fundido. En móvil se conserva la foto
+oculta, según el diseño existente. Cambio exclusivamente CSS.
+Revisión visual a 768 y 1440 px; comprobación de anchos 375, 390, 768 y 1440 px
+sin desbordamiento. ESLint y build de Vite correctos.
+
 Cada unidad se revisa y sube por separado a stage.
 
 | Unidad | Alcance | Estado |

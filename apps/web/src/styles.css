@@ -1593,10 +1593,25 @@ button.home-entrar:focus-visible {
 .home-paisaje {
   position: relative;
   width: min(calc(100% - 3rem), 76rem);
-  height: clamp(12rem, 22vw, 18rem);
-  margin: 0 auto;
+  height: clamp(18rem, 30vw, 25rem);
+  margin: 0 auto clamp(2rem, 4vw, 3.5rem);
   overflow: hidden;
-  border-radius: 0.75rem 0.75rem 0 0;
+  border-radius: 0.75rem;
+}
+
+/* El paisaje se funde con la portada antes de la siguiente banda. */
+.home-paisaje::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 65%,
+    rgba(247, 248, 243, 0.2) 78%,
+    rgba(247, 248, 243, 0.75) 91%,
+    var(--home-marfil) 100%
+  );
 }
 
 .home-paisaje img {
@@ -1609,6 +1624,7 @@ button.home-entrar:focus-visible {
 
 .home-paisaje figcaption {
   position: absolute;
+  z-index: 1;
   right: 0.75rem;
   bottom: 0.6rem;
   padding: 0.2rem 0.4rem;
