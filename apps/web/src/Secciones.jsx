@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 import Beneficios from "./Beneficios.jsx";
 import Diagrama from "./Diagrama.jsx";
-import Foto from "./Foto.jsx";
+import PreguntasAcceso from "./PreguntasAcceso.jsx";
 import GraficaPeso from "./GraficaPeso.jsx";
 
 /** Si el observador no ha revelado nada para entonces, se revela todo. */
@@ -72,7 +72,7 @@ function useRevelar() {
 }
 
 /** Secciones del home, sustituidas de forma incremental según la guía. */
-export default function Secciones({ onEntrar, onArriba }) {
+export default function Secciones({ onEntrar }) {
   const raiz = useRevelar();
 
   return (
@@ -108,46 +108,7 @@ export default function Secciones({ onEntrar, onArriba }) {
         <GraficaPeso />
       </section>
 
-      {/* 4. Contraste invertido. Es el golpe de la página. */}
-      <section className="bloque banda-clara" data-revelar>
-        <div className="bloque-cabeza">
-          <h2>Cada rancho ve lo suyo</h2>
-          <p>
-            Organizaciones, ranchos y estaciones. Quien entra ve el hato de su
-            organización y nada más — el aislamiento no es una vista filtrada,
-            es una condición en cada consulta.
-          </p>
-        </div>
-
-        {/* Tira con scroll en vez de carrusel: mismo recorrido, sin quitarle
-            el control a quien lee ni romper el teclado. */}
-        <div className="tira" tabIndex={0} role="group" aria-label="El trabajo de rancho">
-          <Foto nombre="seccion-corral" />
-          <Foto nombre="seccion-manga" />
-          <Foto nombre="seccion-arete" />
-          <Foto nombre="seccion-hato" />
-        </div>
-      </section>
-
-      {/* 5. Cierre a sangre. La única foto que llega a 1600px. */}
-      <section className="bloque cierre-hero" data-revelar>
-        <div className="cierre-contenido">
-          <h2>El acceso es por invitación</h2>
-          <p>
-            No hay registro abierto. Damos de alta los correos de cada rancho uno
-            por uno, porque cada cuenta ve datos de un negocio real y preferimos
-            saber de quién es cada una.
-          </p>
-          <div className="cierre-acciones">
-            <button type="button" className="contraste" onClick={onEntrar}>
-              Entrar
-            </button>
-            <button type="button" className="volver" onClick={onArriba}>
-              ↑ Volver arriba
-            </button>
-          </div>
-        </div>
-      </section>
+      <PreguntasAcceso onEntrar={onEntrar} />
     </div>
   );
 }

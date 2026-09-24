@@ -1,10 +1,9 @@
 import Marca from "./Marca.jsx";
+import { PieHome } from "./PreguntasAcceso.jsx";
 import Secciones from "./Secciones.jsx";
 import VistaPesajesDemo from "./VistaPesajesDemo.jsx";
 
 export default function Home({ onEntrar }) {
-  const alInicio = () => window.scrollTo({ top: 0, behavior: "auto" });
-
   return (
     <div className="home-publica">
       <a className="home-saltar" href="#contenido-home">
@@ -18,6 +17,7 @@ export default function Home({ onEntrar }) {
         <nav className="home-navegacion" aria-label="Navegación principal">
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
+          <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
         </nav>
         <button type="button" className="home-entrar home-entrar-cabecera" onClick={onEntrar}>
           <span className="home-entrar-largo">Iniciar sesión</span>
@@ -61,8 +61,9 @@ export default function Home({ onEntrar }) {
             <figcaption>Imagen ilustrativa generada con IA</figcaption>
           </figure>
         </section>
-        <Secciones onEntrar={onEntrar} onArriba={alInicio} />
+        <Secciones onEntrar={onEntrar} />
       </main>
+      <PieHome onEntrar={onEntrar} />
     </div>
   );
 }
