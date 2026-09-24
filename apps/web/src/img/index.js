@@ -13,6 +13,16 @@
  */
 
 export const imagenes = {
+  "home-corral-v2-ia": {
+    src: "/img/home-corral-v2-ia.webp",
+    width: 1448,
+    height: 1086,
+    alt: "Ganadero consultando su celular junto a un bovino con arete en la manga de manejo",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
   "home-paisaje-ia": {
     src: "/img/home-paisaje-ia.webp",
     width: 1536,

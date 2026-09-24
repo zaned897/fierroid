@@ -1,15 +1,16 @@
 import Foto from "./Foto.jsx";
+import TelefonoConsulta from "./TelefonoConsulta.jsx";
 
 const BENEFICIOS = [
   {
     titulo: "Durante el pesaje",
     texto: "Relaciona el animal con su peso en un solo registro.",
-    imagen: "home-corral-ia",
+    imagen: "home-corral-v2-ia",
   },
   {
     titulo: "Después de la jornada",
     texto: "Consulta los pesajes y el historial de cada animal.",
-    imagen: "home-consulta-ia",
+    telefono: true,
   },
 ];
 
@@ -26,11 +27,11 @@ export default function Beneficios() {
         <div className="home-beneficios-grid">
           {BENEFICIOS.map((beneficio) => (
             <article className="home-beneficio" key={beneficio.titulo}>
-              <Foto
+              {beneficio.telefono ? <TelefonoConsulta /> : <Foto
                 nombre={beneficio.imagen}
                 className="home-beneficio-foto"
                 pie="Imagen ilustrativa generada con IA"
-              />
+              />}
               <div className="home-beneficio-texto">
                 <h3>{beneficio.titulo}</h3>
                 <p>{beneficio.texto}</p>

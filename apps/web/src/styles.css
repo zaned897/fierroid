@@ -1860,7 +1860,7 @@ button.home-entrar:focus-visible {
   overflow: hidden;
   background:
     linear-gradient(90deg, rgba(10, 68, 49, 0.98) 0%, rgba(10, 68, 49, 0.93) 56%, rgba(10, 68, 49, 0.48) 100%),
-    url("/img/home-hero.webp") right 42% / cover no-repeat;
+    url("/img/home-corral-v2-ia.webp") right 42% / cover no-repeat;
 }
 
 .como-funciona::after {
@@ -1877,6 +1877,17 @@ button.home-entrar:focus-visible {
   max-width: none;
   margin-inline: auto;
   text-align: left;
+}
+
+.como-funciona .bloque-cabeza h2 {
+  max-width: 42rem;
+  font-weight: 700;
+}
+
+.como-funciona .paso-icono svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .como-funciona .bloque-cabeza > p:last-child {
@@ -1962,7 +1973,7 @@ button.home-entrar:focus-visible {
   .como-funciona {
     background:
       linear-gradient(rgba(10, 68, 49, 0.94), rgba(10, 68, 49, 0.96)),
-      url("/img/home-hero.webp") 62% center / cover no-repeat;
+      url("/img/home-corral-v2-ia.webp") 72% center / cover no-repeat;
   }
 
   .como-funciona .diagrama-home {
@@ -1976,8 +1987,10 @@ button.home-entrar:focus-visible {
 
   .como-funciona .paso {
     display: grid;
-    grid-template-columns: 4rem minmax(0, 1fr);
-    gap: 1rem;
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 1.25rem;
+    row-gap: 0.7rem;
     padding: 0 0 2rem;
     text-align: left;
   }
@@ -1993,23 +2006,27 @@ button.home-entrar:focus-visible {
   }
 
   .como-funciona .paso-senal {
-    min-height: 0;
-    gap: 0.75rem;
-    margin: 0;
+    display: contents;
   }
 
   .como-funciona .paso-num {
+    grid-column: 1;
+    grid-row: 1;
     width: 2.6rem;
     height: 2.6rem;
   }
 
   .como-funciona .paso-icono {
+    grid-column: 2;
+    grid-row: 1;
     width: 2.6rem;
     height: 2.6rem;
   }
 
   .como-funciona .paso-texto {
-    padding-top: 3.15rem;
+    grid-column: 2;
+    grid-row: 2;
+    padding-top: 0;
   }
 
   .como-funciona .paso h3 {
@@ -2087,6 +2104,7 @@ button.home-entrar:focus-visible {
   font-size: clamp(2rem, 4vw, 3.2rem);
   letter-spacing: -0.035em;
   line-height: 1.1;
+  font-weight: 700;
 }
 
 .home-beneficios-grid {
@@ -2100,7 +2118,7 @@ button.home-entrar:focus-visible {
   border: 1px solid rgba(20, 60, 45, 0.14);
   border-radius: 0.7rem;
   background: #fff;
-  box-shadow: 0 0.8rem 2.2rem rgba(20, 60, 45, 0.06);
+  min-width: 0;
 }
 
 .home-beneficio-foto {
@@ -2154,8 +2172,9 @@ button.home-entrar:focus-visible {
     padding-block: 4rem;
   }
 
-  .home-beneficios h2 {
-    font-size: clamp(2rem, 10vw, 2.7rem);
+  .home-beneficios h2,
+  .como-funciona .bloque-cabeza h2 {
+    font-size: clamp(1.7rem, 6.5vw, 2.2rem);
   }
 
   .home-beneficios-grid {
@@ -2166,4 +2185,75 @@ button.home-entrar:focus-visible {
   .home-beneficio-texto {
     padding: 1rem 1rem 1.25rem;
   }
+}
+
+/* Vista del teléfono construida con texto legible, sin botones ficticios. */
+.home-telefono-escena {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  margin: 0;
+  overflow: hidden;
+  background: #a1aaa0;
+  container-type: inline-size;
+}
+
+.home-telefono-escena::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  z-index: -1;
+  background: url("/img/home-paisaje-ia.webp") center 70% / cover;
+  filter: blur(4px) brightness(0.85);
+}
+
+.home-telefono {
+  width: 49%;
+  align-self: start;
+  margin-block: 9% 0;
+  border: 6px solid #17201e;
+  border-radius: 1.6rem;
+  overflow: hidden;
+  background: #f7f8f3;
+  box-shadow: 0.7rem 1rem 1.6rem #0006;
+  transform: rotate(9deg);
+  transform-origin: center top;
+  font-size: clamp(0.65rem, 2.4cqi, 0.88rem);
+}
+
+.home-telefono-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 1em 0.8em;
+  background: #143c2d;
+  color: #fff;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.home-telefono-pantalla { padding: 1em; }
+.home-telefono-marca .marca-fierro { background-color: currentColor; }
+.home-telefono-rancho { display: block; color: #52645d; font-size: 0.85em; }
+.home-telefono-titulo { display: block; margin-block: 0.4em 0.65em; font-size: 1.5em; }
+.home-telefono-peso { display: grid; gap: 0.35em; padding: 0.8em; border: 1px solid #dce3df; border-radius: 0.5em; background: #fff; }
+.home-telefono-peso strong { font-size: 2em; letter-spacing: -0.05em; }
+.home-telefono-peso span:last-child { display: flex; align-items: center; gap: 0.3em; font-size: 0.85em; }
+.home-telefono-subtitulo { display: block; margin-block: 1em 0.5em; }
+.home-telefono-lectura { display: flex; justify-content: space-between; gap: 0.4em; padding-block: 0.65em; border-top: 1px solid #dce3df; font-size: 0.85em; }
+
+.home-telefono-escena figcaption {
+  position: absolute;
+  bottom: 0.55rem;
+  right: 0.6rem;
+  left: 0.6rem;
+  width: fit-content;
+  margin-left: auto;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  background: rgba(8, 31, 23, 0.85);
+  color: #fff;
+  font-size: 0.65rem;
 }

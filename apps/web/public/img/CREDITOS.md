@@ -2,8 +2,16 @@
 
 ## Recursos generados para el nuevo home (2026-09-23)
 
+Revisión de la lámina 02: `home-corral-v2-ia.webp`, 1448 × 1086, generado con
+OpenAI image_gen y optimizado a WebP. Uso: tarjeta Durante el pesaje y fondo de
+Cómo funciona. Ilustración, no fotografía documental. Prompt y contexto en
+[corral-v2-prompt.md](../../../../docs/design/home/corral-v2-prompt.md).
+El teléfono de la segunda tarjeta es HTML con datos de ejemplo y reutiliza el
+paisaje generado como fondo; no es una captura de datos de clientes.
+
 | Archivo | Origen | Dimensiones | Uso |
 |---|---|---|---|
+| `home-corral-v2-ia.webp` | OpenAI image_gen, revisión para Fierro | 1448 × 1086 | Corral y banda de pasos |
 | `home-paisaje-ia.png` | OpenAI image_gen, generación para Fierro | 1536 × 1024 | Paisaje de portada |
 | `home-corral-ia.png` | OpenAI image_gen, generación para Fierro | 1536 × 1024 | Contexto de manejo en corral |
 | `home-consulta-ia.png` | OpenAI image_gen, generación para Fierro | 1536 × 1024 | Consulta del celular |

@@ -56,5 +56,18 @@ Validación:
 
 ## Siguiente unidad recomendada
 
+### Corrección visual posterior a f72029b
+
+Se corrigieron los iconos de los tres pasos, la fotografía de corral, la
+composición del teléfono y la jerarquía móvil. Véase
+[revisión de lámina 02](design/home/revision-02.md).
+Chrome comprobado a 375, 390, 768 y 1440 px, sin desbordamiento de página,
+con fotografía cargada y sin excepciones JavaScript. No equivale a aceptación
+visual del usuario ni a completar Historial.
+
+`pnpm lint/build` siguen bloqueados por
+`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`. ESLint y Vite pasaron ejecutados
+desde `apps/web/node_modules`, sin reinstalar dependencias.
+
 Unidad 5: sustituir la sección actual de datos por Historial, con fotografía,
 gráfica y tabla accesible según la lámina de referencia correspondiente.

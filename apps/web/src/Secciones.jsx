@@ -84,9 +84,7 @@ export default function Secciones({ onEntrar, onArriba }) {
         data-revelar
       >
         <div className="bloque-cabeza">
-          <p className="seccion-etiqueta">Cómo funciona</p>
           <h2 id="como-funciona-titulo">Del pesaje al historial, en tres pasos</h2>
-          <p>Un flujo sencillo para registrar en el corral y consultar después.</p>
         </div>
         <Diagrama />
       </section>

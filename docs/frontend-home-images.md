@@ -53,6 +53,16 @@ sin CLI ni API externa configurada. Los prompts exactos están en
 
 ## Verificación y pendientes
 
+### Revisión visual de la lámina 02
+
+`home-corral-v2-ia.webp` (1448 × 1086) sustituye el encuadre lejano en
+Beneficios y se reutiliza en el fondo de los pasos. El recurso se generó con
+la herramienta integrada image_gen; su prompt completo está en
+`design/home/corral-v2-prompt.md`. Los originales anteriores se conservan.
+La segunda tarjeta ahora usa `TelefonoConsulta.jsx`, una vista HTML estática
+con fondo de paisaje ilustrativo, en lugar de la foto de consulta lejana.
+Ambas tarjetas mantienen la proporción 4:3 y la procedencia visible.
+
 Se inspeccionaron visualmente las tres salidas: composición, anatomía general,
 ausencia de texto/marcas añadidas y pertinencia con la sección. No se realizó
 revisión responsive en navegador porque la página no fue modificada.
