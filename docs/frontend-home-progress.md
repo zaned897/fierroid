@@ -2,6 +2,22 @@
 
 ## Unidades de implementación
 
+### 2026-09-24 — Animación de la gráfica existente
+
+La curva se dibuja progresivamente al entrar en pantalla, seguida de puntos
+escalonados, un área tenue y un destello único en el último pesaje.
+Duración total aproximada: 2.5 s. No se repite al volver a la sección.
+Los 17 datos, la marca inestable y la tabla permanecen sin cambios.
+Se usa la API nativa de animaciones; el estado estático mantiene todos los datos
+visibles si no hay soporte. Movimiento reducido evita la animación y, si se
+activa durante ella, cancela los efectos y muestra el resultado completo.
+
+Verificado con Chrome a 375, 390, 768 y 1440 px: animación en progreso y final,
+sin repetición ni desbordamiento; cambio de preferencia de movimiento en vivo.
+ESLint y build de Vite correctos; ninguna excepción JavaScript.
+Este ajuste anima la gráfica existente; el rediseño completo de Historial
+según la lámina 02 continúa pendiente.
+
 ### 2026-09-24 — Transición del paisaje de portada
 
 Se aumentó la altura de la franja para suavizar el recorte y se añadió un
