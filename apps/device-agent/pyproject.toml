@@ -16,5 +16,8 @@ dependencies = [
 [project.scripts]
 fierro-device = "fierro_device.main:main"
 
+[project.optional-dependencies]
+bench = ["python-dotenv[cli]>=1.0,<2"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
