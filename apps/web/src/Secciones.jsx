@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import Beneficios from "./Beneficios.jsx";
 import Diagrama from "./Diagrama.jsx";
 import Foto from "./Foto.jsx";
 import GraficaPeso from "./GraficaPeso.jsx";
@@ -70,40 +71,25 @@ function useRevelar() {
   return raiz;
 }
 
-/**
- * Cinco secciones, cinco registros distintos.
- *
- * Antes eran el mismo bloque cinco veces —foto a un lado, texto al otro, misma
- * altura— y la página se leía como una lista. Ahora ninguna repite el patrón de
- * la anterior: declaración, diagrama, dato, contraste invertido, y una a sangre
- * para cerrar.
- */
+/** Secciones del home, sustituidas de forma incremental según la guía. */
 export default function Secciones({ onEntrar, onArriba }) {
   const raiz = useRevelar();
 
   return (
     <div className="secciones" ref={raiz}>
-      {/* 1. Declaración. Abre con una frase, no con una imagen. */}
-      <section className="bloque declaracion" data-revelar>
-        <p className="declaracion-texto">
-          El peso se apunta a mano, el arete se lee mal, la hoja se traspapela.
-          Cuando alguien pregunta cuánto pesaba ese animal hace tres meses, la
-          respuesta es un cálculo de memoria.
-        </p>
-      </section>
-
-      {/* 2. Diagrama sobre banda más oscura. */}
-      <section className="bloque banda-oscura" data-revelar>
+      <section
+        className="bloque banda-oscura como-funciona"
+        id="como-funciona"
+        aria-labelledby="como-funciona-titulo"
+        data-revelar
+      >
         <div className="bloque-cabeza">
-          <h2>Sigue funcionando sin señal</h2>
-          <p>
-            Es lo que separa a Fierro de una hoja de cálculo. La estación no
-            necesita internet para pesar: lo necesita para <em>contarlo</em>, y
-            eso puede esperar.
-          </p>
+          <h2 id="como-funciona-titulo">Del pesaje al historial, en tres pasos</h2>
         </div>
         <Diagrama />
       </section>
+
+      <Beneficios />
 
       {/* 3. Dato. La gráfica manda y el texto la acompaña. */}
       <section className="bloque dato" data-revelar>

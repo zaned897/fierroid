@@ -13,6 +13,46 @@
  */
 
 export const imagenes = {
+  "home-corral-v2-ia": {
+    src: "/img/home-corral-v2-ia.webp",
+    width: 1448,
+    height: 1086,
+    alt: "Ganadero consultando su celular junto a un bovino con arete en la manga de manejo",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
+  "home-paisaje-ia": {
+    src: "/img/home-paisaje-ia.webp",
+    width: 1536,
+    height: 1024,
+    alt: "Ganado en un potrero con cercas, árboles y montañas al fondo",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
+  "home-corral-ia": {
+    src: "/img/home-corral-ia.webp",
+    width: 1536,
+    height: 1024,
+    alt: "Una persona observa al ganado desde fuera de la manga de manejo",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
+  "home-consulta-ia": {
+    src: "/img/home-consulta-ia.webp",
+    width: 1536,
+    height: 1024,
+    alt: "Una persona consulta su celular en un porche junto al corral",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
   "home-hero": {
     src: "/img/home-hero.webp",
     width: 1600,

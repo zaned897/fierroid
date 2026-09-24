@@ -18,6 +18,9 @@ El rediseño funcional de Pesajes está en [frontend-pesajes.md](frontend-pesaje
 
 ## 2. Referencias visuales y autoridad
 
+Recursos preparados para la implementación: [inventario de imágenes](frontend-home-images.md),
+con originales, procedencia, textos alternativos y recomendaciones de integración.
+
 Mockups versionados junto a esta guía:
 
 1. [Portada con azul petróleo](design/home/01-portada.png).
