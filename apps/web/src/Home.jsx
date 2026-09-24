@@ -17,6 +17,7 @@ export default function Home({ onEntrar }) {
         </a>
         <nav className="home-navegacion" aria-label="Navegación principal">
           <a href="#como-funciona">Cómo funciona</a>
+          <a href="#beneficios">Beneficios</a>
         </nav>
         <button type="button" className="home-entrar home-entrar-cabecera" onClick={onEntrar}>
           <span className="home-entrar-largo">Iniciar sesión</span>

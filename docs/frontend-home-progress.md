@@ -10,15 +10,15 @@ Cada unidad se revisa y sube por separado a stage.
 | 1. Encabezado y portada | Marca, acceso, H1, acciones, paleta y adaptación móvil | Implementada; revisión visual manual pendiente |
 | 2. Vista de ejemplo | Tarjeta de Pesajes, paisaje WebP y rótulos de ejemplo | Integrada; revisión visual manual pendiente |
 | 3. Cómo funciona | Tres pasos y ancla como-funciona | Implementada; revisión visual manual pendiente |
-| 4. Beneficios | Durante el pesaje y Después de la jornada | Pendiente |
+| 4. Beneficios | Durante el pesaje y Después de la jornada | Implementada; revisión visual manual pendiente |
 | 5. Historial | Fotografía, gráfica y tabla accesible | Pendiente |
 | 6. Privacidad y FAQ | Banda de privacidad y acordeón accesible | Pendiente |
 | 7. Cierre y pie | Acceso final, ayuda, marca y enlaces reales | Pendiente |
 | 8. Integración | Navegación completa, responsive, accesibilidad y regresiones | Pendiente |
 
-No publicar enlaces a unidades inexistentes. Por ahora solo Cómo funciona y
-Conocer Fierro tienen un destino real. Beneficios y FAQ se añadirán con sus
-secciones, no como anclas vacías.
+No publicar enlaces a unidades inexistentes. Por ahora Cómo funciona,
+Beneficios y Conocer Fierro tienen un destino real. FAQ se añadirá con su
+sección, no como ancla vacía.
 
 ## 2026-09-23 — Portada y vista de ejemplo
 
@@ -36,6 +36,7 @@ Resultado:
 - Estilos limitados al home; Shell, login y panel privado no cambian.
 - La primera sección antigua fue sustituida por Cómo funciona con lista ordenada,
   tres pasos canónicos y composición responsive.
+- Beneficios usa dos imágenes WebP optimizadas, textos canónicos y apilado móvil.
 - Las demás secciones antiguas conservan temporalmente su tema.
 
 Validación:
@@ -55,5 +56,5 @@ Validación:
 
 ## Siguiente unidad recomendada
 
-Unidad 3: sustituir la sección actual por Cómo funciona con los tres pasos
-canónicos, lista ordenada y adaptación móvil.
+Unidad 5: sustituir la sección actual de datos por Historial, con fotografía,
+gráfica y tabla accesible según la lámina de referencia correspondiente.

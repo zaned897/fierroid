@@ -2064,3 +2064,106 @@ button.home-entrar:focus-visible {
     font-size: 0.62rem;
   }
 }
+
+/* --- Beneficios: segunda mitad de la lámina 02 -------------------------- */
+
+.home-beneficios {
+  --ink: #102b22;
+  --muted: #52645d;
+  --line: rgba(20, 60, 45, 0.14);
+  scroll-margin-top: 1rem;
+  background: #f7f8f3;
+  color: var(--ink);
+}
+
+.home-beneficios-contenido {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.home-beneficios h2 {
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+  color: #102b22;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.home-beneficios-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.home-beneficio {
+  overflow: hidden;
+  border: 1px solid rgba(20, 60, 45, 0.14);
+  border-radius: 0.7rem;
+  background: #fff;
+  box-shadow: 0 0.8rem 2.2rem rgba(20, 60, 45, 0.06);
+}
+
+.home-beneficio-foto {
+  position: relative;
+}
+
+.home-beneficio-foto img {
+  aspect-ratio: 4 / 3;
+  border: 0;
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.home-beneficio:first-child .home-beneficio-foto img {
+  object-position: center 48%;
+}
+
+.home-beneficio:last-child .home-beneficio-foto img {
+  object-position: center 42%;
+}
+
+.home-beneficio-foto .credito {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.55rem;
+  margin: 0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  background: rgba(8, 31, 23, 0.75);
+  color: #fff;
+  opacity: 1;
+}
+
+.home-beneficio-texto {
+  padding: 1.25rem 1.4rem 1.5rem;
+}
+
+.home-beneficio h3 {
+  margin: 0 0 0.45rem;
+  color: #102b22;
+  font-size: 1.25rem;
+}
+
+.home-beneficio p {
+  color: #52645d;
+  font-size: 0.98rem;
+}
+
+@media (max-width: 760px) {
+  .home-beneficios {
+    padding-block: 4rem;
+  }
+
+  .home-beneficios h2 {
+    font-size: clamp(2rem, 10vw, 2.7rem);
+  }
+
+  .home-beneficios-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .home-beneficio-texto {
+    padding: 1rem 1rem 1.25rem;
+  }
+}

@@ -24,7 +24,7 @@ export const imagenes = {
     requiereAtribucion: false,
   },
   "home-corral-ia": {
-    src: "/img/home-corral-ia.png",
+    src: "/img/home-corral-ia.webp",
     width: 1536,
     height: 1024,
     alt: "Una persona observa al ganado desde fuera de la manga de manejo",
@@ -34,7 +34,7 @@ export const imagenes = {
     requiereAtribucion: false,
   },
   "home-consulta-ia": {
-    src: "/img/home-consulta-ia.png",
+    src: "/img/home-consulta-ia.webp",
     width: 1536,
     height: 1024,
     alt: "Una persona consulta su celular en un porche junto al corral",

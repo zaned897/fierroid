@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import Beneficios from "./Beneficios.jsx";
 import Diagrama from "./Diagrama.jsx";
 import Foto from "./Foto.jsx";
 import GraficaPeso from "./GraficaPeso.jsx";
@@ -89,6 +90,8 @@ export default function Secciones({ onEntrar, onArriba }) {
         </div>
         <Diagrama />
       </section>
+
+      <Beneficios />
 
       {/* 3. Dato. La gráfica manda y el texto la acompaña. */}
       <section className="bloque dato" data-revelar>

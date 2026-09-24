@@ -12,7 +12,7 @@ import { imagenes } from "./img/index.js";
  * Sin ellas el navegador no reserva el hueco y el texto salta cuando la
  * imagen carga — que en el corral, con señal mala, es todo el rato.
  */
-export default function Foto({ nombre, className = "" }) {
+export default function Foto({ nombre, className = "", pie = "" }) {
   const img = imagenes[nombre];
 
   if (!img) {
@@ -22,6 +22,8 @@ export default function Foto({ nombre, className = "" }) {
     if (import.meta.env.DEV) throw new Error(`Foto desconocida: "${nombre}"`);
     return null;
   }
+
+  const mostrarPie = Boolean(pie || img.requiereAtribucion);
 
   return (
     <figure className={`foto ${className}`.trim()}>
@@ -33,12 +35,15 @@ export default function Foto({ nombre, className = "" }) {
         loading="lazy"
         decoding="async"
       />
-      {img.requiereAtribucion && (
+      {mostrarPie && (
         <figcaption className="credito">
-          {img.autor} ·{" "}
-          <a href={img.fuente} target="_blank" rel="noreferrer noopener">
-            {img.licencia}
-          </a>
+          {pie && <span>{pie}</span>}
+          {pie && img.requiereAtribucion && <span aria-hidden="true"> · </span>}
+          {img.requiereAtribucion && (
+            <a href={img.fuente} target="_blank" rel="noreferrer noopener">
+              {img.autor} · {img.licencia}
+            </a>
+          )}
         </figcaption>
       )}
     </figure>
