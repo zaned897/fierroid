@@ -1,7 +1,9 @@
-# Entorno reproducible completo: Postgres + API + agent con hardware mock.
+# Entorno local: Postgres + API. Simulador opcional, solo bajo activacion explicita.
 #
-#   docker compose up --build        # stack completo, el agent genera pesajes
+#   docker compose up --build        # backend sin generar pesajes simulados
 #   docker compose up -d db api      # solo backend (lo que corre CI)
+#   docker compose --profile mock up -d agent     # activar simulador de pesajes
+#   docker compose --profile mock stop agent      # detener simulador
 #   docker compose --profile tools run --rm seed   # datos sinteticos historicos
 #
 # La PWA se corre aparte con `cd apps/web && pnpm dev` (proxy a :8000).
@@ -59,6 +61,7 @@ services:
     restart: unless-stopped
 
   agent:
+    profiles: ["mock"]
     build:
       context: .
       dockerfile: apps/device-agent/Dockerfile
@@ -73,7 +76,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    restart: unless-stopped
+    restart: "no"
 
   seed:
     build:

@@ -62,7 +62,9 @@ export async function apiFetch(path, { session, ...options } = {}) {
     } catch {
       // Respuesta sin JSON: se queda el detalle genérico.
     }
-    throw new Error(detalle);
+    const error = new Error(detalle);
+    error.status = res.status;
+    throw error;
   }
   return res.json();
 }

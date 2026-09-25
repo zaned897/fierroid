@@ -6,6 +6,10 @@ Los agentes deben leer esto **antes** de implementar cambios no triviales.
 
 ## Índice
 
+Relevo activo: [dashboard — diseño y manejo de datos](../dashboard-handoff.md).
+Leerlo antes de continuar el frontend autenticado; distingue estado actual,
+propuestas, riesgos y primera unidad de trabajo.
+
 ### Cómo decidir
 
 | Documento | Contenido |
