@@ -12,6 +12,10 @@
     {
       "source": "/v1/:path*",
       "destination": "https://fierro-api-stage-yj7cs5a7aq-pv.a.run.app/v1/:path*"
+    },
+    {
+      "source": "/entrar",
+      "destination": "/index.html"
     }
   ],
   "headers": [

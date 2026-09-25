@@ -28,3 +28,10 @@ proveedor, contrato de sesión ni condición de acceso por invitación.
 
 No se inició sesión en una cuenta real; intercambio de credenciales y vistas
 autenticadas no verificados en este ciclo. Pendiente aceptación visual del usuario.
+
+## Publicación
+
+El usuario aprobó el diseño y su publicación. La comprobación previa detectó
+HTTP 404 al abrir `/entrar` directamente en Vercel. Se añade una reescritura
+específica a `/index.html`, después de las reglas de API, para permitir acceso
+directo y recarga sin modificar el destino de `/v1/*`.
