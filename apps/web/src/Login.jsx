@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import Shell from "./Shell.jsx";
+import Marca from "./Marca.jsx";
+import { imagenes } from "./img/index.js";
+import "./entrar.css";
 
 const GSI_SRC = "https://accounts.google.com/gsi/client";
 const ULTIMO = "fierro.ultimo-proveedor";
@@ -130,7 +132,8 @@ function BotonGoogle({ clientId, onCredencial, ancho }) {
   return (
     <>
       <div ref={contenedor} className="gsi" />
-      {error && <p className="error">{error}</p>}
+      {!listo && !error && <p className="muted" role="status">Cargando Google…</p>}
+      {error && <p className="error" role="alert">{error}</p>}
     </>
   );
 }
@@ -173,18 +176,33 @@ export default function Login({ onSession, exchange, onInicio }) {
   );
 
   const proveedores = config?.providers ?? [];
+  const paisaje = imagenes["home-paisaje-ia"];
 
   return (
-    <Shell lema="Del corral a tu bolsillo.">
-      <button type="button" className="volver" onClick={onInicio}>
-        ← Inicio
-      </button>
+    <div className="entrar">
+      <aside className="entrar-paisaje" aria-label="Fierro, del corral a tu bolsillo">
+        <img src={paisaje.src} width={paisaje.width} height={paisaje.height} alt="" />
+        <div className="entrar-identidad"><Marca size={44} /><span aria-hidden="true">FIERRO</span></div>
+        <div className="entrar-relato">
+          <p className="entrar-antetitulo">Del corral a tu bolsillo.</p>
+          <h2>El peso de tu ganado,<br />siempre a la mano.</h2>
+          <p>Registra cada pesaje y consulta el historial de tus animales desde tu celular.</p>
+        </div>
+        <small className="entrar-credito">Imagen ilustrativa generada con IA</small>
+      </aside>
+      <main className="entrar-panel">
+        <button type="button" className="entrar-volver" onClick={onInicio}>
+          <span aria-hidden="true">←</span> Volver al inicio
+        </button>
+        <div className="entrar-tarjeta">
+          <div className="entrar-sello"><Marca size={40} /><span aria-hidden="true">FIERRO</span></div>
+          <p className="entrar-antetitulo">Del corral a tu bolsillo.</p>
 
-      <h1 className="titulo">Entrar a Fierro</h1>
-      <p className="subtitulo">Continúa con:</p>
+      <h1>Entrar</h1>
+      <p className="entrar-descripcion">Continúa con tu cuenta para consultar tus pesajes.</p>
 
-      <div className="proveedores" ref={columna}>
-        {cargando && <p className="muted">Cargando…</p>}
+      <div className="proveedores" ref={columna} aria-busy={cargando || entrando}>
+        {cargando && <p className="muted" role="status">Cargando opciones de acceso…</p>}
 
         {proveedores.map((p) => (
           <div key={p.id} className="proveedor">
@@ -200,16 +218,22 @@ export default function Login({ onSession, exchange, onInicio }) {
         ))}
 
         {!cargando && proveedores.length === 0 && !errorConfig && (
-          <p className="error">
+          <p className="error" role="alert">
             La API no tiene configurado ningún proveedor de inicio de sesión.
           </p>
         )}
       </div>
 
-      {entrando && <p className="muted">Entrando…</p>}
-      {(error || errorConfig) && <p className="error">{error || errorConfig}</p>}
+      {entrando && <p className="muted" role="status">Entrando…</p>}
+      {(error || errorConfig) && <p className="error" role="alert">{error || errorConfig}</p>}
 
-      <p className="pie">El acceso es por invitación: tu correo debe estar dado de alta.</p>
-    </Shell>
+          <div className="entrar-invitacion">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></svg>
+            <p><strong>Acceso por invitación</strong><span>Tu correo debe estar dado de alta para entrar.</span></p>
+          </div>
+        </div>
+        <p className="entrar-pie">Fierro · Del corral a tu bolsillo.</p>
+      </main>
+    </div>
   );
 }
