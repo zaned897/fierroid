@@ -48,8 +48,9 @@ export async function reducirImagen(file) {
  * La foto va detrás de credencial, así que no se puede usar `<img src>` a secas.
  * Se descarga con la llave y se entrega como object URL.
  */
-export async function fetchPhotoUrl(tagId, session) {
-  const res = await fetch(`/v1/animals/${encodeURIComponent(tagId)}/photo`, {
+export async function fetchPhotoUrl(tagId, session, org) {
+  const query = org ? `?org=${encodeURIComponent(org)}` : "";
+  const res = await fetch(`/v1/animals/${encodeURIComponent(tagId)}/photo${query}`, {
     headers: { Authorization: `Bearer ${session.api_key}` },
   });
   if (!res.ok) return null;

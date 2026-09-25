@@ -20,7 +20,7 @@ function Retrato({ animal, session, size = 56, recarga }) {
     let vivo = true;
     let actual = null;
 
-    fetchPhotoUrl(animal.tag_id, session).then((nueva) => {
+    fetchPhotoUrl(animal.tag_id, session, animal.org).then((nueva) => {
       if (!vivo) {
         if (nueva) URL.revokeObjectURL(nueva);
         return;
@@ -34,7 +34,7 @@ function Retrato({ animal, session, size = 56, recarga }) {
       // Sin revocar, cada re-render filtra un blob en memoria.
       if (actual) URL.revokeObjectURL(actual);
     };
-  }, [animal.has_photo, animal.tag_id, session, recarga]);
+  }, [animal.has_photo, animal.tag_id, animal.org, session, recarga]);
 
   if (url) {
     return <img className="retrato" src={url} alt="" width={size} height={size} />;
@@ -131,6 +131,8 @@ function Ficha({ animal, session, onCerrar, onCambio }) {
       </div>
 
       <dl className="datos">
+        <dt>Organización</dt>
+        <dd>{animal.org || "Sin organización"}</dd>
         <dt>Arete</dt>
         <dd className="tag">{animal.tag_id}</dd>
         <dt>Último peso</dt>
@@ -195,7 +197,7 @@ export default function Animales({ session, onExpired }) {
     recargar();
   }, [recargar]);
 
-  const seleccionado = animales.find((a) => a.tag_id === abierto);
+  const seleccionado = animales.find((a) => a.tag_id === abierto?.tag_id && a.org === abierto?.org);
 
   if (seleccionado) {
     return (
@@ -221,12 +223,13 @@ export default function Animales({ session, onExpired }) {
       <ul className="animal-list">
         {animales.map((animal) => (
           <li key={`${animal.org}-${animal.tag_id}`}>
-            <button type="button" className="animal" onClick={() => setAbierto(animal.tag_id)}>
+            <button type="button" className="animal" onClick={() => setAbierto({ tag_id: animal.tag_id, org: animal.org })}>
               <Retrato animal={animal} session={session} />
               <span className="animal-body">
                 <span className="animal-nombre">{animal.alias || "Sin nombre"}</span>
                 <span className="meta">
                   <span className="tag">{animal.tag_id}</span>
+                  {session.user?.is_superuser && <span>{animal.org || "Sin organización"}</span>}
                   <span>{formatKg(animal.last_weight_kg)}</span>
                 </span>
               </span>

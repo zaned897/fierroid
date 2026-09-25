@@ -1,5 +1,11 @@
 # Relevo del frontend del home
 
+## 2026-09-25 — Panel privado
+
+El estilo aprobado del panel se implementó reutilizando la marca y componentes
+existentes. El home y Entrar conservan su diseño. Evidencia, límites y siguientes
+pasos: [avance del dashboard](dashboard-progress.md).
+
 ## Unidades de implementación
 
 ### 2026-09-24 — Animación de la gráfica existente

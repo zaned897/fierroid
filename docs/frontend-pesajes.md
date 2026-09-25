@@ -29,7 +29,8 @@ acordar una entrega por etapas; no dejar botones sin efecto.
 
 Escritorio: barra lateral de navegación. Móvil: navegación inferior.
 Conservar la identidad visual aprobada: verde oscuro, fondo marfil, acentos
-ocres discretos, bordes suaves y espacios suficientes. Prioridad visual:
+petróleo (`#176575`), bordes suaves y espacios suficientes. Paleta alineada
+con home y Entrar por aprobación del mockup del 2026-09-25. Prioridad visual:
 peso, animal, hora. Evitar ilustraciones grandes, métricas accesorias y paneles
 que compitan con las lecturas.
 

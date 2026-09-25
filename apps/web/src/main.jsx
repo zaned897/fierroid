@@ -8,6 +8,7 @@ import "@fontsource-variable/inter";
 
 import App from "./App.jsx";
 import "./styles.css";
+import "./dashboard.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
