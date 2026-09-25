@@ -1,0 +1,18 @@
+/* El estado base siempre muestra los datos, incluso sin animación u observador. */
+.grafica { --grafica-acento: #76c4d0; }
+.grafica .grafica-svg { color: var(--grafica-acento); }
+.grafica .grafica-linea { stroke: var(--grafica-acento); stroke-width: 2.5; }
+.grafica .grafica-punto:not(.inestable) { fill: var(--grafica-acento); }
+.grafica .grafica-punto,
+.grafica .grafica-destello {
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+}
+.grafica .grafica-area { pointer-events: none; }
+.grafica .grafica-destello {
+  fill: none;
+  stroke: var(--grafica-acento);
+  stroke-width: 1.5;
+  opacity: 0;
+}
