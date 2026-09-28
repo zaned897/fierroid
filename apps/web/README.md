@@ -61,6 +61,11 @@ fallo visible —datos que no son— y no una escritura silenciosa donde no debe
 > **orígenes autorizados** del cliente OAuth en Google, o el botón de Google no
 > se dibuja ahí.
 
+Avance del acceso compartido y verificaciones pendientes:
+[stage web](../../docs/stage-web-progress.md).
+La web consulta `/health` al abrirse para identificar el entorno. Este endpoint
+usa la misma selección de API que `/v1`; si no puede confirmarlo, muestra un aviso.
+
 ### Variables en Vercel
 
 **Ninguna.** El client ID lo sirve la API en `GET /v1/auth/config` y la PWA lo

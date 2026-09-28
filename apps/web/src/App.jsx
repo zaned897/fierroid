@@ -14,6 +14,7 @@ import {
 } from "./auth.js";
 import Pesajes from "./Pesajes.jsx";
 import Estaciones from "./Estaciones.jsx";
+import Entorno from "./Entorno.jsx";
 
 /**
  * Rutas minimas, sin router.
@@ -40,6 +41,10 @@ function useRuta() {
 }
 
 export default function App() {
+  return <><Entorno /><Contenido /></>;
+}
+
+function Contenido() {
   const [session, setSession] = useState(loadSession);
   const [vista, setVista] = useState("pesajes");
   const [ruta, ir] = useRuta();

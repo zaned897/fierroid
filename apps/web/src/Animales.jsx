@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "./auth.js";
 import { CowForTag } from "./icons/cows.jsx";
 import { fetchPhotoUrl, reducirImagen } from "./photo.js";
+import HistorialAnimal from "./HistorialAnimal.jsx";
+import "./animales.css";
 
 function formatKg(kg) {
   return kg == null ? "—" : `${Number(kg).toFixed(1)} kg`;
@@ -42,7 +44,7 @@ function Retrato({ animal, session, size = 56, recarga }) {
   return <CowForTag tagId={animal.tag_id} size={size} className="cow" />;
 }
 
-function Ficha({ animal, session, onCerrar, onCambio }) {
+function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
   const archivo = useRef(null);
   const [alias, setAlias] = useState(animal.alias || "");
   const [notes, setNotes] = useState(animal.notes || "");
@@ -170,6 +172,7 @@ function Ficha({ animal, session, onCerrar, onCambio }) {
       </div>
 
       {error && <p className="error">{error}</p>}
+      <HistorialAnimal animal={animal} session={session} onExpired={onExpired} />
     </section>
   );
 }
@@ -179,6 +182,11 @@ export default function Animales({ session, onExpired }) {
   const [abierto, setAbierto] = useState(null);
   const [error, setError] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+  const termino = busqueda.trim().toLocaleLowerCase("es");
+  const visibles = animales.filter((animal) =>
+    [animal.tag_id, animal.alias].some((value) => (value || "").toLocaleLowerCase("es").includes(termino)),
+  );
 
   const recargar = useCallback(async () => {
     try {
@@ -202,10 +210,12 @@ export default function Animales({ session, onExpired }) {
   if (seleccionado) {
     return (
       <Ficha
+        key={`${seleccionado.org}-${seleccionado.tag_id}`}
         animal={seleccionado}
         session={session}
         onCerrar={() => setAbierto(null)}
         onCambio={recargar}
+        onExpired={onExpired}
       />
     );
   }
@@ -213,6 +223,11 @@ export default function Animales({ session, onExpired }) {
   return (
     <section className="panel" aria-label="Animales">
       <h2>Animales</h2>
+      <label className="campo">Buscar por arete o nombre
+        <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Arete o nombre del animal" />
+      </label>
+      {!cargando && !error && <p role="status">{visibles.length} de {animales.length} animales</p>}
+      {!cargando && animales.length > 0 && visibles.length === 0 && <p>No hay animales que coincidan con tu búsqueda.</p>}
       {cargando && <p className="muted">Cargando…</p>}
       {error && <p className="error">{error}</p>}
       {!cargando && animales.length === 0 && (
@@ -221,7 +236,7 @@ export default function Animales({ session, onExpired }) {
         </p>
       )}
       <ul className="animal-list">
-        {animales.map((animal) => (
+        {visibles.map((animal) => (
           <li key={`${animal.org}-${animal.tag_id}`}>
             <button type="button" className="animal" onClick={() => setAbierto({ tag_id: animal.tag_id, org: animal.org })}>
               <Retrato animal={animal} session={session} />

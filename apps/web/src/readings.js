@@ -17,5 +17,5 @@ export function capturedLabel(iso) {
 }
 
 export function isTestReading(reading) {
-  return ["mock", "synthetic"].includes(reading.source);
+  return ["mock", "synthetic"].includes(reading.source) || (reading.source || "").startsWith("proto-");
 }

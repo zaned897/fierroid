@@ -363,6 +363,26 @@ def get_animals(user: CurrentUser) -> dict[str, Any]:
     return {"animals": animals_mod.list_animals(_require_postgres(), org_slug=_scope(user))}
 
 
+@app.get("/v1/animals/{tag_id}/readings")
+def get_animal_readings(
+    tag_id: str,
+    user: CurrentUser,
+    org: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=200),
+    cursor: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Historial de una ficha, sin mezclar aretes de otras organizaciones."""
+    _require_postgres()
+    readings = store.list_readings(
+        limit=limit,
+        org_slug=_write_scope(user, org),
+        tag_id=tag_id,
+        cursor=_decode_cursor(cursor),
+    )
+    siguiente = _encode_cursor(readings[-1]) if len(readings) == limit else None
+    return {"readings": readings, "next_cursor": siguiente}
+
+
 @app.get("/v1/animals/{tag_id}")
 def get_animal(tag_id: str, user: CurrentUser) -> dict[str, Any]:
     animal = animals_mod.get_animal(

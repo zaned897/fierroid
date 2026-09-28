@@ -667,6 +667,97 @@
         "summary": "Post Animal Photo"
       }
     },
+    "/v1/animals/{tag_id}/readings": {
+      "get": {
+        "description": "Historial de una ficha, sin mezclar aretes de otras organizaciones.",
+        "operationId": "get_animal_readings_v1_animals__tag_id__readings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "title": "Tag Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Animal Readings V1 Animals  Tag Id  Readings Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Animal Readings"
+      }
+    },
     "/v1/auth/config": {
       "get": {
         "description": "Configuracion publica que la PWA necesita antes de que alguien entre.\n\nEl client ID de OAuth es publico por diseno: viaja en el bundle de\ncualquier app con Google Sign-In. Servirlo desde aqui, en vez de inyectarlo\nal construir el front, deja una sola fuente de verdad y hace que cambiarlo\nno requiera reconstruir ni redesplegar la PWA.",

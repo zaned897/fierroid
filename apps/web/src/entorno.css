@@ -1,0 +1,8 @@
+.entorno-aviso {
+  padding: 10px 16px;
+  background: #fff0c2;
+  color: #493b13;
+  text-align: center;
+  font: 600 13px/1.5 var(--fuente);
+  overflow-wrap: anywhere;
+}
