@@ -18,6 +18,8 @@ test("no transforma pesos ausentes en cero", () => {
 test("la procedencia de prueba depende del source y no de la organización", () => {
   assert.equal(isTestReading({ source: "mock" }), true);
   assert.equal(isTestReading({ source: "synthetic" }), true);
+  assert.equal(isTestReading({ source: "proto-rc522" }), true);
+  assert.equal(isTestReading({ source: "proto-sim" }), true);
   assert.equal(isTestReading({ source: "serial", org: "pruebas" }), false);
   assert.equal(isTestReading({}), false);
   assert.equal(capturedLabel(null), "Fecha no disponible");

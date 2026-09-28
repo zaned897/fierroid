@@ -1,0 +1,6 @@
+.animal-history { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 20px; }
+.animal-history .row { flex-wrap: wrap; gap: 12px; }
+.animal-history-list { list-style: none; padding: 0; }
+.animal-history-list li { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.animal-history-list dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: .9rem; }
+.animal-history-list dd { margin: 0; overflow-wrap: anywhere; }

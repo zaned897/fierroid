@@ -169,6 +169,42 @@ def test_el_superusuario_ve_ambas(client, mundo):
     assert {DEVICE_A, DEVICE_B} <= vistos
 
 
+def test_historial_de_animal_no_mezcla_organizaciones(client, mundo):
+    """El mismo arete existe en dos ranchos; cada ficha conserva su alcance."""
+    import psycopg
+
+    tag = f"history-{SUFIJO}"
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE readings SET tag_id = %s WHERE device_id = ANY(%s)",
+            (tag, [DEVICE_A, DEVICE_B]),
+        )
+    normal = entrar(client, mundo["a"])
+    response = client.get(
+        f"/v1/animals/{tag}/readings", headers=normal,
+        params={"org": "valle-verde", "limit": 2},
+    )
+    assert response.status_code == 200
+    first = response.json()
+    assert len(first["readings"]) == 2
+    assert {r["device_id"] for r in first["readings"]} == {DEVICE_A}
+    second = client.get(
+        f"/v1/animals/{tag}/readings", headers=normal,
+        params={"cursor": first["next_cursor"], "limit": 2},
+    ).json()
+    assert len(second["readings"]) == 1
+    assert second["next_cursor"] is None
+    assert {r["event_id"] for r in first["readings"]}.isdisjoint(
+        r["event_id"] for r in second["readings"]
+    )
+    admin = entrar(client, mundo["su"])
+    assert client.get(f"/v1/animals/{tag}/readings", headers=admin).status_code == 400
+    other = client.get(
+        f"/v1/animals/{tag}/readings", headers=admin, params={"org": "valle-verde"},
+    ).json()
+    assert {r["device_id"] for r in other["readings"]} == {DEVICE_B}
+
+
 def test_una_estacion_sin_asignar_no_cuelga_de_nadie(client, mundo):
     """Sus lecturas se guardan, pero no se le muestran a un inquilino ajeno."""
     a = entrar(client, mundo["a"])
