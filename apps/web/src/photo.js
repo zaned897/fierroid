@@ -10,7 +10,30 @@
 const LADO_MAXIMO = 1024;
 const CALIDAD = 0.85;
 
+async function normalizarTipo(file) {
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const empieza = (firma, offset = 0) => firma.every((byte, i) => bytes[offset + i] === byte);
+  let tipo;
+  let extension;
+  if (empieza([0xff, 0xd8, 0xff])) {
+    tipo = "image/jpeg";
+    extension = "jpg";
+  } else if (empieza([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    tipo = "image/png";
+    extension = "png";
+  } else if (empieza([0x52, 0x49, 0x46, 0x46]) && empieza([0x57, 0x45, 0x42, 0x50], 8)) {
+    tipo = "image/webp";
+    extension = "webp";
+  } else {
+    throw new Error("Selecciona una imagen JPEG, PNG o WebP válida.");
+  }
+  // El sistema puede inferir el MIME de una extensión incorrecta. Conservar
+  // los bytes originales; la API sigue validando el contenido recibido.
+  return new File([file], `foto.${extension}`, { type: tipo, lastModified: file.lastModified });
+}
+
 export async function reducirImagen(file) {
+  file = await normalizarTipo(file);
   // Si el navegador no trae createImageBitmap, se sube tal cual: mejor una
   // foto pesada que ninguna.
   if (typeof createImageBitmap !== "function") return file;
