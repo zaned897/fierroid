@@ -1,8 +1,31 @@
 # Relevo activo: seguimiento de animales, gráfica y bitácora
 
-Fecha: 2026-09-28. Este documento permite continuar desde un clon de `main`.
-La petición de esta entrega es **publicar solo documentación en main**, conservando
-el código incompleto local. No confundir este commit documental con un despliegue.
+Fecha: 2026-09-28. La entrega documental inicial se publicó en `main` (`d815089`).
+Después, el usuario autorizó continuar en `codex/animal-followup`. La gráfica y
+bitácora están implementadas y verificadas en esa rama; todavía no desplegadas.
+Las secciones de infraestructura describen el último estado remoto verificado.
+
+## Actualización de implementación
+
+- Gráfica SVG individual sobre el historial cargado, eje temporal real, sin colapsar
+  eventos distintos. Excluye pesos inválidos/inestables y pruebas por defecto;
+  permite incluir pruebas con aviso. Cargar más historial amplía la gráfica.
+- Bitácora paginada con fecha del evento, categoría, texto, autor autenticado y
+  fecha de registro. Solo agregar/consultar; independiente de la nota general.
+- GET/POST journal aislados por organización. UUID del cliente permite reintentar
+  sin duplicados mientras la ficha sigue abierta; un contenido distinto con el
+  mismo UUID devuelve 409. El formulario se limpia solo al recibir confirmación.
+- Migración `007_animal_journal.sql` aplicada dos veces sin problemas solamente
+  en PostgreSQL local aislado. Aplicarla en stage antes de publicar API/frontend.
+- Validación: 161 pruebas API y 35 device-agent; Ruff; pruebas Node de gráfica,
+  historial y fotos; lint/build web. Navegador local: filtrado de pruebas y nota
+  conservada tras recargar. No se generaron lecturas en stage ni producción.
+- Pendiente: publicar y verificar stage con sesión real; anomalías y resumen del
+  hato siguen fuera de esta entrega. Los borradores no sobreviven cerrar la ficha.
+
+El inventario de borradores de la sección 4 es histórico, anterior a esta
+implementación. Los componentes nuevos son `EvolucionAnimal.jsx`, `animalTrend.js`
+y `BitacoraAnimal.jsx`; el contrato OpenAPI y las pruebas están actualizados.
 
 ## 1. Objetivo aprobado y orden de trabajo
 
@@ -14,7 +37,8 @@ emparejamiento vienen después, no deben incorporarse todos a esta unidad.
 
 Primera acción del siguiente agente: leer AGENTS.md, docs/agent/README.md y este
 documento; inspeccionar Git y el grafo antes de editar. Implementar y probar la
-gráfica y la bitácora, según la sección 5. No arrancar simuladores para poblar stage.
+entrega de la gráfica y la bitácora, según la actualización inicial y la sección 5.
+No arrancar simuladores para poblar stage.
 
 Guías relevantes: [ingeniería](agent/engineering-rules.md),
 [frontend incremental](agent/frontend-self-driven.md), [pruebas](agent/testing.md),
@@ -49,7 +73,7 @@ Publicado con #69:
 - Franja STAGE obtenida desde `/health`, también en Entrar. Fallo de consulta no
   se presenta como entorno confirmado.
 
-**No existen aún** gráfica individual, bitácora desplegada, reglas de anomalías,
+**No están desplegadas aún** gráfica individual, bitácora, reglas de anomalías,
 resumen general del hato ni alta autónoma de dispositivos por usuarios normales.
 
 ## 3. Infraestructura, acceso y hardware
@@ -83,7 +107,7 @@ resumen general del hato ni alta autónoma de dispositivos por usuarios normales
   Última API local Fierro: puerto 18000. El PostgreSQL de pruebas propio
   `fierro-history-test-pg` usa 127.0.0.1:25433 y quedó **detenido** al cerrar pruebas.
 
-## 4. Trabajo incompleto local: no está en main
+## 4. Inventario histórico anterior a la implementación
 
 Checkout original: `C:/Users/eduardo/Documents/GitHub/fierroid`.
 Rama actual al redactar: `codex/animal-followup`, creada desde `origin/main`.

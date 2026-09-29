@@ -4,6 +4,7 @@ import { apiFetch } from "./auth.js";
 import { CowForTag } from "./icons/cows.jsx";
 import { fetchPhotoUrl, reducirImagen } from "./photo.js";
 import HistorialAnimal from "./HistorialAnimal.jsx";
+import BitacoraAnimal from "./BitacoraAnimal.jsx";
 import "./animales.css";
 
 function formatKg(kg) {
@@ -173,6 +174,7 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
 
       {error && <p className="error">{error}</p>}
       <HistorialAnimal animal={animal} session={session} onExpired={onExpired} />
+      <BitacoraAnimal animal={animal} session={session} onExpired={onExpired} />
     </section>
   );
 }

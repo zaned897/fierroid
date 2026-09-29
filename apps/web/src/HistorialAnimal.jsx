@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "./auth.js";
+import EvolucionAnimal from "./EvolucionAnimal.jsx";
 import { capturedLabel, isTestReading, orderedReadings, weightValue } from "./readings.js";
 
 export default function HistorialAnimal({ animal, session, onExpired }) {
@@ -55,6 +56,7 @@ export default function HistorialAnimal({ animal, session, onExpired }) {
     {error && <p className="error" role="alert">{error}</p>}
     {busy && <p role="status">Cargando pesajes…</p>}
     {!busy && !error && rows.length === 0 && <p>Este animal todavía no tiene pesajes.</p>}
+    {rows.length > 0 && <EvolucionAnimal rows={rows} hasMore={Boolean(cursor)} />}
     <ol className="animal-history-list">{rows.map((row) => <li key={row.event_id}>
       <strong>{weightValue(row.weight_kg)} kg</strong>
       <dl><dt>Capturado</dt><dd>{capturedLabel(row.captured_at)}</dd>
