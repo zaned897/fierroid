@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import base64
-from typing import Annotated, Any
+from datetime import datetime
+from typing import Annotated, Any, Literal
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field, field_validator
 
-from fierro_api import __version__, google_auth
+from fierro_api import __version__, google_auth, journal
 from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
 from fierro_api.auth import (
@@ -67,6 +69,21 @@ class GoogleLoginIn(BaseModel):
 class AnimalIn(BaseModel):
     alias: str | None = None
     notes: str | None = None
+
+
+class JournalIn(BaseModel):
+    entry_id: UUID
+    occurred_at: AwareDatetime
+    category: Literal["observacion", "alimentacion", "manejo", "salud"]
+    body: str = Field(min_length=1, max_length=4000)
+
+    @field_validator("body")
+    @classmethod
+    def non_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Escribe una anotación")
+        return value
 
 
 class OrgIn(BaseModel):
@@ -361,6 +378,54 @@ def _write_scope(user: AuthUser, org: str | None) -> str:
 @app.get("/v1/animals")
 def get_animals(user: CurrentUser) -> dict[str, Any]:
     return {"animals": animals_mod.list_animals(_require_postgres(), org_slug=_scope(user))}
+
+
+@app.post("/v1/animals/{tag_id}/journal")
+def post_animal_journal(
+    tag_id: str, body: JournalIn, user: CurrentUser,
+    org: str | None = Query(default=None),
+) -> dict[str, Any]:
+    try:
+        return journal.add_entry(
+            _require_postgres(), org=_write_scope(user, org), tag=tag_id,
+            author_id=user.id, **body.model_dump(),
+        )
+    except journal.EntryConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/v1/animals/{tag_id}/journal")
+def get_animal_journal(
+    tag_id: str, user: CurrentUser, org: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+    cursor: str | None = Query(default=None),
+) -> dict[str, Any]:
+    before = None
+    if cursor:
+        try:
+            decoded = _decode_cursor(cursor)
+            if decoded is None:
+                raise ValueError("cursor vacío")
+            date, key = decoded
+            parsed = datetime.fromisoformat(date)
+            if parsed.tzinfo is None:
+                raise ValueError("fecha sin zona")
+            before = (parsed, UUID(key))
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(status_code=400, detail="Cursor inválido") from exc
+    entries = journal.list_entries(
+        _require_postgres(), org=_write_scope(user, org), tag=tag_id,
+        limit=limit, before=before,
+    )
+    next_cursor = None
+    if len(entries) == limit:
+        last = entries[-1]
+        next_cursor = _encode_cursor({
+            "captured_at": last["occurred_at"], "event_id": last["entry_id"],
+        })
+    return {"entries": entries, "next_cursor": next_cursor}
 
 
 @app.get("/v1/animals/{tag_id}/readings")
