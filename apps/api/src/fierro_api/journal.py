@@ -35,7 +35,10 @@ def add_entry(
             "ON CONFLICT (org_id, tag_id) DO NOTHING", (org_id, tag),
         )
         cur.execute("SELECT id FROM animals WHERE org_id=%s AND tag_id=%s", (org_id, tag))
-        animal_id = cur.fetchone()["id"]
+        animal = cur.fetchone()
+        if animal is None:
+            raise RuntimeError("No se pudo recuperar la ficha del animal")
+        animal_id = animal["id"]
         cur.execute(
             "INSERT INTO animal_journal"
             "(entry_id, animal_id, author_id, occurred_at, category, body) "
@@ -48,6 +51,8 @@ def add_entry(
             (entry_id,),
         )
         row = cur.fetchone()
+        if row is None:
+            raise RuntimeError("No se pudo confirmar la anotación")
         if any(row[key] != value for key, value in {
             "animal_id": animal_id, "author_id": author_id, "occurred_at": occurred_at,
             "category": category, "body": body,

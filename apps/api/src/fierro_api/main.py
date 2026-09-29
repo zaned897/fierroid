@@ -405,7 +405,10 @@ def get_animal_journal(
     before = None
     if cursor:
         try:
-            date, key = _decode_cursor(cursor)
+            decoded = _decode_cursor(cursor)
+            if decoded is None:
+                raise ValueError("cursor vacío")
+            date, key = decoded
             parsed = datetime.fromisoformat(date)
             if parsed.tzinfo is None:
                 raise ValueError("fecha sin zona")
