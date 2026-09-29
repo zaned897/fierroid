@@ -1,4 +1,5 @@
 import Marca from "./Marca.jsx";
+import ListaEspera from "./ListaEspera.jsx";
 import { PieHome } from "./PreguntasAcceso.jsx";
 import Secciones from "./Secciones.jsx";
 import VistaPesajesDemo from "./VistaPesajesDemo.jsx";
@@ -38,8 +39,8 @@ export default function Home({ onEntrar }) {
                 <button type="button" className="home-entrar" onClick={onEntrar}>
                   Iniciar sesión <span aria-hidden="true">→</span>
                 </button>
-                <a className="home-conocer" href="#como-funciona">
-                  Conocer Fierro
+                <a className="home-conocer" href="#lista-espera">
+                  Unirme a la lista de espera
                 </a>
               </div>
               <p className="home-nota">
@@ -62,6 +63,7 @@ export default function Home({ onEntrar }) {
           </figure>
         </section>
         <Secciones onEntrar={onEntrar} />
+        <ListaEspera />
       </main>
       <PieHome onEntrar={onEntrar} />
     </div>

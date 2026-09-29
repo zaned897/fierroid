@@ -11,7 +11,7 @@ from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import AwareDatetime, BaseModel, Field, field_validator
 
-from fierro_api import __version__, google_auth, journal
+from fierro_api import __version__, google_auth, journal, waitlist
 from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
 from fierro_api.auth import (
@@ -60,6 +60,22 @@ class ReadingsBatchIn(BaseModel):
 class LoginIn(BaseModel):
     email: str
     password: str
+
+
+class WaitlistIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    email: str = Field(max_length=254, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    stations: int = Field(ge=1, le=1000, strict=True)
+    consent: Literal[True]
+    website: str = Field(default="", max_length=0)
+
+    @field_validator("name", "email", mode="before")
+    @classmethod
+    def normalize_contact(cls, value: Any, info: Any) -> Any:
+        if isinstance(value, str):
+            value = value.strip()
+            return value.lower() if info.field_name == "email" else value
+        return value
 
 
 class GoogleLoginIn(BaseModel):
@@ -688,6 +704,25 @@ def main() -> None:
         port=settings.port,
         reload=False,
     )
+
+
+
+
+@app.post("/v1/waitlist", status_code=202)
+def join_waitlist(body: WaitlistIn) -> dict[str, bool]:
+    try:
+        waitlist.register(_require_postgres(), name=body.name, email=body.email,
+                          stations=body.stations)
+    except waitlist.WaitlistFull as exc:
+        raise HTTPException(429, "Inténtalo más tarde.", headers={"Retry-After": "3600"}) from exc
+    return {"accepted": True}
+
+
+@app.get("/v1/admin/waitlist")
+def get_waitlist(user: SuperUser, before: int | None = Query(default=None, ge=1),
+                 limit: int = Query(default=20, ge=1, le=100)) -> dict[str, Any]:
+    entries = waitlist.list_entries(_require_postgres(), before, limit)
+    return {"entries": entries, "next_cursor": entries[-1]["id"] if len(entries) == limit else None}
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { apiFetch } from "./auth.js";
+import ListaEsperaAdmin from "./ListaEsperaAdmin.jsx";
 
 /**
  * Panel de administración: la cadena organización → rancho → estación, y usuarios.
@@ -360,6 +361,7 @@ export default function Admin({ session, onExpired }) {
         <h3>Dar de alta</h3>
         <NuevoUsuario orgs={arbol.orgs} onHecho={altaUsuario} onError={setError} />
       </section>
+      <ListaEsperaAdmin session={session} onExpired={onExpired} />
     </>
   );
 }
