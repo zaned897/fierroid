@@ -7,9 +7,12 @@ Las secciones de infraestructura describen el último estado remoto verificado.
 
 ## Actualización de implementación
 
-- Gráfica SVG individual sobre el historial cargado, eje temporal real, sin colapsar
+- Gráfica Recharts 3 individual (línea o puntos) sobre el historial cargado, eje temporal real, sin colapsar
   eventos distintos. Excluye pesos inválidos/inestables y pruebas por defecto;
   permite incluir pruebas con aviso. Cargar más historial amplía la gráfica.
+  Tooltip con fecha, peso y estación, navegación por teclado y carga diferida
+  del módulo de gráficas. La escala vertical se ajusta al rango de pesos y se
+  indica explícitamente. Se conserva el listado accesible de lecturas.
 - Bitácora paginada con fecha del evento, categoría, texto, autor autenticado y
   fecha de registro. Solo agregar/consultar; independiente de la nota general.
 - GET/POST journal aislados por organización. UUID del cliente permite reintentar
