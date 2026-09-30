@@ -1,4 +1,5 @@
 import Marca from "./Marca.jsx";
+import ListaEspera from "./ListaEspera.jsx";
 import { PieHome } from "./PreguntasAcceso.jsx";
 import Secciones from "./Secciones.jsx";
 import VistaPesajesDemo from "./VistaPesajesDemo.jsx";
@@ -17,6 +18,7 @@ export default function Home({ onEntrar }) {
         <nav className="home-navegacion" aria-label="Navegación principal">
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
+          <a href="#fierro-vision">Vision Premium</a>
           <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
         </nav>
         <button type="button" className="home-entrar home-entrar-cabecera" onClick={onEntrar}>
@@ -38,8 +40,8 @@ export default function Home({ onEntrar }) {
                 <button type="button" className="home-entrar" onClick={onEntrar}>
                   Iniciar sesión <span aria-hidden="true">→</span>
                 </button>
-                <a className="home-conocer" href="#como-funciona">
-                  Conocer Fierro
+                <a className="home-conocer" href="#lista-espera">
+                  Unirme a la lista de espera
                 </a>
               </div>
               <p className="home-nota">
@@ -58,10 +60,10 @@ export default function Home({ onEntrar }) {
               loading="eager"
               decoding="async"
             />
-            <figcaption>Imagen ilustrativa generada con IA</figcaption>
           </figure>
         </section>
         <Secciones onEntrar={onEntrar} />
+        <ListaEspera />
       </main>
       <PieHome onEntrar={onEntrar} />
     </div>

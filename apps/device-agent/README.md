@@ -2,6 +2,9 @@
 
 Captures RFID + stable weight, writes to SQLite outbox first, then syncs to the API.
 
+Para usar las estaciones físicas compartidas en stage, seguir la
+[guía de configuración y lecturas en Mac y Windows](../../docs/stage-banco-mac-windows.md).
+
 ```bash
 FIERRO_MOCK_HW=1 FIERRO_API_URL=http://127.0.0.1:8000 fierro-device
 ```

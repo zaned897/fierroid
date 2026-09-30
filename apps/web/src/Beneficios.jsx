@@ -30,7 +30,6 @@ export default function Beneficios() {
               {beneficio.telefono ? <TelefonoConsulta /> : <Foto
                 nombre={beneficio.imagen}
                 className="home-beneficio-foto"
-                pie="Imagen ilustrativa generada con IA"
               />}
               <div className="home-beneficio-texto">
                 <h3>{beneficio.titulo}</h3>

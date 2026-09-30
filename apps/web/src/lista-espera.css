@@ -1,0 +1,13 @@
+.home-publica .waitlist-section { max-width: 1120px; margin: 0 auto; padding: 72px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; scroll-margin-top: 32px; }
+.waitlist-intro h2 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.1; color: #143c2d; }
+.waitlist-intro p { line-height: 1.65; }
+.waitlist-note { color: #52655e; font-size: .9rem; }
+.waitlist-card { padding: 28px; border: 1px solid #dce5de; border-radius: 18px; background: white; box-shadow: 0 12px 40px #143c2d08; min-width: 0; }
+.waitlist-card label { display: grid; gap: 8px; margin-bottom: 20px; font-weight: 500; }
+.waitlist-card input:not([type=checkbox]) { width: 100%; box-sizing: border-box; min-height: 46px; padding: 10px 12px; border: 1px solid #a2b6ad; border-radius: 8px; font: inherit; }
+.waitlist-card small { font-weight: normal; color: #52655e; }
+.waitlist-card .waitlist-consent { display: flex; align-items: flex-start; gap: 10px; font-size: .85rem; line-height: 1.5; }
+.waitlist-consent input { width: 20px; height: 20px; flex: none; }
+.waitlist-trap { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.waitlist-card button { min-height: 48px; }
+@media(max-width: 700px) { .home-publica .waitlist-section { grid-template-columns: 1fr; gap: 24px; padding: 48px 20px; } .waitlist-card { padding: 20px; } }
