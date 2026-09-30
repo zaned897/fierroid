@@ -9,7 +9,7 @@ const lecturas = [
 
 export default function VistaPesajesDemo() {
   return (
-    <figure className="home-demo" aria-labelledby="home-demo-caption">
+    <figure className="home-demo" aria-label="Panel de pesajes">
       <div className="home-demo-marco">
         <aside className="home-demo-lateral" aria-hidden="true">
           <span className="home-demo-marca">Fierro</span>
@@ -23,7 +23,7 @@ export default function VistaPesajesDemo() {
             <span>Juan Pérez</span>
           </div>
           <h2>Pesajes</h2>
-          <section className="home-demo-ultimo" aria-label="Último pesaje de ejemplo">
+          <section className="home-demo-ultimo" aria-label="Último pesaje">
             <div>
               <span className="home-demo-etiqueta">Último pesaje</span>
               <strong>437.5 kg</strong>
@@ -36,7 +36,7 @@ export default function VistaPesajesDemo() {
           </section>
           <div className="home-demo-recientes">
             <h3>Lecturas recientes</h3>
-            <div className="home-demo-tabla" role="table" aria-label="Lecturas recientes de ejemplo">
+            <div className="home-demo-tabla" role="table" aria-label="Lecturas recientes">
               <div className="home-demo-fila home-demo-cabecera" role="row">
                 <span role="columnheader">Animal</span>
                 <span role="columnheader">Peso</span>
@@ -56,7 +56,7 @@ export default function VistaPesajesDemo() {
           </div>
         </div>
       </div>
-      <figcaption id="home-demo-caption">Vista de ejemplo</figcaption>
     </figure>
   );
 }
+

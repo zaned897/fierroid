@@ -188,7 +188,6 @@ export default function Login({ onSession, exchange, onInicio }) {
           <h2>El peso de tu ganado,<br />siempre a la mano.</h2>
           <p>Registra cada pesaje y consulta el historial de tus animales desde tu celular.</p>
         </div>
-        <small className="entrar-credito">Imagen ilustrativa generada con IA</small>
       </aside>
       <main className="entrar-panel">
         <button type="button" className="entrar-volver" onClick={onInicio}>

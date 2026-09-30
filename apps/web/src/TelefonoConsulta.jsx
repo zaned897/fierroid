@@ -4,7 +4,7 @@ import { CowIcon } from "./icons/cows.jsx";
 /** Ilustración HTML, sin controles operativos ni consultas a datos privados. */
 export default function TelefonoConsulta() {
   return (
-    <figure className="home-telefono-escena" aria-label="Vista de ejemplo de consulta de pesajes en un teléfono">
+    <figure className="home-telefono-escena" aria-label="Consulta de pesajes en un teléfono">
       <div className="home-telefono">
         <div className="home-telefono-marca"><Marca size={26} /><span>FIERRO</span></div>
         <div className="home-telefono-pantalla">
@@ -20,7 +20,7 @@ export default function TelefonoConsulta() {
           <div className="home-telefono-lectura"><span>Hoy, 19:26</span><strong>325.0 kg</strong></div>
         </div>
       </div>
-      <figcaption>Vista de ejemplo · Fondo ilustrativo generado con IA</figcaption>
     </figure>
   );
 }
+

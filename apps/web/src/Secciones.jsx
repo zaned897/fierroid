@@ -4,6 +4,7 @@ import Beneficios from "./Beneficios.jsx";
 import Diagrama from "./Diagrama.jsx";
 import PreguntasAcceso from "./PreguntasAcceso.jsx";
 import GraficaPeso from "./GraficaPeso.jsx";
+import VisionPremium from "./VisionPremium.jsx";
 
 /** Si el observador no ha revelado nada para entonces, se revela todo. */
 const RESCATE_MS = 1500;
@@ -108,6 +109,7 @@ export default function Secciones({ onEntrar }) {
         <GraficaPeso />
       </section>
 
+      <VisionPremium />
       <PreguntasAcceso onEntrar={onEntrar} />
     </div>
   );

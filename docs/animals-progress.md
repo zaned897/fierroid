@@ -1,6 +1,6 @@
 # Animales: búsqueda e historial
 
-2026-09-27. Implementado localmente en `codex/stage-shared-access`; sin publicar.
+2026-09-27. Publicado en stage mediante PR #69; producción no promovida.
 
 ## Entrega
 
@@ -44,3 +44,19 @@ recurre a consultas globales que puedan mezclar organizaciones.
 Revisar esta entrega en stage antes de ampliar administración. Siguiente unidad:
 mostrar organización y rancho de cada estación y sus últimos reportes, conservando
 roles. Después abordar altas/asignaciones y, finalmente, emparejamiento de equipos.
+
+## Publicación realizada
+
+- PR: https://github.com/zaned897/fierroid/pull/69, integrado con CI exitoso.
+- Main y stage: `33eee9f6f8f2821d401d2a2cd6fb856c5e7b3f23`.
+- Production permanece en `06183897a80529666ce2463d6241c909558a2b1b`.
+- API stage: revisión `fierro-api-stage-00002-zsc`, 100% del tráfico.
+- Imagen verificada: `sha256:69e80bd099d6a52276515d48d0534bb0d71e8bf603bf44f799d111f6b0a9c79c`.
+- Se actualizó solo la imagen del servicio mediante gcloud. Terraform instalado
+  1.15.8 no satisface >=1.16; `stage.tfvars` local conserva el digest nuevo.
+  No se aplicó Terraform, no se ejecutaron migraciones y el job de migración no cambió.
+- Vercel: despliegue exitoso; alias stage devuelve `/health` 200 con `env=stage`.
+  Bundle `index-DGgYmkb0.js` contiene búsqueda, historial y aviso STAGE.
+- La API desplegada expone la nueva ruta en OpenAPI. La sesión real del navegador
+  integrado sigue pendiente: muestra Entrar. Se pidió al usuario iniciar sesión.
+- PostgreSQL temporal de pruebas detenido; contenedores de otros proyectos intactos.

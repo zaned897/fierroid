@@ -116,7 +116,6 @@ export default function GraficaPeso() {
       <figcaption className="grafica-titulo">
         Peso del arete <span className="tag">484381933670979</span>, mayo a
         septiembre de 2026
-        <span className="grafica-nota">Ejemplo con datos de nuestro entorno de pruebas.</span>
       </figcaption>
 
       <svg

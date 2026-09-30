@@ -18,6 +18,7 @@ export default function Home({ onEntrar }) {
         <nav className="home-navegacion" aria-label="Navegación principal">
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
+          <a href="#fierro-vision">Vision Premium</a>
           <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
         </nav>
         <button type="button" className="home-entrar home-entrar-cabecera" onClick={onEntrar}>
@@ -59,7 +60,6 @@ export default function Home({ onEntrar }) {
               loading="eager"
               decoding="async"
             />
-            <figcaption>Imagen ilustrativa generada con IA</figcaption>
           </figure>
         </section>
         <Secciones onEntrar={onEntrar} />
