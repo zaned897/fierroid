@@ -38,6 +38,10 @@ export function clearSession() {
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+export function apiUrl(path) {
+  return `${API_BASE}${path}`;
+}
+
 /** fetch con la credencial puesta. Lanza si la sesión ya no sirve. */
 export async function apiFetch(path, { session, ...options } = {}) {
   const headers = { ...(options.headers || {}) };
@@ -45,7 +49,7 @@ export async function apiFetch(path, { session, ...options } = {}) {
     headers.Authorization = `Bearer ${session.api_key}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(apiUrl(path), { ...options, headers });
 
   if (res.status === 401) {
     // Credencial revocada, expirada o cuenta desactivada. No hay nada que
@@ -71,7 +75,7 @@ export async function apiFetch(path, { session, ...options } = {}) {
 
 /** Cambia el ID token de Google por una API key nuestra. */
 export async function exchangeGoogleToken(idToken) {
-  const res = await fetch(`${API_BASE}/v1/auth/google`, {
+  const res = await fetch(apiUrl("/v1/auth/google"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id_token: idToken }),

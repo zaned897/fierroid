@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import Admin from "./Admin.jsx";
 import Animales from "./Animales.jsx";
+import Cotizacion from "./Cotizacion.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import Dashboard from "./Dashboard.jsx";
@@ -48,6 +49,7 @@ function Contenido() {
   const [session, setSession] = useState(loadSession);
   const [vista, setVista] = useState("pesajes");
   const [ruta, ir] = useRuta();
+  const rutaActual = ruta.replace(/\/+$/, "") || "/";
 
   const entrar = useCallback(
     (nueva) => {
@@ -74,11 +76,21 @@ function Contenido() {
     setSession(null);
   }, []);
 
+  if (rutaActual === "/cotizacion") {
+    return (
+      <Cotizacion
+        sesionActiva={Boolean(session)}
+        onEntrar={() => ir(session ? "/" : "/entrar")}
+        onInicio={() => ir("/")}
+      />
+    );
+  }
+
   if (!session) {
-    return ruta === "/entrar" ? (
+    return rutaActual === "/entrar" ? (
       <Login onSession={entrar} exchange={exchangeGoogleToken} onInicio={() => ir("/")} />
     ) : (
-      <Home onEntrar={() => ir("/entrar")} />
+      <Home onEntrar={() => ir("/entrar")} onCotizacion={() => ir("/cotizacion")} />
     );
   }
 

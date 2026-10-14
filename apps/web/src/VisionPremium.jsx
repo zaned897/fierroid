@@ -77,8 +77,8 @@ export default function VisionPremium() {
             para resolver oclusiones complejas, segmentar cada bovino y medir con
             precisión en el corral.
           </p>
-          <a href="#lista-espera" className="vision-cta-link">
-            Unirme a la lista de espera para Fierro Vision{" "}
+          <a href="/cotizacion" className="vision-cta-link">
+            Solicitar cotización para Fierro Vision{" "}
             <span aria-hidden="true">→</span>
           </a>
         </div>
@@ -797,7 +797,7 @@ export default function VisionPremium() {
             )}
 
             <div className="vision-inspector-cta">
-              <a href="#lista-espera" className="vision-btn-reserve">
+              <a href="/cotizacion" className="vision-btn-reserve">
                 Solicitar acceso anticipado <span aria-hidden="true">→</span>
               </a>
             </div>

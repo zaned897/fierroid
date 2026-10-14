@@ -27,6 +27,13 @@ class Settings:
     google_client_id: str = ""
     # 0 = sin expiracion. 90 dias equilibra "larga vida" con higiene.
     api_key_ttl_days: int = 90
+    waitlist_confirm_base_url: str = "http://127.0.0.1:8000"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_starttls: bool = True
 
     @property
     def is_deployed(self) -> bool:
@@ -49,6 +56,24 @@ class Settings:
             cors_origins=origins or ("*",),
             google_client_id=os.getenv("FIERRO_GOOGLE_CLIENT_ID", "").strip(),
             api_key_ttl_days=int(os.getenv("FIERRO_API_KEY_TTL_DAYS", "90")),
+            waitlist_confirm_base_url=(
+                os.getenv("FIERRO_WAITLIST_CONFIRM_BASE_URL")
+                or os.getenv("FIERRO_PUBLIC_URL")
+                or "http://127.0.0.1:8000"
+            ).strip().rstrip("/"),
+            smtp_host=os.getenv("FIERRO_SMTP_HOST", "").strip(),
+            smtp_port=int(os.getenv("FIERRO_SMTP_PORT", "587")),
+            smtp_username=os.getenv("FIERRO_SMTP_USERNAME", "").strip(),
+            smtp_password=os.getenv("FIERRO_SMTP_PASSWORD", "").strip(),
+            smtp_from=(
+                os.getenv("FIERRO_SMTP_FROM")
+                or os.getenv("FIERRO_SMTP_USERNAME")
+                or ""
+            ).strip(),
+            smtp_starttls=(
+                os.getenv("FIERRO_SMTP_STARTTLS", "1").strip().lower()
+                not in {"0", "false", "no", "off"}
+            ),
         )
 
     def validate(self) -> None:
@@ -83,5 +108,12 @@ class Settings:
             logger.warning(
                 "FIERRO_GOOGLE_CLIENT_ID no esta definido en %s: "
                 "el inicio de sesion con Google respondera 503",
+                self.env,
+            )
+
+        if not (self.smtp_host and self.smtp_from):
+            logger.warning(
+                "El correo de confirmacion de lista de espera no esta configurado "
+                "en %s: define FIERRO_SMTP_HOST y FIERRO_SMTP_FROM.",
                 self.env,
             )
