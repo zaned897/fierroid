@@ -1,10 +1,14 @@
 import Marca from "./Marca.jsx";
-import ListaEspera from "./ListaEspera.jsx";
 import { PieHome } from "./PreguntasAcceso.jsx";
 import Secciones from "./Secciones.jsx";
 import VistaPesajesDemo from "./VistaPesajesDemo.jsx";
 
-export default function Home({ onEntrar }) {
+export default function Home({ onEntrar, onCotizacion }) {
+  function abrirCotizacion(event) {
+    event.preventDefault();
+    onCotizacion();
+  }
+
   return (
     <div className="home-publica">
       <a className="home-saltar" href="#contenido-home">
@@ -19,6 +23,7 @@ export default function Home({ onEntrar }) {
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
           <a href="#fierro-vision">Vision Premium</a>
+          <a href="/cotizacion" onClick={abrirCotizacion}>Cotización</a>
           <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
         </nav>
         <button type="button" className="home-entrar home-entrar-cabecera" onClick={onEntrar}>
@@ -40,8 +45,8 @@ export default function Home({ onEntrar }) {
                 <button type="button" className="home-entrar" onClick={onEntrar}>
                   Iniciar sesión <span aria-hidden="true">→</span>
                 </button>
-                <a className="home-conocer" href="#lista-espera">
-                  Unirme a la lista de espera
+                <a className="home-conocer" href="/cotizacion" onClick={abrirCotizacion}>
+                  Solicitar cotización
                 </a>
               </div>
               <p className="home-nota">
@@ -63,7 +68,6 @@ export default function Home({ onEntrar }) {
           </figure>
         </section>
         <Secciones onEntrar={onEntrar} />
-        <ListaEspera />
       </main>
       <PieHome onEntrar={onEntrar} />
     </div>

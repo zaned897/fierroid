@@ -1099,6 +1099,59 @@ button.contraste:hover {
   opacity: 0.55;
 }
 
+.waitlist-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.85rem 0 1rem;
+}
+
+.waitlist-admin-list {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.waitlist-admin-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.waitlist-admin-list li > div {
+  min-width: 0;
+}
+
+.waitlist-admin-list p {
+  margin: 0.2rem 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.waitlist-status {
+  flex: none;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.waitlist-status.is-confirmed {
+  border-color: rgba(83, 166, 111, 0.55);
+  color: #7ed093;
+}
+
+.waitlist-status.is-pending {
+  border-color: rgba(196, 163, 90, 0.55);
+  color: var(--accent);
+}
+
 /* Las estaciones sueltas se marcan, no se esconden: sus pesajes entran a la
    base y no salen en ninguna vista, sin dar un solo error. */
 .sueltas li {
@@ -1205,6 +1258,37 @@ button.contraste:hover {
 
 .home-saltar:focus {
   transform: none;
+}
+
+.cotizacion-main {
+  padding-bottom: 72px;
+}
+
+.cotizacion-hero {
+  width: min(calc(100% - 3rem), 72rem);
+  margin: 0 auto;
+  padding: 64px 0 8px;
+}
+
+.cotizacion-hero h1 {
+  max-width: 760px;
+  margin: 0 0 1rem;
+  color: var(--home-bosque);
+  font-size: clamp(2.6rem, 7vw, 5.6rem);
+  line-height: 0.95;
+  font-weight: 820;
+}
+
+.cotizacion-hero p:not(.home-lema) {
+  max-width: 640px;
+  margin: 0;
+  color: var(--home-muted);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.6;
+}
+
+.cotizacion-publica .waitlist-section {
+  padding-top: 40px;
 }
 
 .home-encabezado {

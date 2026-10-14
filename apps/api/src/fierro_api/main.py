@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import base64
+import logging
 from datetime import datetime
 from typing import Annotated, Any, Literal
+from urllib.parse import urlencode
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile, status
@@ -28,6 +30,7 @@ from fierro_api.auth import (
 from fierro_api.settings import Settings
 from fierro_api.store import build_store
 
+logger = logging.getLogger(__name__)
 settings = Settings.from_env()
 # Antes de tocar la base: en stage o production, una config incompleta aborta
 # el arranque en vez de degradar a un almacenamiento efimero.
@@ -65,11 +68,12 @@ class LoginIn(BaseModel):
 class WaitlistIn(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     email: str = Field(max_length=254, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    state: str = Field(min_length=1, max_length=80)
     stations: int = Field(ge=1, le=1000, strict=True)
     consent: Literal[True]
     website: str = Field(default="", max_length=0)
 
-    @field_validator("name", "email", mode="before")
+    @field_validator("name", "email", "state", mode="before")
     @classmethod
     def normalize_contact(cls, value: Any, info: Any) -> Any:
         if isinstance(value, str):
@@ -706,23 +710,122 @@ def main() -> None:
     )
 
 
+def _waitlist_confirmation_url(token: str) -> str:
+    return (
+        f"{settings.waitlist_confirm_base_url}/v1/waitlist/confirm?"
+        f"{urlencode({'token': token})}"
+    )
+
+
+def _waitlist_mail_config() -> waitlist.MailConfig:
+    return waitlist.MailConfig(
+        host=settings.smtp_host,
+        port=settings.smtp_port,
+        from_email=settings.smtp_from,
+        username=settings.smtp_username,
+        password=settings.smtp_password,
+        starttls=settings.smtp_starttls,
+    )
 
 
 @app.post("/v1/waitlist", status_code=202)
-def join_waitlist(body: WaitlistIn) -> dict[str, bool]:
+def join_waitlist(body: WaitlistIn) -> dict[str, Any]:
     try:
-        waitlist.register(_require_postgres(), name=body.name, email=body.email,
-                          stations=body.stations)
+        result = waitlist.register(
+            _require_postgres(),
+            name=body.name,
+            email=body.email,
+            state=body.state,
+            stations=body.stations,
+        )
     except waitlist.WaitlistFull as exc:
-        raise HTTPException(429, "Inténtalo más tarde.", headers={"Retry-After": "3600"}) from exc
-    return {"accepted": True}
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Inténtalo más tarde.",
+            headers={"Retry-After": "3600"},
+        ) from exc
+
+    email_sent = False
+    confirmation_url = None
+    if result.token:
+        confirmation_url = _waitlist_confirmation_url(result.token)
+        try:
+            email_sent = waitlist.send_confirmation_email(
+                _waitlist_mail_config(),
+                to_email=result.email,
+                name=result.name,
+                confirmation_url=confirmation_url,
+            )
+        except waitlist.MailDeliveryError:
+            logger.exception(
+                "No se pudo enviar correo de lista de espera a %s", result.email
+            )
+
+    response: dict[str, Any] = {
+        "accepted": True,
+        "confirmed": result.confirmed,
+        "email_sent": email_sent,
+    }
+    if confirmation_url and settings.env == "dev":
+        response["confirmation_url"] = confirmation_url
+    return response
+
+
+@app.get("/v1/waitlist/confirm")
+def confirm_waitlist(token: str = Query(min_length=20, max_length=200)) -> Response:
+    if waitlist.confirm(_require_postgres(), token) is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Enlace invalido"
+        )
+    return Response(
+        content="""<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Correo confirmado | Fierro</title>
+    <style>
+      body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f8f3;color:#143c2d;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+      main{max-width:34rem;padding:2rem}
+      h1{font-size:clamp(2rem,8vw,3.5rem);line-height:1;margin:0 0 1rem}
+      p{font-size:1.1rem;line-height:1.55;color:#52645d}
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Correo confirmado.</h1>
+      <p>Gracias por unirte a la lista de espera de Fierro. Te contactaremos cuando haya disponibilidad.</p>
+    </main>
+  </body>
+</html>""",
+        media_type="text/html; charset=utf-8",
+    )
 
 
 @app.get("/v1/admin/waitlist")
-def get_waitlist(user: SuperUser, before: int | None = Query(default=None, ge=1),
-                 limit: int = Query(default=20, ge=1, le=100)) -> dict[str, Any]:
+def get_waitlist(
+    user: SuperUser,
+    before: int | None = Query(default=None, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+) -> dict[str, Any]:
     entries = waitlist.list_entries(_require_postgres(), before, limit)
-    return {"entries": entries, "next_cursor": entries[-1]["id"] if len(entries) == limit else None}
+    return {
+        "entries": entries,
+        "next_cursor": entries[-1]["id"] if len(entries) == limit else None,
+    }
+
+
+@app.get("/v1/admin/waitlist.xlsx")
+def download_waitlist(user: SuperUser) -> Response:
+    workbook = waitlist.build_xlsx(waitlist.list_all_entries(_require_postgres()))
+    return Response(
+        content=workbook,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": 'attachment; filename="lista-espera-fierro.xlsx"',
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 if __name__ == "__main__":
