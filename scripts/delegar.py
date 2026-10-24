@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import os
 import re
@@ -31,6 +32,9 @@ import time
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
+# agy sale con 0 aunque el modo headless le niegue un permiso y no haga nada.
+AGY_SIN_TRABAJO = ("no output produced", "auto-denied")
+
 REGISTROS = RAIZ / ".claude" / "delegaciones"
 WORKTREES = RAIZ / ".claude" / "worktrees"
 ULTIMA_REVISION = REGISTROS / ".ultima-revision"
@@ -129,17 +133,29 @@ def delegar(agente: str, tarea: str, base: str, modo: str, limite: int) -> int:
         print(f"[delegar] {agente} no termino en {limite}s; worktree intacto.", file=sys.stderr)
         return 3
 
-    cambios = git("status", "--short", cwd=worktree)
+    codigo = fin.returncode
+    if agente == "agy" and codigo == 0:
+        salida = registro.read_text(encoding="utf-8").lower()
+        if any(marca in salida for marca in AGY_SIN_TRABAJO):
+            print("[delegar] agy no trabajo: el modo headless le nego un permiso. "
+                  "Ver docs/agent/delegar.md (permisos de agy).", file=sys.stderr)
+            codigo = 4
+
     print(f"[delegar] {agente} salio con codigo {fin.returncode}")
     print(f"[delegar] resumen del agente: {registro}")
-    if cambios:
-        print("[delegar] cambios sin commit en el worktree:")
-        print(git("diff", "--stat", cwd=worktree) or cambios)
-        print(f"[delegar] revisa con: git -C \"{worktree}\" diff")
+    # Marca los archivos nuevos (sin stagear contenido) para que `git diff`
+    # los muestre y se puedan integrar junto con lo demas.
+    git("add", "--intent-to-add", "--all", cwd=worktree)
+    if git("status", "--porcelain", cwd=worktree):
+        print("[delegar] cambios en el worktree:")
+        print(git("diff", "HEAD", "--stat", cwd=worktree))
+        print(f"[delegar] revisa con: git -C \"{worktree}\" diff HEAD")
+        print(f"[delegar] integra con: git -C \"{worktree}\" diff HEAD --binary | git apply")
     else:
         print("[delegar] el agente no dejo cambios.")
-    print(f"[delegar] al terminar: git worktree remove \"{worktree}\" && git branch -D {rama}")
-    return fin.returncode
+    print(f"[delegar] al terminar: git worktree remove --force \"{worktree}\" "
+          f"&& git branch -D {rama}")
+    return codigo
 
 
 def base_revision() -> str:
@@ -152,7 +168,8 @@ def base_revision() -> str:
 
 
 def huella_diff(base: str) -> str:
-    diff = git("diff", base)  # incluye lo que aun no tiene commit
+    # Incluye lo que no tiene commit y los archivos nuevos sin rastrear.
+    diff = git("diff", base) + git("status", "--porcelain")
     return hashlib.sha256(diff.encode("utf-8")).hexdigest() if diff else ""
 
 
@@ -160,7 +177,7 @@ def revisar(base: str, limite: int) -> tuple[int, str]:
     codex = binario("codex")
     instruccion = (
         PREAMBULO
-        + f"Revisa el diff de este repo contra el commit {base} (`git diff {base}`). "
+        + f"Revisa el diff contra el commit {base} (`git diff {base}`, `git status`). "
         "No edites archivos. Reporta solo problemas reales: bugs, datos que se pueden "
         "perder, violaciones de idempotencia, valores inventados en vez de fallar. "
         "Para cada uno: archivo:linea, que falla y como. Si no hay nada, di 'Sin hallazgos'."
@@ -206,11 +223,12 @@ def hook_stop() -> int:
         # Un hook roto no debe frenar el turno; se avisa y se sigue.
         print(f"[delegar] revision de Codex omitida: {error}", file=sys.stderr)
         return 0
-    REGISTROS.mkdir(parents=True, exist_ok=True)
-    ULTIMA_REVISION.write_text(huella, encoding="utf-8")
     if codigo != 0:
+        # Sin guardar la huella: el mismo diff se vuelve a revisar la proxima vez.
         print(f"[delegar] la revision de Codex fallo (codigo {codigo}): {texto}", file=sys.stderr)
         return 0
+    REGISTROS.mkdir(parents=True, exist_ok=True)
+    ULTIMA_REVISION.write_text(huella, encoding="utf-8")
     if "sin hallazgos" in texto.lower():
         return 0
     print(
@@ -222,6 +240,10 @@ def hook_stop() -> int:
 
 
 def main() -> int:
+    # En Windows la consola usa cp1252 y los acentos salen corruptos.
+    for flujo in (sys.stdout, sys.stderr):
+        if isinstance(flujo, io.TextIOWrapper):
+            flujo.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="accion", required=True)
     for agente in ("codex", "agy"):

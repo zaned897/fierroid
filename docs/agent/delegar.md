@@ -36,13 +36,25 @@ El resumen del agente queda en `.claude/delegaciones/`. Ambas rutas están en `.
 
 Después de delegar, Claude:
 
-1. Lee el resumen y `git -C <worktree> diff`. Lo trata como código de otro: verifica, no confía.
+1. Lee el resumen y `git -C <worktree> diff HEAD`. Lo trata como código de otro: verifica, no confía.
+   El script marca los archivos nuevos con `git add -N`, así que el diff los incluye.
 2. Corre lint y pruebas en el worktree (`ruff`, `pytest`, `pnpm lint && pnpm build`).
-3. Trae lo que sirve a su rama (`git -C <worktree> diff | git apply`) y descarta el resto.
-4. Limpia: `git worktree remove <worktree>` y `git branch -D delegar/...`.
+3. Trae lo que sirve a su rama (`git -C <worktree> diff HEAD --binary | git apply`) y descarta el resto.
+4. Limpia: `git worktree remove --force <worktree>` y `git branch -D delegar/...`.
 
-Codex corre con `--sandbox workspace-write` dentro del worktree. `agy` corre por defecto con
-`--mode accept-edits`; `--modo auto` le deja ejecutar comandos, úsalo solo si la tarea lo pide.
+Códigos de salida: `0` terminó, `2` falta la CLI, `3` se pasó del límite de tiempo,
+`4` agy no trabajó porque el modo headless le negó un permiso.
+
+Codex corre con `--sandbox workspace-write` dentro del worktree.
+
+### Permisos de agy
+
+`agy -p` no puede preguntar permisos: niega en automático cualquier herramienta que no esté
+permitida y sale con código 0 sin hacer nada (el script lo detecta y devuelve `4`). Antes de
+delegarle algo que necesite correr comandos, el usuario agrega reglas `command(<comando>)` en
+`permissions.allow` del `settings.json` de Antigravity, solo para lo que la tarea necesita
+(por ejemplo `git`, `pnpm`, `python`). El script no pasa `--dangerously-skip-permissions`.
+`--mode auto` no existe en Windows (agy no tiene sandbox de terminal ahí) y cae al modo normal.
 
 ## Hook de revisión de Codex
 

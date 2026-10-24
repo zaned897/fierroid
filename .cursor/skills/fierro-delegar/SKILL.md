@@ -32,13 +32,14 @@ python scripts/delegar.py review                  # Codex second opinion vs main
 ```
 
 1. The script makes a worktree under `.claude/worktrees/` on branch `delegar/...`
-2. Read the summary in `.claude/delegaciones/` and `git -C <worktree> diff`
+2. Read the summary in `.claude/delegaciones/` and `git -C <worktree> diff HEAD`
 3. Run lint and tests in the worktree
-4. Bring over what holds up (`git -C <worktree> diff | git apply`), drop the rest
+4. Bring over what holds up (`git -C <worktree> diff HEAD --binary | git apply`), drop the rest
 5. Remove the worktree and the `delegar/...` branch
 
-The CLIs exist only on the user's PC. Exit code 2 means the CLI is missing: say so, do the
-task yourself, never pretend it was delegated.
+The CLIs exist only on the user's PC. Exit code 2 means the CLI is missing, 4 means agy
+was denied a permission in headless mode and did nothing. Say so, do the task yourself,
+never pretend it was delegated.
 
 ## Codex review hook
 
