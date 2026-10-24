@@ -18,7 +18,7 @@ export default function HistorialAnimal({ animal, session, onExpired }) {
     setBusy(true);
     setError(null);
     try {
-      const query = new URLSearchParams({ org: animal.org, limit: "20" });
+      const query = new URLSearchParams({ org: animal.org, limit: "50" });
       if (siguiente) query.set("cursor", siguiente);
       const body = await apiFetch(`/v1/animals/${encodeURIComponent(animal.tag_id)}/readings?${query}`, {
         session, signal: controller.signal,
@@ -57,7 +57,9 @@ export default function HistorialAnimal({ animal, session, onExpired }) {
     {busy && <p role="status">Cargando pesajes…</p>}
     {!busy && !error && rows.length === 0 && <p>Este animal todavía no tiene pesajes.</p>}
     {rows.length > 0 && <EvolucionAnimal rows={rows} hasMore={Boolean(cursor)} />}
-    <ol className="animal-history-list">{rows.map((row) => <li key={row.event_id}>
+    {rows.length > 0 && <details className="animal-history-details">
+      <summary>Lista de pesajes ({rows.length})</summary>
+      <ol className="animal-history-list">{rows.map((row) => <li key={row.event_id}>
       <strong>{weightValue(row.weight_kg)} kg</strong>
       <dl><dt>Capturado</dt><dd>{capturedLabel(row.captured_at)}</dd>
         <dt>Recibido</dt><dd>{capturedLabel(row.received_at)}</dd>
@@ -65,6 +67,7 @@ export default function HistorialAnimal({ animal, session, onExpired }) {
       {row.stable === false && <span className="dashboard-warning">Peso inestable</span>}
       {isTestReading(row) && <span className="dashboard-test">Lectura de prueba</span>}
     </li>)}</ol>
+    </details>}
     {cursor && <button type="button" disabled={busy} onClick={() => cargar(cursor)}>Ver más pesajes</button>}
   </section>;
 }

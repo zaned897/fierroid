@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { hiddenTestCount, trendReadings, trendSummary } from "../src/animalTrend.js";
+import { hiddenTestCount, outlierIds, trendReadings, trendSummary } from "../src/animalTrend.js";
 
 const row = (id, date, extra = {}) => ({event_id:id, captured_at:date, weight_kg:400, stable:true, source:"serial", ...extra});
 test("la curva excluye pruebas, pesos inestables, ausentes y fechas inválidas", () => {
@@ -24,4 +24,12 @@ test("resume cambio y ganancia diaria entre el primer y el último pesaje", () =
   const s = trendSummary([row("a","2026-09-01T00:00:00Z",{weight_kg:400}), row("b","2026-09-11T00:00:00Z",{weight_kg:412})]);
   assert.deepEqual(s,{deltaKg:12, days:10, dailyKg:1.2});
   assert.equal(trendSummary([row("a","2026-09-01T08:00:00Z"), row("b","2026-09-01T12:00:00Z",{weight_kg:401})]).dailyKg,null);
+});
+test("señala el pesaje que se aparta de sus vecinos sin tocar la tendencia normal", () => {
+  const kg = [400, 405, 410, 480, 420, 425, 430];
+  const points = kg.map((w, i) => row(`p${i}`, `2026-09-${String(i + 1).padStart(2, "0")}`, {weight_kg:w}));
+  assert.deepEqual([...outlierIds(points)], ["p3"]);
+  const growth = [200, 215, 230, 245, 260, 275].map((w, i) => row(`g${i}`, `2026-09-${String(i + 1).padStart(2, "0")}`, {weight_kg:w}));
+  assert.equal(outlierIds(growth).size, 0);
+  assert.equal(outlierIds(points.slice(0, 3)).size, 0);
 });

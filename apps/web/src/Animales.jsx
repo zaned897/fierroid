@@ -144,6 +144,9 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
         <dd>{animal.readings ?? 0}</dd>
       </dl>
 
+      {/* La evolución del peso es el dato principal de la ficha: va antes de editar. */}
+      <HistorialAnimal animal={animal} session={session} onExpired={onExpired} />
+
       <label className="campo">
         Nombre
         <input value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="La Pinta" />
@@ -173,7 +176,6 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
       </div>
 
       {error && <p className="error">{error}</p>}
-      <HistorialAnimal animal={animal} session={session} onExpired={onExpired} />
       <BitacoraAnimal animal={animal} session={session} onExpired={onExpired} />
     </section>
   );

@@ -155,3 +155,32 @@ def test_cli_escribe_json(seed_module, tmp_path):
     payload = json.loads(out.read_text(encoding="utf-8"))
     assert len(payload["herd"]) == 4
     assert payload["readings"]
+
+
+def test_tasa_de_atipicos_cero_no_cambia_semillas_previas(seed_module, now):
+    """Agregar --outlier-rate no debe reescribir los datos ya sembrados con una semilla."""
+    _, base = build(seed_module, now)
+    rng = random.Random(99)
+    herd = seed_module.build_herd(rng, 10, seed_module.DEFAULT_COUNTRY_CODE, now)
+    explicit = seed_module.generate_events(
+        rng=rng, herd=herd, devices=["rpi-a", "rpi-b"], days=60, interval_days=7, now=now,
+        outlier_rate=0.0,
+    )
+    assert explicit == base
+
+
+def test_atipicos_son_estables_y_se_apartan_de_la_curva(seed_module, now):
+    rng = random.Random(7)
+    herd = seed_module.build_herd(rng, 10, seed_module.DEFAULT_COUNTRY_CODE, now)
+    events = seed_module.generate_events(
+        rng=rng, herd=herd, devices=["rpi-a"], days=120, interval_days=7, now=now,
+        outlier_rate=0.2,
+    )
+    by_tag = {animal.tag_id: animal for animal in herd}
+    def curva(e):
+        return seed_module.weight_at(by_tag[e["tag_id"]], datetime.fromisoformat(e["captured_at"]))
+
+    desvios = [abs(e["weight_kg"] / curva(e) - 1) for e in events]
+    lejanos = [d for d in desvios if d > 0.10]
+    assert 0.1 * len(events) < len(lejanos) < 0.3 * len(events)
+    assert all(e["source"] == "synthetic" for e in events)
