@@ -1,0 +1,163 @@
+/* Por qué pesar y lecturas: misma superficie clara que Beneficios. */
+.home-referencias {
+  --ink: #102b22;
+  --muted: #52645d;
+  --line: rgba(20, 60, 45, 0.14);
+  scroll-margin-top: 1rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.home-referencias-contenido {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.home-referencias h2 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.home-referencias .home-referencias-intro {
+  max-width: 40rem;
+  margin: 0 0 clamp(2rem, 4vw, 3rem);
+  color: var(--muted);
+}
+
+.home-datos,
+.home-lecturas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.home-dato {
+  padding: 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: #f7f8f3;
+}
+
+.home-dato-icono {
+  display: block;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin-bottom: 1rem;
+  color: #176575;
+}
+
+.home-dato-icono svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.home-dato h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.home-dato p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.home-cita {
+  display: inline-block;
+  min-width: 2.75rem;
+  color: #176575;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.home-cita:hover,
+.home-cita:focus-visible {
+  text-decoration: underline;
+}
+
+.home-lecturas-titulo {
+  margin: clamp(2.5rem, 5vw, 3.5rem) 0 1rem;
+  font-size: 1.3rem;
+}
+
+.home-lecturas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 2rem;
+  counter-reset: lectura;
+}
+
+.home-lectura {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 0 0.9rem 2.4rem;
+  border-top: 1px solid var(--line);
+  counter-increment: lectura;
+  scroll-margin-top: 5rem;
+}
+
+.home-lectura::before {
+  content: counter(lectura);
+  position: absolute;
+  top: 0.9rem;
+  left: 0;
+  display: grid;
+  width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #e3f1f3;
+  color: #176575;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.home-lectura:target::before {
+  background: #176575;
+  color: #fff;
+}
+
+.home-lectura-tipo {
+  color: #176575;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.home-lectura a {
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.home-lectura-medio {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.home-referencias-nota {
+  margin: 1.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .home-datos,
+  .home-lecturas {
+    grid-template-columns: 1fr;
+  }
+}

@@ -3,10 +3,11 @@ import { useEffect, useRef } from "react";
 import Beneficios from "./Beneficios.jsx";
 import Diagrama from "./Diagrama.jsx";
 import PreguntasAcceso from "./PreguntasAcceso.jsx";
+import Referencias from "./Referencias.jsx";
 import GraficaPeso from "./GraficaPeso.jsx";
 import VisionPremium from "./VisionPremium.jsx";
 
-/** Si el observador no ha revelado nada para entonces, se revela todo. */
+/** Si el observador no respondió ni una vez para entonces, se revela todo. */
 const RESCATE_MS = 1500;
 
 /**
@@ -21,7 +22,10 @@ const RESCATE_MS = 1500;
  * Eso no basta, y lo descubrí midiendo: hay entornos donde `IntersectionObserver`
  * existe, acepta `observe()` y **nunca entrega el callback**. La comprobación de
  * soporte no los cubre, y el contenido se quedaría en `opacity: 0` para siempre.
- * De ahí el temporizador de rescate: pasado ese plazo se revela todo, se pierde
+ * De ahí el temporizador de rescate: si en ese plazo el callback no llegó ni
+ * una vez, se revela todo. No basta con "nada visible todavía": con la portada
+ * ocupando la pantalla, ninguna sección está a la vista y el rescate apagaba
+ * el revelado aunque el observador funcionara. Pasado el plazo se pierde
  * el escalonado y no se pierde la página. La animación es un adorno; el texto no.
  */
 function useRevelar() {
@@ -37,8 +41,14 @@ function useRevelar() {
 
     const objetivos = [...nodo.querySelectorAll("[data-revelar]")];
 
+    // El observador entrega una primera llamada por cada objetivo apenas
+    // empieza a observar, esté o no en pantalla. Si llegó, funciona; lo que
+    // está debajo del pliegue se revela cuando la persona baje.
+    let respondio = false;
+
     const observador = new IntersectionObserver(
       (entradas) => {
+        respondio = true;
         entradas.forEach((entrada) => {
           if (!entrada.isIntersecting) return;
           entrada.target.classList.add("visible");
@@ -53,7 +63,7 @@ function useRevelar() {
     objetivos.forEach((el) => observador.observe(el));
 
     const rescate = setTimeout(() => {
-      if (objetivos.some((el) => el.classList.contains("visible"))) return;
+      if (respondio) return;
       // Se quita el ocultamiento en vez de animar hacia visible. Marcar cada
       // sección dependería de que la transición corra, y hay entornos donde no
       // corre: entonces la opacidad se quedaría clavada en 0, que es justo lo
@@ -109,6 +119,7 @@ export default function Secciones({ onEntrar }) {
         <GraficaPeso />
       </section>
 
+      <Referencias />
       <VisionPremium />
       <PreguntasAcceso onEntrar={onEntrar} />
     </div>

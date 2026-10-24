@@ -36,7 +36,8 @@ No implementar el mockup completo como una imagen: usar HTML semántico y CSS.
 - Conservar la marca original de `Marca.jsx` y sus recursos. No sustituirla por
   las diferentes vacas o cabezas de toro generadas en las láminas 02 y 03.
 - No añadir Probar Fierro, registro público, Recursos, Contacto o una segunda
-  navegación porque aparezcan en la lámina 02.
+  navegación porque aparezcan en la lámina 02. (Las lecturas recomendadas se
+  agregaron después a pedido del usuario, dentro del home y sin página aparte.)
 - No añadir botones Nuevo pesaje o Sincronizar de los teléfonos ilustrados.
   La captura y sincronización continúan siendo automáticas.
 - No introducir campos de raza, sexo ni aretes adicionales a partir de las
@@ -75,9 +76,12 @@ Orden único de la página:
 2. Cómo funciona: tres pasos.
 3. En el corral y desde tu celular.
 4. Cada animal tiene su historia.
-5. Privacidad y acceso del equipo.
-6. Preguntas frecuentes.
-7. Cierre de acceso y pie de página.
+5. Por qué pesar seguido: datos con fuente y lecturas recomendadas
+   (`Referencias.jsx`). Cada fuente se verificó contra su página original;
+   no se agregan citas de memoria.
+6. Privacidad y acceso del equipo.
+7. Preguntas frecuentes.
+8. Cierre de acceso y pie de página.
 
 | Etiqueta | Acción |
 |---|---|
