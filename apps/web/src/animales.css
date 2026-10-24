@@ -18,3 +18,8 @@
 .animal-journal .row { flex-wrap: wrap; gap: 12px; }
 .animal-journal select { width: 100%; min-height: 44px; padding: 8px; font: inherit; }
 .animal-journal-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.trend-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; }
+.trend-summary div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fafcfb; }
+.trend-summary dt { font-size: .75rem; color: #617873; }
+.trend-summary dd { margin: 2px 0 0; font-size: 1.15rem; font-weight: 600; color: #176575; }
+.animal-trend-empty button { min-height: 44px; }
