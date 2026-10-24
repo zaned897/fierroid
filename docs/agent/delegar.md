@@ -52,7 +52,7 @@ Codex corre con `--sandbox workspace-write` dentro del worktree.
 `agy -p` no puede preguntar permisos: niega en automático cualquier herramienta que no esté
 permitida y sale con código 0 sin hacer nada (el script lo detecta y devuelve `4`). Antes de
 delegarle algo que necesite correr comandos, el usuario agrega reglas `command(<comando>)` en
-`permissions.allow` del `settings.json` de Antigravity, solo para lo que la tarea necesita
+`permissions.allow` de `~/.gemini/antigravity-cli/settings.json` (es de usuario, aplica a todo `agy`), solo para lo que la tarea necesita
 (por ejemplo `git`, `pnpm`, `python`). El script no pasa `--dangerously-skip-permissions`.
 `--mode auto` no existe en Windows (agy no tiene sandbox de terminal ahí) y cae al modo normal.
 
