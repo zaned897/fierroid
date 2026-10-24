@@ -1,5 +1,8 @@
-import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from "recharts";
-import { capturedLabel, weightValue } from "./readings.js";
+import { CartesianGrid, Cell, ComposedChart, Line, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from "recharts";
+import { capturedLabel, isTestReading, weightValue } from "./readings.js";
+
+const REAL = "#176575";
+const TEST = "#b7791f";
 
 const dateLabel = (value) => new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short" }).format(value);
 function WeightTooltip({ active, payload }) {
@@ -9,11 +12,15 @@ function WeightTooltip({ active, payload }) {
     <p>{capturedLabel(reading.captured_at)}</p>
     <strong>{weightValue(reading.weight_kg)} <small>kg</small></strong>
     <p>{reading.device_id}</p>
+    {reading.isTest && <p className="dashboard-test">Lectura de prueba</p>}
   </div>;
 }
 
 export default function PesoChart({ rows, mode }) {
-  const data = rows.map((row) => ({ ...row, timestamp: Date.parse(row.captured_at) }));
+  const data = rows.map((row) => ({ ...row, timestamp: Date.parse(row.captured_at), isTest: isTestReading(row) }));
+  // Una prueba nunca debe parecer peso real: mismo trazo, punto en otro color.
+  const dot = ({ cx, cy, payload }) => <circle key={payload.event_id} cx={cx} cy={cy} r={4} fill="#fff" strokeWidth={2}
+    stroke={payload.isTest ? TEST : REAL} />;
   return <div className="animal-chart">
     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
       <ComposedChart data={data} margin={{ top: 20, right: 16, bottom: 12, left: 0 }} accessibilityLayer
@@ -24,9 +31,11 @@ export default function PesoChart({ rows, mode }) {
         <YAxis width={58} domain={[(min) => Math.max(0, Math.floor(min - 5)), (max) => Math.ceil(max + 5)]}
           tickFormatter={(value) => `${value} kg`} tickLine={false} axisLine={false} tick={{ fill: '#617873', fontSize: 11 }} />
         <Tooltip content={<WeightTooltip />} cursor={{ stroke: '#799b94', strokeDasharray: '4 4' }} />
-        {mode === 'points' ? <Scatter name="Peso" dataKey="weight_kg" fill="#176575" isAnimationActive={false} /> :
-          <Line name="Peso" type="linear" dataKey="weight_kg" stroke="#176575" strokeWidth={2.5}
-            dot={{ r: 4, fill: '#fff', strokeWidth: 2 }} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} isAnimationActive={false} />}
+        {mode === 'points' ? <Scatter name="Peso" dataKey="weight_kg" fill={REAL} isAnimationActive={false}>
+          {data.map((row) => <Cell key={row.event_id} fill={row.isTest ? TEST : REAL} />)}
+        </Scatter> :
+          <Line name="Peso" type="linear" dataKey="weight_kg" stroke={REAL} strokeWidth={2.5}
+            dot={dot} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} isAnimationActive={false} />}
       </ComposedChart>
     </ResponsiveContainer>
   </div>;
