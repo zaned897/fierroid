@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(command -v python || command -v python3)\" \"$CLAUDE_PROJECT_DIR/scripts/delegar.py\" hook-stop",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}

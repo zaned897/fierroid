@@ -24,3 +24,7 @@ apps/web/.vite/
 .terraform.lock.hcl
 crash.log
 *.pt
+
+# Delegaciones a Codex/agy: worktrees y registros locales (scripts/delegar.py).
+.claude/worktrees/
+.claude/delegaciones/
