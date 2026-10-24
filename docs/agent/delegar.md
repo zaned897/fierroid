@@ -15,7 +15,7 @@ nube no hay CLIs: el script sale con código 2 y lo dice, y el hook no hace nada
 | Agente | Le toca | No le toca |
 |--------|---------|------------|
 | **Codex** | Tareas de Python/API con criterio de éxito claro: pruebas que faltan, un endpoint con contrato ya definido, un refactor mecánico, scripts. Segunda opinión sobre el diff (`review` y el hook) | Outbox, sync, idempotencia, drivers |
-| **Antigravity** | UI en `apps/web` desde una pantalla ya aprobada, ajustes visuales, verificación en navegador, leer documentos largos (manuales de indicadores, datasheets) y resumirlos | Contratos de datos, lógica del device agent |
+| **Antigravity** | Ediciones de UI en `apps/web` desde una pantalla ya aprobada, ajustes visuales, leer documentos largos (manuales de indicadores, datasheets) y resumirlos. Solo edita, no corre comandos | Contratos de datos, lógica del device agent, tareas que necesiten correr pruebas |
 | **Claude** | Diseño y decisiones, `apps/device-agent` (outbox SQLite, sync, energía), idempotencia por `event_id`, frontera de hardware, integrar y abrir PRs | — |
 
 Regla para decidir: delega cuando la tarea cabe en un párrafo, tiene una forma objetiva de
@@ -47,14 +47,16 @@ Códigos de salida: `0` terminó, `2` falta la CLI, `3` se pasó del límite de 
 
 Codex corre con `--sandbox workspace-write` dentro del worktree.
 
-### Permisos de agy
+### agy solo edita
 
-`agy -p` no puede preguntar permisos: niega en automático cualquier herramienta que no esté
-permitida y sale con código 0 sin hacer nada (el script lo detecta y devuelve `4`). Antes de
-delegarle algo que necesite correr comandos, el usuario agrega reglas `command(<comando>)` en
-`permissions.allow` de `~/.gemini/antigravity-cli/settings.json` (es de usuario, aplica a todo `agy`), solo para lo que la tarea necesita
-(por ejemplo `git`, `pnpm`, `python`). El script no pasa `--dangerously-skip-permissions`.
-`--mode auto` no existe en Windows (agy no tiene sandbox de terminal ahí) y cae al modo normal.
+`agy -p` lee y edita archivos, pero no corre comandos. Su modo de permisos por defecto
+(`toolPermission: request-review`) pide confirmar cada comando aunque esté en
+`permissions.allow`, y sin terminal esa confirmación se niega sola. Por eso el script le
+pide no correr comandos, y Claude corre lint y pruebas al revisar el diff. Si agy intenta un
+comando igual, sale con código 0 sin hacer nada; el script lo detecta y devuelve `4`.
+
+Para que corra comandos habría que aprobarle todo (`toolPermission: always-proceed` o
+`--dangerously-skip-permissions`). El script no lo hace: lo que necesite comandos va a Codex.
 
 ## Hook de revisión de Codex
 

@@ -17,7 +17,7 @@ Full guide: [`docs/agent/delegar.md`](../../../docs/agent/delegar.md)
 | Agent | Delegate | Keep away |
 |-------|----------|-----------|
 | Codex | Python/API work with a clear pass criterion, missing tests, mechanical refactors, scripts, diff review | Outbox, sync, idempotency, drivers |
-| Antigravity | `apps/web` UI from an approved screen, visual tweaks, browser checks, long-document reading | Data contracts, device agent logic |
+| Antigravity | `apps/web` UI edits from an approved screen, visual tweaks, long-document reading. Edits files only, runs no commands | Data contracts, device agent logic, anything that must run commands |
 | Claude | Design, `apps/device-agent`, `event_id` idempotency, hardware boundary, integration, PRs | — |
 
 Delegate only when the task fits in one paragraph, has an objective check (a test, a

@@ -114,7 +114,11 @@ def delegar(agente: str, tarea: str, base: str, modo: str, limite: int) -> int:
     worktree, rama = crear_worktree(agente, tarea, base)
     REGISTROS.mkdir(parents=True, exist_ok=True)
     registro = REGISTROS / f"{worktree.name}.md"
+    # agy -p niega cualquier comando (su modo request-review no se puede
+    # confirmar sin terminal), asi que solo lee y edita; Claude corre las pruebas.
     prompt = PREAMBULO + tarea
+    if agente == "agy":
+        prompt = PREAMBULO + "No corras comandos de terminal: solo lee y edita archivos.\n" + tarea
     comando = comando_agente(agente, worktree, registro, modo)
 
     print(f"[delegar] {agente} trabaja en {worktree} (rama {rama})", flush=True)
