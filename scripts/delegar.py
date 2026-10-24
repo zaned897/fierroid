@@ -141,7 +141,7 @@ def delegar(agente: str, tarea: str, base: str, modo: str, limite: int) -> int:
                   "Ver docs/agent/delegar.md (permisos de agy).", file=sys.stderr)
             codigo = 4
 
-    print(f"[delegar] {agente} salio con codigo {fin.returncode}")
+    print(f"[delegar] {agente} salio con codigo {fin.returncode}; delegar devuelve {codigo}")
     print(f"[delegar] resumen del agente: {registro}")
     # Marca los archivos nuevos (sin stagear contenido) para que `git diff`
     # los muestre y se puedan integrar junto con lo demas.
@@ -168,9 +168,16 @@ def base_revision() -> str:
 
 
 def huella_diff(base: str) -> str:
-    # Incluye lo que no tiene commit y los archivos nuevos sin rastrear.
-    diff = git("diff", base) + git("status", "--porcelain")
-    return hashlib.sha256(diff.encode("utf-8")).hexdigest() if diff else ""
+    # Incluye lo que no tiene commit y el contenido de los archivos nuevos sin
+    # rastrear. Lo ignorado (.claude/delegaciones/) queda fuera, si no cada
+    # registro de revision cambiaria la huella y se revisaria en bucle.
+    diff = git("diff", base)
+    huella = hashlib.sha256(diff.encode("utf-8"))
+    nuevos = git("ls-files", "--others", "--exclude-standard").splitlines()
+    for nombre in sorted(nuevos):
+        huella.update(nombre.encode("utf-8"))
+        huella.update((RAIZ / nombre).read_bytes())
+    return huella.hexdigest() if diff or nuevos else ""
 
 
 def revisar(base: str, limite: int) -> tuple[int, str]:
