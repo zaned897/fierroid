@@ -1532,8 +1532,29 @@ button.home-entrar:focus-visible {
 
 .home-demo-ultimo strong {
   font-size: clamp(2rem, 4vw, 3rem);
+  font-variant-numeric: tabular-nums;
   line-height: 1.05;
   letter-spacing: -0.045em;
+}
+
+.home-demo.midiendo .home-demo-estado {
+  color: #6b7d76;
+}
+
+.home-demo-estado {
+  margin-top: 0.3rem;
+  color: #176575;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.home-demo-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .home-demo-ultimo time {

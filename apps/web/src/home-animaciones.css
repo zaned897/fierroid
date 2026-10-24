@@ -1,0 +1,140 @@
+/*
+ * Movimiento del home, todo con propósito: cada animación cuenta algo del
+ * producto (el orden de los pasos, que la lectura se estabiliza antes de
+ * guardarse, que el dato viaja a la nube después).
+ *
+ * Dos reglas que no se negocian:
+ * 1. El estado final es el estado sin animación. Si nada de esto corre, la
+ *    página se lee completa.
+ * 2. Todo vive bajo `prefers-reduced-motion: no-preference`. Con movimiento
+ *    reducido no hay una sola regla de este archivo activa.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes home-subir {
+    from {
+      opacity: 0;
+      transform: translateY(0.9rem);
+    }
+  }
+
+  @keyframes home-trazar-x {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+  }
+
+  @keyframes home-trazar-y {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+  }
+
+  @keyframes home-latido {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(183, 227, 232, 0);
+    }
+    40% {
+      box-shadow: 0 0 0 0.55rem rgba(183, 227, 232, 0.28);
+    }
+  }
+
+  @keyframes home-subida-nube {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    45% {
+      transform: translateY(-0.3rem);
+    }
+  }
+
+  @keyframes home-resaltar {
+    from {
+      background-color: rgba(118, 196, 208, 0.35);
+    }
+  }
+
+  /* --- Cómo funciona: los pasos se encienden en orden ------------------ */
+
+  /* Pasos y conectores solo se animan cuando la sección se revela; antes la
+     sección entera está a opacidad 0, así que no hay salto visible. */
+  .secciones.con-revelado .como-funciona.visible .paso {
+    animation: home-subir 520ms ease-out both;
+  }
+
+  .secciones.con-revelado .como-funciona.visible .paso::after {
+    animation: home-trazar-x 520ms ease-out both;
+  }
+
+  .secciones.con-revelado .como-funciona.visible .paso-num {
+    animation: home-latido 900ms ease-out both;
+  }
+
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(1) { animation-delay: 150ms; }
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(2) { animation-delay: 650ms; }
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) { animation-delay: 1150ms; }
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(1)::after { animation-delay: 500ms; }
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(2)::after { animation-delay: 1000ms; }
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(1) .paso-num { animation-delay: 300ms; }
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(2) .paso-num { animation-delay: 800ms; }
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) .paso-num { animation-delay: 1300ms; }
+
+  /* La nube "recibe" el dato: dos subidas cortas y se queda quieta. */
+  .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) .paso-icono {
+    animation: home-subida-nube 700ms ease-in-out 1600ms 2 both;
+  }
+
+  @media (max-width: 760px) {
+    .secciones.con-revelado .como-funciona.visible .paso::after {
+      animation-name: home-trazar-y;
+    }
+  }
+
+  /* --- Beneficios y lecturas: tarjetas escalonadas -------------------- */
+
+  .secciones.con-revelado .visible .home-beneficio,
+  .secciones.con-revelado .visible .home-lectura,
+  .secciones.con-revelado .visible .home-dato {
+    animation: home-subir 480ms ease-out both;
+  }
+
+  .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(2) { animation-delay: 120ms; }
+  .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(3) { animation-delay: 240ms; }
+  .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(4) { animation-delay: 360ms; }
+  .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(5) { animation-delay: 480ms; }
+  .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(6) { animation-delay: 600ms; }
+
+  /* --- Panel demo: la lectura nueva entra a la tabla ------------------- */
+
+  .home-demo.guardado .home-demo-fila:nth-child(2) {
+    animation: home-resaltar 1400ms ease-out both;
+  }
+
+  /* --- Portada: el paisaje respira despacio ---------------------------- */
+
+  /* Solo en pantallas grandes: en el celular, en el corral, la batería vale
+     más que el adorno. Un solo transform, sin repintar la imagen. */
+  @media (min-width: 761px) {
+    @keyframes home-paisaje {
+      from {
+        transform: scale(1.04) translateX(1.5%);
+      }
+      to {
+        transform: scale(1.1) translateX(-1.5%);
+      }
+    }
+
+    .home-paisaje img {
+      animation: home-paisaje 38s ease-in-out infinite alternate;
+      will-change: transform;
+    }
+  }
+
+  /* --- Preguntas frecuentes: la respuesta entra, no aparece de golpe --- */
+
+  .home-faq-item[open] > p {
+    animation: home-subir 260ms ease-out both;
+  }
+}

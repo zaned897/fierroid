@@ -15,6 +15,14 @@ const PREGUNTAS = [
     respuesta: "Puedes consultar los pesajes y la información de los animales a los que tu cuenta tiene acceso.",
   },
   {
+    pregunta: "¿Por qué una lectura aparece como inestable?",
+    respuesta: "Porque la báscula no se estabilizó mientras el animal se movía. La lectura se guarda igual y queda marcada, para que decidas si repetir el pesaje. Nunca se corrige ni se oculta.",
+  },
+  {
+    pregunta: "¿Qué aretes puede leer?",
+    respuesta: "Fierro está pensado para aretes electrónicos con la norma internacional ISO 11784/11785. Antes de instalar conviene confirmar el tipo de arete que ya usan tus animales.",
+  },
+  {
     pregunta: "¿Qué equipo necesita mi rancho?",
     respuesta: "Fierro conecta un lector de aretes y una báscula con un equipo que registra los pesajes. La compatibilidad depende de los modelos y debe verificarse antes de instalarlos.",
   },

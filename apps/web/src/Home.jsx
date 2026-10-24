@@ -3,6 +3,7 @@ import ListaEspera from "./ListaEspera.jsx";
 import { PieHome } from "./PreguntasAcceso.jsx";
 import Secciones from "./Secciones.jsx";
 import VistaPesajesDemo from "./VistaPesajesDemo.jsx";
+import "./home-animaciones.css";
 
 export default function Home({ onEntrar }) {
   return (
@@ -18,6 +19,7 @@ export default function Home({ onEntrar }) {
         <nav className="home-navegacion" aria-label="Navegación principal">
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
+          <a href="#por-que-pesar">Por qué pesar</a>
           <a href="#fierro-vision">Vision Premium</a>
           <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
         </nav>
