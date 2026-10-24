@@ -31,6 +31,7 @@ propuestas, riesgos y primera unidad de trabajo.
 | [`pull-requests.md`](pull-requests.md) | Ramas, commits, PRs, merge a `main` |
 | [`jira.md`](jira.md) | Cuándo abrir tickets, plantillas, duplicados, Atlassian MCP |
 | [`testing.md`](testing.md) | Lint, tests, evidencia, mock hardware |
+| [`delegar.md`](delegar.md) | Qué tareas pasar a Codex o Antigravity y cómo revisar lo que devuelven |
 
 ## Skills en el repo
 

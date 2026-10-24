@@ -30,6 +30,7 @@ En `.claude/skills/` (espejo de `.cursor/skills/`). Cargar la que aplique **ante
 | `fierro-edge-reliability` | Device agent, storage, energía, systemd, deploy a RPi |
 | `fierro-hardware-boundary` | Drivers serial, RFID/báscula, PCB, gabinete, BOM |
 | `fierro-unblock` | Desarrollo estancado |
+| `fierro-delegar` | Pasar una tarea acotada a Codex o Antigravity (`scripts/delegar.py`) |
 | `fierro-sprints` | Planear, partir trabajo, abrir o cerrar tickets |
 | `fierro-dev-workflow` | Flujo general |
 | `fierro-pull-requests` | Ramas y PRs |

@@ -11,6 +11,7 @@ Skills equivalentes, espejadas en `.cursor/skills/` (Cursor) y `.claude/skills/`
 | `fierro-edge-reliability` | Device agent, storage, energía, systemd, deploy a RPi |
 | `fierro-hardware-boundary` | Drivers serial, RFID/báscula, PCB, gabinete, BOM |
 | `fierro-unblock` | En cuanto el desarrollo se estanca |
+| `fierro-delegar` | Pasar una tarea acotada a Codex o Antigravity |
 | `fierro-sprints` | Planear, partir trabajo, abrir o cerrar tickets |
 | `fierro-dev-workflow` | Flujo general de trabajo |
 | `fierro-pull-requests` | Crear y actualizar PRs |
