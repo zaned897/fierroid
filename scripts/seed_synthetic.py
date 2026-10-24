@@ -110,6 +110,16 @@ def quantize(weight: float, rng: random.Random) -> float:
     return round(round(noisy / SCALE_DIVISION_KG) * SCALE_DIVISION_KG, 1)
 
 
+def atypical(weight: float, rng: random.Random) -> float:
+    """Lectura estable pero equivocada: lo que la PWA debe senalar como atipico.
+
+    Arriba: otro animal o una pata de mas sobre la plataforma. Abajo: el animal
+    recargado en la manga, con parte del peso fuera de la bascula.
+    """
+    factor = rng.uniform(1.12, 1.25) if rng.random() < 0.5 else rng.uniform(0.75, 0.88)
+    return weight * factor
+
+
 def generate_events(
     *,
     rng: random.Random,
@@ -118,6 +128,7 @@ def generate_events(
     days: int,
     interval_days: int,
     now: datetime,
+    outlier_rate: float = 0.0,
 ) -> list[dict[str, Any]]:
     """Jornadas de pesaje cada `interval_days`; no todo el hato pasa por la manga."""
     events: list[dict[str, Any]] = []
@@ -140,12 +151,16 @@ def generate_events(
                 # futura es dato invalido, no dato faltante.
                 continue
             iso = captured_at.isoformat()
+            weight = weight_at(animal, captured_at)
+            # Sin tasa no se consume aleatoriedad: las semillas previas no cambian.
+            if outlier_rate and rng.random() < outlier_rate:
+                weight = atypical(weight, rng)
             events.append(
                 {
                     "event_id": str(uuid.uuid5(EVENT_NAMESPACE, f"{device}|{animal.tag_id}|{iso}")),
                     "device_id": device,
                     "tag_id": animal.tag_id,
-                    "weight_kg": quantize(weight_at(animal, captured_at), rng),
+                    "weight_kg": quantize(weight, rng),
                     "captured_at": iso,
                     # 3% inestable: el animal se movio y el indicador no fijo peso.
                     "stable": rng.random() > 0.03,
@@ -222,6 +237,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="IDs concretos separados por coma. Gana sobre --devices. "
         "Sirve para sembrar el hato de una organizacion ya creada.",
     )
+    parser.add_argument(
+        "--outlier-rate",
+        type=float,
+        default=0.0,
+        help="Fraccion de pesajes estables pero atipicos (0.03 = 3%%), para ilustrar alertas.",
+    )
     parser.add_argument("--batch-size", type=int, default=200)
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument("--country-code", type=int, default=DEFAULT_COUNTRY_CODE)
@@ -233,6 +254,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if not args.api and not args.out:
         print("Falta --api o --out", file=sys.stderr)
+        return 2
+    if not 0.0 <= args.outlier_rate <= 0.5:
+        print("--outlier-rate debe estar entre 0 y 0.5", file=sys.stderr)
         return 2
     if args.interval_days < 1:
         print("--interval-days debe ser >= 1", file=sys.stderr)
@@ -255,6 +279,7 @@ def main(argv: list[str] | None = None) -> int:
         days=args.days,
         interval_days=args.interval_days,
         now=now,
+        outlier_rate=args.outlier_rate,
     )
 
     print(

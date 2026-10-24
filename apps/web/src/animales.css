@@ -23,3 +23,8 @@
 .trend-summary dt { font-size: .75rem; color: #617873; }
 .trend-summary dd { margin: 2px 0 0; font-size: 1.15rem; font-weight: 600; color: #176575; }
 .animal-trend-empty button { min-height: 44px; }
+.trend-outliers { margin-top: 12px; padding: 10px 12px; border-left: 4px solid #c0392b; border-radius: 8px; background: #fdf1ef; color: #5c1d16; }
+.trend-outliers p { margin: 0; }
+.trend-outliers ul { margin: 6px 0 0; padding-left: 18px; font-size: .9rem; }
+.trend-outlier-label { color: #c0392b !important; font-weight: 600; }
+.animal-history-details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
