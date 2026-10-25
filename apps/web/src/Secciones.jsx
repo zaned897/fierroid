@@ -83,7 +83,7 @@ function useRevelar() {
 }
 
 /** Secciones del home, sustituidas de forma incremental según la guía. */
-export default function Secciones({ onEntrar }) {
+export default function Secciones() {
   const raiz = useRevelar();
 
   return (
@@ -121,7 +121,7 @@ export default function Secciones({ onEntrar }) {
 
       <Referencias />
       <VisionPremium />
-      <PreguntasAcceso onEntrar={onEntrar} />
+      <PreguntasAcceso />
     </div>
   );
 }

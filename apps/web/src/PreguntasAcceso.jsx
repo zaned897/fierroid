@@ -15,6 +15,10 @@ const PREGUNTAS = [
     respuesta: "Puedes consultar los pesajes y la información de los animales a los que tu cuenta tiene acceso.",
   },
   {
+    pregunta: "¿Quién ve la información de mi rancho?",
+    respuesta: "Tu equipo. Cada usuario ve únicamente la información que le corresponde.",
+  },
+  {
     pregunta: "¿Por qué una lectura aparece como inestable?",
     respuesta: "Porque la báscula no se estabilizó mientras el animal se movía. La lectura se guarda igual y queda marcada, para que decidas si repetir el pesaje. Nunca se corrige ni se oculta.",
   },
@@ -28,24 +32,9 @@ const PREGUNTAS = [
   },
 ];
 
-export default function PreguntasAcceso({ onEntrar }) {
+export default function PreguntasAcceso() {
   return (
     <div className="home-preguntas-acceso">
-      <section className="home-privacidad" aria-labelledby="privacidad-titulo">
-        <div className="home-privacidad-contenido">
-          <svg className="home-privacidad-icono" viewBox="0 0 32 40" aria-hidden="true" focusable="false">
-            <path d="M8 17V11a8 8 0 0 1 16 0v6" fill="none" stroke="currentColor" strokeWidth="4" />
-            <rect x="2" y="15" width="28" height="23" rx="4" fill="currentColor" />
-            <circle cx="16" cy="25" r="3" fill="#f7f8f3" />
-            <path d="M16 26v5" stroke="#f7f8f3" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-          <div>
-            <h2 id="privacidad-titulo">La información de tu rancho, para tu equipo.</h2>
-            <p>Cada usuario ve únicamente la información que le corresponde.</p>
-          </div>
-        </div>
-      </section>
-
       <section className="home-faq" id="preguntas-frecuentes" aria-labelledby="faq-titulo">
         <div className="home-acceso-contenido">
           <h2 id="faq-titulo">Preguntas frecuentes</h2>
@@ -63,18 +52,6 @@ export default function PreguntasAcceso({ onEntrar }) {
         </div>
       </section>
 
-      <section className="home-acceso-final" aria-labelledby="acceso-final-titulo">
-        <div className="home-acceso-contenido home-acceso-columnas">
-          <div>
-            <h2 id="acceso-final-titulo">¿Tu rancho ya usa Fierro?</h2>
-            <p>Inicia sesión con tu correo autorizado.</p>
-          </div>
-          <div className="home-acceso-accion">
-            <button type="button" className="home-entrar" onClick={onEntrar}>Iniciar sesión</button>
-            <p>Si aún no tienes acceso, pide al administrador de tu rancho que dé de alta tu correo.</p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

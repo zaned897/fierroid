@@ -72,8 +72,8 @@ export default function Home({ onEntrar }) {
             </div>
           </div>
         </section>
-        <Secciones onEntrar={onEntrar} />
-        <ListaEspera />
+        <Secciones />
+        <ListaEspera onEntrar={onEntrar} />
       </main>
       <PieHome onEntrar={onEntrar} />
     </div>

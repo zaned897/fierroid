@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { apiFetch } from "./auth.js";
 import "./lista-espera.css";
 
-export default function ListaEspera() {
+export default function ListaEspera({ onEntrar }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
@@ -31,6 +31,8 @@ export default function ListaEspera() {
       <h2 id="waitlist-title">Lleva Fierro a tu rancho.</h2>
       <p>Únete a la lista de espera para conocer la disponibilidad de las estaciones.</p>
       <p className="waitlist-note">Sin pago ni compromiso de compra. El registro no reserva equipo ni garantiza una fecha de entrega.</p>
+      <p className="waitlist-entrar">¿Tu rancho ya usa Fierro?{" "}
+        <button type="button" className="home-nota-entrar" onClick={onEntrar}>Inicia sesión</button></p>
     </div>
     {done ? <div className="waitlist-card" role="status"><h3>Tu interés quedó registrado.</h3><p>Usaremos tu correo para contactarte sobre la disponibilidad de Fierro.</p><p>Este registro no crea una cuenta de acceso al panel.</p></div> :
       <form className="waitlist-card" onSubmit={submit} aria-busy={busy}>

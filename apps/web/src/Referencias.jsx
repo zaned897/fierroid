@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import "./referencias.css";
 
 /**
@@ -98,6 +100,12 @@ function IconoDato({ tipo }) {
 }
 
 export default function Referencias() {
+  // Las fuentes van plegadas; una cita las abre antes de saltar a su renglón.
+  const fuentes = useRef(null);
+  const abrirFuentes = () => {
+    if (fuentes.current) fuentes.current.open = true;
+  };
+
   return (
     <section className="bloque home-referencias" id="por-que-pesar" aria-labelledby="por-que-pesar-titulo" data-revelar>
       <div className="home-referencias-contenido">
@@ -113,7 +121,7 @@ export default function Referencias() {
               <h3>{dato.titulo}</h3>
               <p>
                 {dato.texto}{" "}
-                <a className="home-cita" href={`#lectura-${dato.fuente}`} aria-label={`Fuente ${numeroDe[dato.fuente]}`}>
+                <a className="home-cita" href={`#lectura-${dato.fuente}`} onClick={abrirFuentes} aria-label={`Fuente ${numeroDe[dato.fuente]}`}>
                   [{numeroDe[dato.fuente]}]
                 </a>
               </p>
@@ -121,23 +129,27 @@ export default function Referencias() {
           ))}
         </ul>
 
-        <h3 className="home-lecturas-titulo" id="lecturas">Lecturas recomendadas</h3>
-        <ol className="home-lecturas">
-          {LECTURAS.map((lectura) => (
-            <li className="home-lectura" key={lectura.id} id={`lectura-${lectura.id}`}>
-              <span className="home-lectura-tipo">{lectura.tipo}</span>
-              <a href={lectura.url} target="_blank" rel="noopener noreferrer">
-                {lectura.titulo}
-              </a>
-              <span className="home-lectura-medio">
-                {lectura.autores} · {lectura.medio}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <p className="home-referencias-nota">
-          Enlaces a sitios externos, en inglés salvo la nota de BM Editores. Fierro no está afiliado a estas fuentes.
-        </p>
+        <details className="home-lecturas-plegable" id="lecturas" ref={fuentes}>
+          <summary className="home-lecturas-titulo">
+            Ver las {LECTURAS.length} fuentes
+          </summary>
+          <ol className="home-lecturas">
+            {LECTURAS.map((lectura) => (
+              <li className="home-lectura" key={lectura.id} id={`lectura-${lectura.id}`}>
+                <span className="home-lectura-tipo">{lectura.tipo}</span>
+                <a href={lectura.url} target="_blank" rel="noopener noreferrer">
+                  {lectura.titulo}
+                </a>
+                <span className="home-lectura-medio">
+                  {lectura.autores} · {lectura.medio}
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p className="home-referencias-nota">
+            Enlaces a sitios externos, en inglés salvo la nota de BM Editores. Fierro no está afiliado a estas fuentes.
+          </p>
+        </details>
       </div>
     </section>
   );

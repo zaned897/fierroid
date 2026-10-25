@@ -11,3 +11,4 @@
 .waitlist-trap { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .waitlist-card button { min-height: 48px; }
 @media(max-width: 700px) { .home-publica .waitlist-section { grid-template-columns: 1fr; gap: 24px; padding: 48px 20px; } .waitlist-card { padding: 20px; } }
+.waitlist-entrar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; color: #52655e; }
