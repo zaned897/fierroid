@@ -38,31 +38,39 @@ export default function Home({ onEntrar }) {
               <p className="home-descripcion">
                 Registra cada pesaje y consulta el historial de tus animales desde tu celular.
               </p>
+              <ul className="home-sellos" aria-label="Lo que distingue a Fierro">
+                <li>Funciona sin señal</li>
+                <li>Ningún pesaje se pierde</li>
+                <li>Lecturas dudosas, marcadas</li>
+              </ul>
               <div className="home-acciones">
-                <button type="button" className="home-entrar" onClick={onEntrar}>
-                  Iniciar sesión <span aria-hidden="true">→</span>
-                </button>
-                <a className="home-conocer" href="#lista-espera">
-                  Unirme a la lista de espera
+                <a className="home-entrar" href="#lista-espera">
+                  Unirme a la lista de espera <span aria-hidden="true">→</span>
                 </a>
               </div>
               <p className="home-nota">
-                <span className="home-candado" aria-hidden="true" />
-                Acceso por invitación.
+                ¿Tu rancho ya usa Fierro?{" "}
+                <button type="button" className="home-nota-entrar" onClick={onEntrar}>
+                  Inicia sesión
+                </button>
               </p>
             </div>
-            <VistaPesajesDemo />
+            {/* La tarjeta se monta sobre el paisaje: juntos ocupan el lugar
+                que antes ocupaban por separado. */}
+            <div className="home-portada-vista">
+              <figure className="home-paisaje">
+                <img
+                  src="/img/home-paisaje-ia.webp"
+                  width="1536"
+                  height="1024"
+                  alt=""
+                  loading="eager"
+                  decoding="async"
+                />
+              </figure>
+              <VistaPesajesDemo />
+            </div>
           </div>
-          <figure className="home-paisaje">
-            <img
-              src="/img/home-paisaje-ia.webp"
-              width="1536"
-              height="1024"
-              alt=""
-              loading="eager"
-              decoding="async"
-            />
-          </figure>
         </section>
         <Secciones onEntrar={onEntrar} />
         <ListaEspera />
