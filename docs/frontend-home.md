@@ -77,11 +77,15 @@ Orden único de la página:
 3. En el corral y desde tu celular.
 4. Cada animal tiene su historia.
 5. Por qué pesar seguido: datos con fuente y lecturas recomendadas
-   (`Referencias.jsx`). Cada fuente se verificó contra su página original;
-   no se agregan citas de memoria.
-6. Privacidad y acceso del equipo.
-7. Preguntas frecuentes.
-8. Cierre de acceso y pie de página.
+   (`Referencias.jsx`), plegadas en "Ver las fuentes". Cada fuente se verificó
+   contra su página original; no se agregan citas de memoria.
+6. Fierro Vision, marcado como en desarrollo (`VisionPremium.jsx`).
+7. Preguntas frecuentes, incluida la privacidad del equipo.
+8. Lista de espera con la línea de inicio de sesión, y pie de página.
+
+Cambios de 2026-10-25, aprobados en el [diseño del home](https://claude.ai/artifact/LS3Vcw3zrJK2aaxNZJMCP6):
+la portada lleva primero a la lista de espera (#88), la página se acorta sin
+borrar texto (#89) y Fierro Vision dice el estado real de cada capacidad (#90).
 
 | Etiqueta | Acción |
 |---|---|
@@ -103,12 +107,14 @@ menú hamburguesa sin contenido necesario. Ofrecer Saltar al contenido para tecl
 | Lema | Del corral a tu bolsillo. |
 | H1 | El peso de tu ganado, siempre a la mano. |
 | Descripción | Registra cada pesaje y consulta el historial de tus animales desde tu celular. |
-| Acción principal | Iniciar sesión |
-| Acción secundaria | Conocer Fierro |
-| Nota | Acceso por invitación. |
+| Sellos | Funciona sin señal · Ningún pesaje se pierde · Lecturas dudosas, marcadas |
+| Acción principal | Unirme a la lista de espera (ancla #lista-espera) |
+| Nota | ¿Tu rancho ya usa Fierro? Inicia sesión (flujo onEntrar) |
 | Pie de demostración | Vista de ejemplo |
 
-Conocer Fierro desplaza a #como-funciona. La portada no necesita ocupar una altura
+El acceso es por invitación, así que casi todo visitante es nuevo: la lista de
+espera es la acción principal y Iniciar sesión queda en la cabecera y en la nota.
+La vista de ejemplo se monta sobre el paisaje. La portada no necesita ocupar una altura
 mínima de una pantalla completa: dejar que el contenido y dispositivo determinen
 la altura. Escritorio: texto y acciones a un lado, vista del producto al otro.
 Móvil: texto, acciones, nota y una vista compacta del producto, en ese orden.
@@ -183,13 +189,12 @@ antes de crear un evento. No cambiar esa lógica para justificar el marketing.
 
 ## 8. Privacidad y preguntas frecuentes — lámina 03
 
-### Bloque de privacidad
+### Privacidad
 
-Título: **La información de tu rancho, para tu equipo.**
-Descripción: **Cada usuario ve únicamente la información que le corresponde.**
-
-Banda breve con icono de candado y texto. No añadir certificaciones, garantías
-legales ni explicaciones de consultas, tokens o aislamiento técnico.
+Desde #89 es una pregunta frecuente: **¿Quién ve la información de mi rancho?**
+Tu equipo. Cada usuario ve únicamente la información que le corresponde.
+No añadir certificaciones, garantías legales ni explicaciones de consultas,
+tokens o aislamiento técnico.
 
 ### Preguntas frecuentes
 
@@ -209,17 +214,11 @@ visible y funcionamiento con teclado. Evitar animaciones obligatorias o alturas
 que recorten respuestas. El texto describe el flujo previsto, no certifica que
 las pruebas pendientes de desconexión o compatibilidad física estén completadas.
 
-## 9. Cierre y pie — lámina 03
+## 9. Cierre y pie
 
-| Elemento | Texto |
-|---|---|
-| Título | ¿Tu rancho ya usa Fierro? |
-| Descripción | Inicia sesión con tu correo autorizado. |
-| Acción | Iniciar sesión |
-| Ayuda | Si aún no tienes acceso, pide al administrador de tu rancho que dé de alta tu correo. |
-
-Banda verde oscura con acción azul petróleo y contraste verificado. Móvil:
-apilar contenido y botón. No añadir formulario de registro ni contactos ficticios.
+Desde #89 no hay banda de acceso aparte: la sección de lista de espera cierra la
+página y lleva la línea "¿Tu rancho ya usa Fierro? Inicia sesión". La ayuda para
+quien no tiene acceso vive en la pregunta "¿Cómo entro a Fierro?".
 Pie con marca original, Del corral a tu bolsillo., Cómo funciona, Preguntas
 frecuentes e Iniciar sesión. Los enlaces conservan los destinos anteriores.
 

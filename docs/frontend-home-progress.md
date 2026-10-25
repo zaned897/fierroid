@@ -122,3 +122,17 @@ desde `apps/web/node_modules`, sin reinstalar dependencias.
 
 Unidad 5: sustituir la sección actual de datos por Historial, con fotografía,
 gráfica y tabla accesible según la lámina de referencia correspondiente.
+
+## 2026-10-25 — Propuestas A, B y C del diseño del home
+
+Diseño aprobado: https://claude.ai/artifact/LS3Vcw3zrJK2aaxNZJMCP6 (#88, #89, #90).
+
+- A: lista de espera como acción principal, sellos y vista de ejemplo sobre el paisaje.
+- B: fuentes plegadas (una cita las abre), privacidad como pregunta frecuente,
+  banda de acceso sustituida por una línea en la lista de espera.
+- C: Fierro Vision en desarrollo, una sola foto, estado por capacidad y
+  detalles técnicos en un desplegable.
+
+Medido con Playwright sobre `vite preview`: alto en celular (390 px) de 9,856
+a 7,521 px; escritorio (1280 px) de 7,517 a 5,979 px. Sin desbordamiento
+horizontal. `pnpm lint` y `pnpm build` pasan.
