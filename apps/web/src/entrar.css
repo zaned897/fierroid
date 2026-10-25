@@ -33,6 +33,11 @@
 .entrar .proveedor { padding-top: 12px; }
 .entrar .ultimo { background: #e8eee7; color: #143c2d; border-color: #c4d4c9; top: -10px; }
 .entrar .muted { color: #52635d; line-height: 1.6; }
+.entrar .gsi { display: flex; align-items: center; min-height: 44px; }
+.entrar .gsi > div:empty { display: none; }
+.entrar .gsi-espera { justify-content: center; border: 1px solid #d9e1d8; border-radius: 999px; background: #fff; color: #52635d; font-size: 14px; animation: gsi-pulso 1.4s ease-in-out infinite; }
+@keyframes gsi-pulso { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .entrar .gsi-espera { animation: none; } }
 .entrar .error { color: #9b3029; background: #fff0ed; border: 1px solid #e9bdb6; border-radius: 10px; padding: 14px 16px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .entrar-invitacion { display: flex; align-items: flex-start; gap: 12px; margin-top: 32px; padding-top: 28px; border-top: 1px solid #d9e1d8; color: #176575; }
 .entrar-invitacion svg { flex: 0 0 22px; margin-top: 2px; }

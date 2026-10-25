@@ -6,6 +6,7 @@ import "./entrar.css";
 
 const GSI_SRC = "https://accounts.google.com/gsi/client";
 const ULTIMO = "fierro.ultimo-proveedor";
+const CONFIG = "fierro.auth-config";
 
 /** Carga el script de Google una sola vez, aunque el componente se remonte. */
 function useGoogleScript() {
@@ -56,6 +57,23 @@ function normalizar(config) {
   };
 }
 
+function leerConfig() {
+  try {
+    const crudo = localStorage.getItem(CONFIG);
+    return crudo ? normalizar(JSON.parse(crudo)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function guardarConfig(config) {
+  try {
+    localStorage.setItem(CONFIG, JSON.stringify(config));
+  } catch {
+    // Sin copia local la próxima visita espera a la API, como antes.
+  }
+}
+
 /**
  * Qué proveedores existen lo decide la API, no el bundle.
  *
@@ -64,24 +82,33 @@ function normalizar(config) {
  * que siempre retornaba— y la página se veía bien, sin botón y sin error.
  * Pedirlo en tiempo de ejecución convierte ese fallo silencioso en una
  * petición que falla a la vista.
+ *
+ * La API escala a cero: la primera petición tras un rato despierta el
+ * contenedor y tarda segundos. Por eso se dibuja con la última config que
+ * contestó la API y se confirma por detrás; si cambió, gana la nueva. Si la
+ * API no contesta, el error se muestra igual aunque haya copia.
  */
 function useProveedores() {
-  const [estado, setEstado] = useState({ cargando: true, config: null, error: null });
+  const [estado, setEstado] = useState(() => {
+    const guardada = leerConfig();
+    return { cargando: !guardada, config: guardada, error: null };
+  });
 
   useEffect(() => {
     let vivo = true;
     fetch("/v1/auth/config")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((config) => {
+        guardarConfig(config);
         if (vivo) setEstado({ cargando: false, config: normalizar(config), error: null });
       })
       .catch((err) => {
         if (vivo) {
-          setEstado({
+          setEstado((previo) => ({
             cargando: false,
-            config: null,
+            config: previo.config,
             error: `No se pudo contactar la API: ${err.message}`,
-          });
+          }));
         }
       });
     return () => {
@@ -109,30 +136,40 @@ function guardarUltimo(id) {
 }
 
 /** Botón de Google, dibujado por Google. */
-function BotonGoogle({ clientId, onCredencial, ancho }) {
+function BotonGoogle({ google, clientId, onCredencial, ancho }) {
   const contenedor = useRef(null);
-  const { listo, error } = useGoogleScript();
+  const { listo, error } = google;
+  const [dibujado, setDibujado] = useState(false);
+
+  useEffect(() => {
+    if (!listo || !clientId) return;
+    window.google.accounts.id.initialize({ client_id: clientId, callback: onCredencial });
+  }, [listo, clientId, onCredencial]);
 
   useEffect(() => {
     if (!listo || !clientId || !contenedor.current) return;
-
-    window.google.accounts.id.initialize({ client_id: clientId, callback: onCredencial });
     // Lo dibuja Google y no nosotros: sus lineamientos de marca lo exigen, y un
     // botón propio se rompe cada vez que cambian el flujo por dentro.
     window.google.accounts.id.renderButton(contenedor.current, {
-      theme: "filled_black",
+      theme: "outline",
       size: "large",
-      shape: "rectangular",
+      shape: "pill",
       text: "continue_with",
+      logo_alignment: "left",
       locale: "es",
       width: ancho,
     });
-  }, [listo, clientId, onCredencial, ancho]);
+    setDibujado(true);
+  }, [listo, clientId, ancho]);
 
   return (
     <>
-      <div ref={contenedor} className="gsi" />
-      {!listo && !error && <p className="muted" role="status">Cargando Google…</p>}
+      {/* El hueco se reserva desde el primer frame: el botón aparece en su
+          lugar en vez de empujar la página. */}
+      <div className={dibujado ? "gsi" : "gsi gsi-espera"}>
+        <div ref={contenedor} />
+        {!dibujado && !error && <span role="status">Cargando Google…</span>}
+      </div>
       {error && <p className="error" role="alert">{error}</p>}
     </>
   );
@@ -140,6 +177,9 @@ function BotonGoogle({ clientId, onCredencial, ancho }) {
 
 export default function Login({ onSession, exchange, onInicio }) {
   const { cargando, config, error: errorConfig } = useProveedores();
+  // El script de Google (~90 KB) se pide junto con la config, no después de
+  // ella: encadenados sumaban el arranque en frío de la API y la descarga.
+  const google = useGoogleScript();
   const [error, setError] = useState(null);
   const [entrando, setEntrando] = useState(false);
   const [ancho, setAncho] = useState(320);
@@ -201,13 +241,20 @@ export default function Login({ onSession, exchange, onInicio }) {
       <p className="entrar-descripcion">Continúa con tu cuenta para consultar tus pesajes.</p>
 
       <div className="proveedores" ref={columna} aria-busy={cargando || entrando}>
-        {cargando && <p className="muted" role="status">Cargando opciones de acceso…</p>}
+        {cargando && (
+          <div className="proveedor">
+            <div className="gsi gsi-espera">
+              <span role="status">Cargando opciones de acceso…</span>
+            </div>
+          </div>
+        )}
 
         {proveedores.map((p) => (
           <div key={p.id} className="proveedor">
             {ultimo === p.id && <span className="ultimo">Última vez</span>}
             {p.id === "google" && (
               <BotonGoogle
+                google={google}
                 clientId={config.google_client_id}
                 onCredencial={alRecibirCredencial}
                 ancho={ancho}
