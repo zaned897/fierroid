@@ -25,6 +25,6 @@ apps/web/.vite/
 crash.log
 *.pt
 
-# Delegaciones a Codex/agy: worktrees y registros locales (scripts/delegar.py).
+# Delegaciones a Codex/agy: worktrees y registros locales (tools/agentes/delegar.py).
 .claude/worktrees/
 .claude/delegaciones/

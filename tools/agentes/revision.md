@@ -1,0 +1,1 @@
+Reporta solo problemas reales: bugs, datos que se pueden perder, violaciones de idempotencia, valores inventados en vez de fallar. Para cada uno: archivo:linea, que falla y como. Si no hay nada, di 'Sin hallazgos'.
