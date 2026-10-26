@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Genera los iconos de la PWA desde el PNG de la marca. Sin dependencias.
+"""Genera icon.png, la mascara del logo de la app, desde el PNG de la marca.
+Sin dependencias. El favicon y los iconos de la PWA salen de
+scripts/generar_favicon.cjs.
 
     python3 scripts/generar_iconos.py
 
@@ -13,11 +15,6 @@ y se reescala.
 import struct
 import zlib
 from pathlib import Path
-
-RGB = tuple[int, int, int]
-
-VERDE: RGB = (26, 46, 26)     # --bg de la marca, el mismo del icon.svg que sustituye
-ORO: RGB = (196, 163, 90)     # --accent
 
 
 def leer_rgba(ruta: str) -> tuple[int, int, bytearray]:
@@ -140,35 +137,6 @@ def reducir(lado: int, pix: bytearray, destino: int) -> bytearray:
     return salida
 
 
-def recolorear(pix: bytearray, rgb: RGB) -> bytearray:
-    salida = bytearray(pix)
-    for i in range(0, len(salida), 4):
-        salida[i], salida[i + 1], salida[i + 2] = rgb
-    return salida
-
-
-def sobre_fondo(
-    lado: int, marca: bytearray, rgb_fondo: RGB, escala: float = 0.62
-) -> bytearray:
-    """Icono maskable: fondo a sangre y la marca dentro de la zona segura."""
-    fondo = bytearray()
-    for _ in range(lado * lado):
-        fondo += bytes((*rgb_fondo, 255))
-    dentro = int(lado * escala)
-    chico = reducir(lado, marca, dentro)
-    off = (lado - dentro) // 2
-    for y in range(dentro):
-        for x in range(dentro):
-            i = (y * dentro + x) * 4
-            a = chico[i + 3]
-            if not a:
-                continue
-            j = ((y + off) * lado + (x + off)) * 4
-            for c in range(3):
-                fondo[j + c] = (chico[i + c] * a + fondo[j + c] * (255 - a)) // 255
-    return fondo
-
-
 w, h, pix = leer_rgba("resources/favicon_streight_lines.png")
 lado, cuadrado = recortar_cuadrado(w, h, pix)
 print(f"original {w}x{h}  ->  recortado y cuadrado {lado}x{lado}")
@@ -176,8 +144,5 @@ print(f"original {w}x{h}  ->  recortado y cuadrado {lado}x{lado}")
 marca512 = reducir(lado, cuadrado, 512)
 escribir_rgba("apps/web/public/icon.png", 512, 512, marca512)
 
-maskable = sobre_fondo(512, recolorear(marca512, ORO), VERDE)
-escribir_rgba("apps/web/public/icon-maskable.png", 512, 512, maskable)
-
-for n in ("icon.png", "icon-maskable.png"):
-    print(f"  apps/web/public/{n}  {Path('apps/web/public/' + n).stat().st_size / 1024:.0f} KB")
+kb = Path("apps/web/public/icon.png").stat().st_size / 1024
+print(f"  apps/web/public/icon.png  {kb:.0f} KB")
