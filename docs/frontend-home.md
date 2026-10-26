@@ -80,6 +80,10 @@ Orden único de la página:
    (`Referencias.jsx`), plegadas en "Ver las fuentes". Cada fuente se verificó
    contra su página original; no se agregan citas de memoria.
 6. Fierro Vision, marcado como en desarrollo (`VisionPremium.jsx`).
+6b. Más que una báscula (`MasQueBascula.jsx`, #94): cuatro ideas que salen de
+   los pesajes, cada una con su estado ("Disponible" o "Próximamente") y una
+   vista de ejemplo plegable con datos fijos. Épica #93. El aparte en la manga
+   (#97) no entra hasta probar su hardware.
 7. Preguntas frecuentes, incluida la privacidad del equipo.
 8. Lista de espera con la línea de inicio de sesión, y pie de página.
 
