@@ -1233,7 +1233,8 @@ button.contraste:hover {
   background-color: currentColor;
 }
 
-button.home-entrar {
+button.home-entrar,
+a.home-entrar {
   min-height: 44px;
   border-color: var(--home-petroleo);
   background: var(--home-petroleo);
@@ -1241,14 +1242,16 @@ button.home-entrar {
   font-weight: 650;
 }
 
-button.home-entrar:hover {
+button.home-entrar:hover,
+a.home-entrar:hover {
   border-color: var(--home-bosque);
   background: var(--home-bosque);
   color: #fff;
 }
 
 .home-marca:focus-visible,
-button.home-entrar:focus-visible {
+button.home-entrar:focus-visible,
+a.home-entrar:focus-visible {
   outline: 3px solid var(--home-petroleo);
   outline-offset: 3px;
 }
@@ -1731,6 +1734,127 @@ button.home-entrar:focus-visible {
   border-bottom: 0;
   border-radius: 0.45rem 0.45rem 0 0;
   transform: translateX(-50%);
+}
+
+/* --- Portada, propuesta A: lista de espera primero y tarjeta sobre el paisaje --- */
+
+.home-sellos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-sellos li {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: #e3eee8;
+  color: var(--home-bosque);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.home-nota {
+  gap: 0.35rem;
+  color: var(--home-muted);
+  font-size: 0.95rem;
+}
+
+.home-nota-entrar {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--home-petroleo);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.home-nota-entrar:hover {
+  color: var(--home-bosque);
+}
+
+.home-nota-entrar:focus-visible {
+  outline: 3px solid var(--home-petroleo);
+  outline-offset: 3px;
+}
+
+/* El paisaje ocupa la mitad baja de la columna y la tarjeta flota encima. */
+.home-portada-vista {
+  position: relative;
+  min-width: 0;
+  padding: 0 3rem 4.5rem 0;
+}
+
+.home-portada-vista .home-paisaje {
+  position: absolute;
+  inset: 22% 0 0 3rem;
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+
+.home-portada-vista .home-paisaje::after {
+  display: none;
+}
+
+.home-portada-vista .home-demo {
+  position: relative;
+}
+
+.home-portada-vista .home-demo-marco {
+  box-shadow: 0 1.2rem 2.4rem rgba(10, 24, 18, 0.28);
+}
+
+.home-portada-vista .home-demo > figcaption {
+  width: fit-content;
+  margin: 0.55rem 0 0 auto;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.25rem;
+  background: rgba(10, 24, 18, 0.72);
+  color: #fff;
+}
+
+.home-portada-principal {
+  padding-top: clamp(3rem, 6vw, 4.5rem);
+}
+
+@media (max-width: 760px) {
+  .home-portada-principal {
+    gap: 1.75rem;
+    padding-top: 2rem;
+  }
+
+  .home-portada h1 {
+    font-size: clamp(2.2rem, 9.8vw, 3rem);
+  }
+
+  .home-descripcion {
+    margin-top: 1rem;
+  }
+
+  .home-sellos {
+    margin-top: 1.1rem;
+  }
+
+  .home-acciones {
+    margin-top: 1.25rem;
+  }
+
+  .home-portada-vista {
+    padding: 0 0.75rem 2.75rem;
+  }
+
+  .home-portada-vista .home-paisaje {
+    display: block;
+    inset: 35% -1rem 0;
+    border-radius: 0;
+  }
 }
 /* --- Cómo funciona: docs/design/home/02-funcionamiento-beneficios.png --- */
 
