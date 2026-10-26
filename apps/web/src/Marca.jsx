@@ -6,8 +6,8 @@
  * paleta. El café original (#6c3d25) sobre el verde de fondo (#142018) queda
  * casi invisible, y un logotipo que no se ve no es un logotipo.
  *
- * En la pestaña del navegador sí va el archivo tal cual, con su café: ahí el
- * fondo lo pone el navegador, no nosotros.
+ * La pestaña del navegador no usa este archivo: el favicon (favicon.svg) es la
+ * cabeza de toro sobre disco dorado, que trae su propio fondo.
  */
 export default function Marca({ size = 48, className = "" }) {
   return (
