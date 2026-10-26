@@ -89,6 +89,9 @@ export default function Secciones() {
 
   return (
     <div className="secciones" ref={raiz}>
+      {/* Justo después de la portada: es lo que vende (#94). */}
+      <MasQueBascula />
+
       <section
         className="bloque banda-oscura como-funciona"
         id="como-funciona"
@@ -122,7 +125,6 @@ export default function Secciones() {
 
       <Referencias />
       <VisionPremium />
-      <MasQueBascula />
       <PreguntasAcceso />
     </div>
   );

@@ -3,8 +3,9 @@ import "./mas-que-bascula.css";
 /**
  * Lo que sale de los pesajes además del registro (#93, #94). Cada idea dice su
  * estado real, con la misma regla que Fierro Vision: lo que aún no se
- * construye no se presenta como disponible. Las vistas son ejemplos fijos,
- * sin consultas a datos de ningún rancho.
+ * construye no se presenta como disponible. Las vistas van siempre abiertas
+ * porque son lo que vende; son ejemplos fijos, sin consultas a datos de
+ * ningún rancho.
  */
 const IDEAS = [
   {
@@ -109,10 +110,7 @@ export default function MasQueBascula() {
                 {idea.disponible ? "Disponible" : "Próximamente"}
               </span>
             </div>
-            <details>
-              <summary>Ver ejemplo</summary>
-              <Vista vista={idea.vista} />
-            </details>
+            <Vista vista={idea.vista} />
           </li>
         ))}
       </ul>

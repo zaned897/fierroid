@@ -17,6 +17,7 @@ export default function Home({ onEntrar }) {
           <span>Fierro</span>
         </a>
         <nav className="home-navegacion" aria-label="Navegación principal">
+          <a href="#mas-que-bascula">Lo que hace</a>
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
           <a href="#por-que-pesar">Por qué pesar</a>

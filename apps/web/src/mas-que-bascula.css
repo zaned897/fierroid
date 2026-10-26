@@ -2,7 +2,7 @@
    porque .secciones todavía trae el tema oscuro antiguo. */
 .home-publica .mas-que-bascula {
   padding: 88px max(24px, calc((100% - 1200px) / 2));
-  background: var(--home-marfil);
+  background: #fff;
   color: var(--home-texto);
   scroll-margin-top: 24px;
 }
@@ -22,7 +22,15 @@
   text-transform: uppercase;
 }
 
-.mqb-cabeza h2 { color: var(--home-bosque); }
+.home-publica .mqb-cabeza h2 {
+  margin-bottom: 0.9rem;
+  color: var(--home-bosque);
+  font-size: clamp(2rem, 4.2vw, 2.9rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+.home-publica .mqb-cabeza p:last-child { font-size: 1.08rem; }
 .mqb-cabeza p:last-child { color: var(--home-muted); }
 .home-publica .mas-que-bascula p { color: var(--home-muted); }
 
@@ -41,9 +49,9 @@
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 0.85rem;
   padding: 1.1rem;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(20, 60, 45, 0.08);
+  border: 1px solid #dce3df;
+  border-radius: 16px;
+  background: var(--home-marfil);
 }
 
 .mqb-icono {
@@ -71,29 +79,14 @@
 
 .mqb-estado.mqb-disponible { background: #e3eee8; color: #1c6b44; }
 
-.mqb-idea > details { grid-column: 1 / -1; }
-
-.mqb-idea summary {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--home-petroleo);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.mqb-idea summary:focus-visible {
-  outline: 2px solid var(--home-petroleo);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
+.mqb-idea > .mqb-vista { grid-column: 1 / -1; }
 
 .mqb-vista {
-  margin: 0.4rem 0 0;
-  padding: 0.85rem;
-  border: 1px solid #dce3df;
-  border-radius: 10px;
-  background: var(--home-marfil);
+  margin: 0.2rem 0 0;
+  padding: 0.95rem;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(20, 60, 45, 0.1);
 }
 
 .mqb-vista-titulo { display: block; margin-bottom: 0.3rem; color: var(--home-bosque); }

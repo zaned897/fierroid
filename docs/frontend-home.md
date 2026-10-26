@@ -73,19 +73,20 @@ y su vista ilustrativa; no implica modificar automáticamente la aplicación.
 Orden único de la página:
 
 1. Encabezado y portada.
-2. Cómo funciona: tres pasos.
-3. En el corral y desde tu celular.
-4. Cada animal tiene su historia.
-5. Por qué pesar seguido: datos con fuente y lecturas recomendadas
+2. Más que una báscula (`MasQueBascula.jsx`, #94), justo después de la portada
+   porque es lo que vende: cuatro ideas que salen de los pesajes, cada una con
+   su estado ("Disponible" o "Próximamente") y su vista de ejemplo abierta, con
+   datos fijos. Épica #93. El aparte en la manga (#97) no entra hasta probar
+   su hardware.
+3. Cómo funciona: tres pasos.
+4. En el corral y desde tu celular.
+5. Cada animal tiene su historia.
+6. Por qué pesar seguido: datos con fuente y lecturas recomendadas
    (`Referencias.jsx`), plegadas en "Ver las fuentes". Cada fuente se verificó
    contra su página original; no se agregan citas de memoria.
-6. Fierro Vision, marcado como en desarrollo (`VisionPremium.jsx`).
-6b. Más que una báscula (`MasQueBascula.jsx`, #94): cuatro ideas que salen de
-   los pesajes, cada una con su estado ("Disponible" o "Próximamente") y una
-   vista de ejemplo plegable con datos fijos. Épica #93. El aparte en la manga
-   (#97) no entra hasta probar su hardware.
-7. Preguntas frecuentes, incluida la privacidad del equipo.
-8. Lista de espera con la línea de inicio de sesión, y pie de página.
+7. Fierro Vision, marcado como en desarrollo (`VisionPremium.jsx`).
+8. Preguntas frecuentes, incluida la privacidad del equipo.
+9. Lista de espera con la línea de inicio de sesión, y pie de página.
 
 Cambios de 2026-10-25, aprobados en el [diseño del home](https://claude.ai/artifact/LS3Vcw3zrJK2aaxNZJMCP6):
 la portada lleva primero a la lista de espera (#88), la página se acorta sin
