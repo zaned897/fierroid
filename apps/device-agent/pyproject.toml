@@ -11,12 +11,14 @@ requires-python = ">=3.11"
 dependencies = [
   "pyserial>=3.5",
   "httpx>=0.27",
+  "python-dotenv>=1.0,<2",
 ]
 
 [project.scripts]
 fierro-device = "fierro_device.main:main"
 
 [project.optional-dependencies]
+# Se conserva para el comando anterior `python -m dotenv ... run`; ya no hace falta.
 bench = ["python-dotenv[cli]>=1.0,<2"]
 
 [tool.setuptools.packages.find]

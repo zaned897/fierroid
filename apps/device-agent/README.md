@@ -7,7 +7,27 @@ Para usar las estaciones físicas compartidas en stage, seguir la
 
 ```bash
 FIERRO_MOCK_HW=1 FIERRO_API_URL=http://127.0.0.1:8000 fierro-device
+fierro-device doctor   # revisa config, puerto, outbox y API sin capturar
 ```
+
+## Configuración
+
+El agente carga su configuración solo, del primer archivo que exista:
+
+1. `FIERRO_ENV_FILE`, si está definida (si apunta a un archivo inexistente, falla).
+2. Archivo del sistema: `~/.config/fierro/device.env` (Linux/RPi),
+   `~/Library/Application Support/Fierro/device.env` (Mac),
+   `%APPDATA%\Fierro\device.env` (Windows).
+3. `apps/device-agent/.env`, para bancos con el repo clonado.
+
+Las variables ya definidas en el proceso tienen prioridad sobre el archivo.
+Con hardware real (`FIERRO_MOCK_HW` distinto de `1`, el valor por defecto)
+el agente se niega a arrancar sin `FIERRO_DEVICE_ID` y `FIERRO_API_URL`.
+Simular exige `FIERRO_MOCK_HW=1` explícito y el log lo advierte.
+
+Si no se define `FIERRO_DB_PATH`, la outbox va a una ruta persistente:
+`~/.local/share/fierro/outbox.db`, `~/Library/Application Support/Fierro/outbox.db`
+o `%LOCALAPPDATA%\Fierro\outbox.db`. Nunca a `/tmp`.
 
 ## Prototipo Windows (COM6) con archivo de configuración
 
@@ -25,13 +45,13 @@ Este archivo es independiente del `.env` general de la raíz (API/web/Compose).
 Cerrar el monitor serial de Arduino y arrancar desde la raíz del repositorio:
 
 ```powershell
-python -m dotenv -f apps/device-agent/.env run --override -- python -m fierro_device.main
+python -m fierro_device.main
 ```
 
-El agente no carga `.env` por sí solo. El comando anterior carga ese archivo y
-da prioridad a sus valores sobre los heredados de PowerShell, solo en el proceso
-hijo. No cambia las variables de la terminal. `python -m fierro_device.main`
-sin el prefijo sigue usando únicamente el entorno del proceso.
+El agente carga `apps/device-agent/.env` por sí solo (ver Configuración).
+Una variable `FIERRO_*` que ya exista en PowerShell gana sobre el archivo;
+si dudas, `fierro-device doctor` muestra los valores efectivos.
+El comando anterior con `python -m dotenv ... run --override` sigue funcionando.
 
 - El ejemplo usa hardware real del prototipo en COM6 y envía lecturas a stage.
 - Cambiar puerto y estación cuando corresponda; la estación debe estar registrada.

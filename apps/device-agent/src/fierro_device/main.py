@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import signal
+import sys
 import time
 
 from fierro_device import __version__
+from fierro_device.config import ConfigError, load_config
 from fierro_device.hardware import build_hardware
 from fierro_device.models import WeightReading
 from fierro_device.settings import Settings
@@ -130,10 +133,37 @@ class Agent:
         logger.info("agent stopped")
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="fierro-device")
+    parser.add_argument(
+        "comando",
+        nargs="?",
+        default="run",
+        choices=("run", "doctor"),
+        help="run (por defecto) captura y sincroniza; doctor revisa la estacion",
+    )
+    args = parser.parse_args(argv)
+    try:
+        config_path = load_config()
+    except ConfigError as exc:
+        logger.error("%s", exc)
+        return 2
     settings = Settings.from_env()
+    if args.comando == "doctor":
+        from fierro_device.doctor import run_doctor
+
+        return run_doctor(settings, config_path)
+    logger.info("config file=%s", config_path or "(ninguno, solo entorno)")
+    problems = settings.problems()
+    if problems:
+        for problem in problems:
+            logger.error("config: %s", problem)
+        return 2
+    if settings.mock_hw:
+        logger.warning("MODO SIMULADO: FIERRO_MOCK_HW=1, las lecturas no son reales")
     Agent(settings).run()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
