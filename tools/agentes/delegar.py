@@ -7,14 +7,20 @@ asi que lo que haga el otro agente queda como un diff aparte que Claude revisa,
 prueba y decide si integrar. Nada se mezcla a la rama actual ni a `main` aqui.
 
 Uso:
-    python scripts/delegar.py codex "agrega pruebas para ingest con lote vacio"
-    python scripts/delegar.py agy "ajusta el espaciado de la tarjeta de animal"
-    python scripts/delegar.py review            # segunda opinion de Codex
-    python scripts/delegar.py hook-stop         # lo llama el hook Stop
+    python tools/agentes/delegar.py estado          # que CLIs hay en esta maquina
+    python tools/agentes/delegar.py codex "agrega pruebas para el caso de lista vacia"
+    python tools/agentes/delegar.py agy "aplica el espaciado aprobado a la tarjeta"
+    python tools/agentes/delegar.py review          # segunda opinion de Codex
+    python tools/agentes/delegar.py limpiar         # borra worktrees y ramas delegar/*
+    python tools/agentes/delegar.py hook-stop       # lo llama el hook Stop
 
 Las CLIs y sus sesiones viven en la PC del usuario. Si falta una, el script
 sale con codigo 2 y lo dice: falla ruidosa, nunca un resultado inventado.
 Sin dependencias fuera de la biblioteca estandar, para correr igual en Windows.
+
+Lo propio de cada proyecto vive en `preambulo.md` (y, si hace falta, en
+`revision.md`, que dice que cuenta como problema en una revision), junto a
+este archivo; el script es igual en todos los repos.
 """
 
 from __future__ import annotations
@@ -31,30 +37,41 @@ import sys
 import time
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parent.parent
+AQUI = Path(__file__).resolve().parent
+RAIZ = AQUI.parent.parent
 # agy sale con 0 aunque el modo headless le niegue un permiso y no haga nada.
 AGY_SIN_TRABAJO = ("no output produced", "auto-denied")
 
 REGISTROS = RAIZ / ".claude" / "delegaciones"
 WORKTREES = RAIZ / ".claude" / "worktrees"
 ULTIMA_REVISION = REGISTROS / ".ultima-revision"
+PREFIJO_RAMA = "delegar/"
 
-# Contexto que recibe el otro agente antes de la tarea. Corto a proposito: las
-# reglas completas estan en el repo y el agente las lee desde ahi.
-PREAMBULO = """Trabajas en el repo fierroid (Fierro IoT, pesaje de ganado edge-first).
-Antes de cambiar nada lee CLAUDE.md y AGENTS.md. Reglas que no se negocian:
-- Ninguna lectura de pesaje se pierde. Falla ruidosa, nunca datos falsos.
-- Idempotencia por event_id. Diff minimo, solo lo que pide la tarea.
-- Sin hardware: usa FIERRO_MOCK_HW=1.
+# Variable que prende el hook de revision. Apagada por defecto: cada revision
+# gasta cuota de ChatGPT y tarda.
+VARIABLE_REVISION = "CODEX_REVIEW"
+
+PREAMBULO_GENERICO = """Antes de cambiar nada lee AGENTS.md en la raiz del repo.
+- Diff minimo, solo lo que pide la tarea. Falla ruidosa, nunca datos inventados.
 - No hagas commit ni push; deja los cambios en el arbol de trabajo.
 Al terminar resume que cambiaste, que comandos corriste y su resultado.
-
-Tarea:
 """
+
+CRITERIO_REVISION = (
+    "Reporta solo problemas reales: bugs, regresiones, datos o precios inventados, "
+    "secretos en el diff, enlaces o SEO rotos, y lo que contradiga AGENTS.md. "
+    "Para cada uno: archivo:linea, que falla y como. Si no hay nada, di 'Sin hallazgos'."
+)
 
 
 class Falta(RuntimeError):
     """La herramienta necesaria no esta disponible en esta maquina."""
+
+
+def preambulo() -> str:
+    archivo = AQUI / "preambulo.md"
+    texto = archivo.read_text(encoding="utf-8") if archivo.exists() else PREAMBULO_GENERICO
+    return texto.rstrip() + "\n\nTarea:\n"
 
 
 def binario(nombre: str) -> str:
@@ -84,7 +101,7 @@ def slug(texto: str) -> str:
 def crear_worktree(agente: str, tarea: str, base: str) -> tuple[Path, str]:
     marca = time.strftime("%Y%m%d-%H%M%S")
     nombre = f"{agente}-{slug(tarea)}-{marca}"
-    rama = f"delegar/{nombre}"
+    rama = f"{PREFIJO_RAMA}{nombre}"
     ruta = WORKTREES / f"delegar-{nombre}"
     WORKTREES.mkdir(parents=True, exist_ok=True)
     git("worktree", "add", "-b", rama, str(ruta), base)
@@ -116,9 +133,10 @@ def delegar(agente: str, tarea: str, base: str, modo: str, limite: int) -> int:
     registro = REGISTROS / f"{worktree.name}.md"
     # agy -p niega cualquier comando (su modo request-review no se puede
     # confirmar sin terminal), asi que solo lee y edita; Claude corre las pruebas.
-    prompt = PREAMBULO + tarea
+    prompt = preambulo() + tarea
     if agente == "agy":
-        prompt = PREAMBULO + "No corras comandos de terminal: solo lee y edita archivos.\n" + tarea
+        aviso = "No corras comandos de terminal: solo lee y edita archivos.\n"
+        prompt = preambulo() + aviso + tarea
     comando = comando_agente(agente, worktree, registro, modo)
 
     print(f"[delegar] {agente} trabaja en {worktree} (rama {rama})", flush=True)
@@ -142,7 +160,7 @@ def delegar(agente: str, tarea: str, base: str, modo: str, limite: int) -> int:
         salida = registro.read_text(encoding="utf-8").lower()
         if any(marca in salida for marca in AGY_SIN_TRABAJO):
             print("[delegar] agy no trabajo: el modo headless le nego un permiso. "
-                  "Ver docs/agent/delegar.md (permisos de agy).", file=sys.stderr)
+                  "Ver tools/agentes/README.md (permisos de agy).", file=sys.stderr)
             codigo = 4
 
     print(f"[delegar] {agente} salio con codigo {fin.returncode}; delegar devuelve {codigo}")
@@ -157,18 +175,24 @@ def delegar(agente: str, tarea: str, base: str, modo: str, limite: int) -> int:
         print(f"[delegar] integra con: git -C \"{worktree}\" diff HEAD --binary | git apply")
     else:
         print("[delegar] el agente no dejo cambios.")
-    print(f"[delegar] al terminar: git worktree remove --force \"{worktree}\" "
-          f"&& git branch -D {rama}")
+    print("[delegar] al terminar: python tools/agentes/delegar.py limpiar")
     return codigo
 
 
+def rama_principal() -> str:
+    try:
+        return git("symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+    except subprocess.CalledProcessError:
+        return "origin/main"
+
+
 def base_revision() -> str:
-    for ref in ("origin/main", "main"):
+    for ref in dict.fromkeys((rama_principal(), "origin/main", "main")):
         try:
             return git("merge-base", "HEAD", ref)
         except subprocess.CalledProcessError:
             continue
-    raise Falta("No encuentro `main` ni `origin/main` para comparar.")
+    raise Falta("No encuentro la rama principal (origin/HEAD, origin/main ni main) para comparar.")
 
 
 def huella_diff(base: str) -> str:
@@ -179,19 +203,25 @@ def huella_diff(base: str) -> str:
     huella = hashlib.sha256(diff.encode("utf-8"))
     nuevos = git("ls-files", "--others", "--exclude-standard").splitlines()
     for nombre in sorted(nuevos):
+        ruta = RAIZ / nombre
         huella.update(nombre.encode("utf-8"))
-        huella.update((RAIZ / nombre).read_bytes())
+        if ruta.is_file():
+            huella.update(ruta.read_bytes())
     return huella.hexdigest() if diff or nuevos else ""
+
+
+def criterio_revision() -> str:
+    # Un proyecto puede afinar que cuenta como problema real en revision.md.
+    archivo = AQUI / "revision.md"
+    return archivo.read_text(encoding="utf-8").strip() if archivo.exists() else CRITERIO_REVISION
 
 
 def revisar(base: str, limite: int) -> tuple[int, str]:
     codex = binario("codex")
     instruccion = (
-        PREAMBULO
+        preambulo()
         + f"Revisa el diff contra el commit {base} (`git diff {base}`, `git status`). "
-        "No edites archivos. Reporta solo problemas reales: bugs, datos que se pueden "
-        "perder, violaciones de idempotencia, valores inventados en vez de fallar. "
-        "Para cada uno: archivo:linea, que falla y como. Si no hay nada, di 'Sin hallazgos'."
+        "No edites archivos. " + criterio_revision()
     )
     REGISTROS.mkdir(parents=True, exist_ok=True)
     registro = REGISTROS / f"review-{time.strftime('%Y%m%d-%H%M%S')}.md"
@@ -207,11 +237,11 @@ def revisar(base: str, limite: int) -> tuple[int, str]:
 def hook_stop() -> int:
     """Hook Stop de Claude Code: segunda opinion de Codex sobre el diff nuevo.
 
-    Apagado salvo `FIERRO_CODEX_REVIEW=1`. Sale 0 en silencio cuando no aplica
+    Apagado salvo `CODEX_REVIEW=1`. Sale 0 en silencio cuando no aplica
     (nube sin Codex, sin diff, diff ya revisado) para no estorbar. Cuando Codex
     encuentra algo, sale 2: Claude Code le pasa el texto a Claude, que decide.
     """
-    if os.environ.get("FIERRO_CODEX_REVIEW") != "1":
+    if os.environ.get(VARIABLE_REVISION) != "1":
         return 0
     try:
         evento = json.load(sys.stdin)
@@ -220,7 +250,7 @@ def hook_stop() -> int:
     if evento.get("stop_hook_active"):
         return 0  # ya continuamos una vez por este hook; no hacer bucle
     if shutil.which("codex") is None:
-        print("[delegar] FIERRO_CODEX_REVIEW=1 pero `codex` no esta en el PATH.", file=sys.stderr)
+        print(f"[delegar] {VARIABLE_REVISION}=1 pero `codex` no esta en el PATH.", file=sys.stderr)
         return 0
 
     try:
@@ -250,6 +280,42 @@ def hook_stop() -> int:
     return 2
 
 
+def estado() -> int:
+    """Dice que agentes puede usar esta maquina. Nunca falla: solo informa."""
+    for nombre, uso in (("codex", "delegar y revisar"), ("agy", "delegar UI y lecturas")):
+        ruta = shutil.which(nombre)
+        if ruta is None:
+            print(f"[delegar] {nombre}: no instalado ({uso} no disponible aqui)")
+            continue
+        try:
+            version = subprocess.run(
+                [ruta, "--version"], capture_output=True, text=True, timeout=20
+            ).stdout.strip().splitlines()
+        except (OSError, subprocess.SubprocessError):
+            version = []
+        print(f"[delegar] {nombre}: {version[0] if version else 'instalado'} ({ruta})")
+    revision = "prendida" if os.environ.get(VARIABLE_REVISION) == "1" else "apagada"
+    print(f"[delegar] revision automatica de Codex ({VARIABLE_REVISION}): {revision}")
+    return 0
+
+
+def limpiar() -> int:
+    """Quita los worktrees y ramas que dejo este script. No toca otras ramas."""
+    quitados = 0
+    for bloque in git("worktree", "list", "--porcelain").split("\n\n"):
+        lineas = bloque.splitlines()
+        ruta = next((x[9:] for x in lineas if x.startswith("worktree ")), "")
+        if ruta and Path(ruta).resolve().parent == WORKTREES.resolve():
+            git("worktree", "remove", "--force", ruta)
+            quitados += 1
+    git("worktree", "prune")
+    ramas = git("branch", "--list", f"{PREFIJO_RAMA}*", "--format=%(refname:short)").splitlines()
+    for rama in filter(None, ramas):
+        git("branch", "-D", rama)
+    print(f"[delegar] {quitados} worktrees y {len([r for r in ramas if r])} ramas quitadas")
+    return 0
+
+
 def main() -> int:
     # En Windows la consola usa cp1252 y los acentos salen corruptos.
     for flujo in (sys.stdout, sys.stderr):
@@ -267,12 +333,18 @@ def main() -> int:
                            choices=["accept-edits", "auto", "plan"])
     r = sub.add_parser("review", help="segunda opinion de Codex sobre el diff contra main")
     r.add_argument("--limite", type=int, default=900)
+    sub.add_parser("estado", help="que CLIs de agentes hay en esta maquina")
+    sub.add_parser("limpiar", help="quitar worktrees y ramas delegar/*")
     sub.add_parser("hook-stop", help="punto de entrada del hook Stop")
     args = parser.parse_args()
 
     try:
         if args.accion == "hook-stop":
             return hook_stop()
+        if args.accion == "estado":
+            return estado()
+        if args.accion == "limpiar":
+            return limpiar()
         if args.accion == "review":
             codigo, texto = revisar(base_revision(), args.limite)
             print(texto)

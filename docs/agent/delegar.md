@@ -2,7 +2,8 @@
 
 Claude Code es el dueño de la tarea y del PR. Codex (OpenAI) y Antigravity (`agy`, Google)
 ayudan con piezas acotadas; lo que devuelven es un diff que Claude revisa, prueba y decide
-si integrar. Herramienta: [`scripts/delegar.py`](../../scripts/delegar.py).
+si integrar. Herramienta: [`tools/agentes/delegar.py`](../../tools/agentes/delegar.py); el contexto que recibe el otro
+agente está en `tools/agentes/preambulo.md` y lo que cuenta en una revisión en `tools/agentes/revision.md`.
 
 ## Dónde funciona
 
@@ -24,10 +25,12 @@ saber si quedó (una prueba, una captura) y no toca el invariante raíz. Si duda
 ## Uso
 
 ```bash
-python scripts/delegar.py codex "agrega pruebas para ingest con lote vacío en apps/api"
-python scripts/delegar.py agy "aplica el espaciado de la pantalla aprobada a AnimalCard"
-python scripts/delegar.py agy --modo plan "lee docs/x.pdf y resume el protocolo serial"
-python scripts/delegar.py review   # segunda opinión de Codex sobre el diff contra main
+python tools/agentes/delegar.py codex "agrega pruebas para ingest con lote vacío en apps/api"
+python tools/agentes/delegar.py agy "aplica el espaciado de la pantalla aprobada a AnimalCard"
+python tools/agentes/delegar.py agy --modo plan "lee docs/x.pdf y resume el protocolo serial"
+python tools/agentes/delegar.py review   # segunda opinión de Codex sobre el diff contra main
+python tools/agentes/delegar.py estado   # qué CLIs hay en esta máquina
+python tools/agentes/delegar.py limpiar  # quita worktrees y ramas delegar/*
 ```
 
 Cada tarea crea un worktree en `.claude/worktrees/delegar-<agente>-<slug>-<fecha>` con la
@@ -40,7 +43,7 @@ Después de delegar, Claude:
    El script marca los archivos nuevos con `git add -N`, así que el diff los incluye.
 2. Corre lint y pruebas en el worktree (`ruff`, `pytest`, `pnpm lint && pnpm build`).
 3. Trae lo que sirve a su rama (`git -C <worktree> diff HEAD --binary | git apply`) y descarta el resto.
-4. Limpia: `git worktree remove --force <worktree>` y `git branch -D delegar/...`.
+4. Limpia: `python tools/agentes/delegar.py limpiar`.
 
 Códigos de salida: `0` terminó, `2` falta la CLI, `3` se pasó del límite de tiempo,
 `4` agy no trabajó porque el modo headless le negó un permiso.
@@ -60,7 +63,7 @@ Para que corra comandos habría que aprobarle todo (`toolPermission: always-proc
 
 ## Hook de revisión de Codex
 
-`.claude/settings.json` registra un hook `Stop` que, con `FIERRO_CODEX_REVIEW=1`, le pide a
+`.claude/settings.json` registra un hook `Stop` que, con `CODEX_REVIEW=1`, le pide a
 Codex revisar el diff contra `main` cuando Claude termina un turno. Revisa cada estado del diff
 una sola vez y no encadena revisiones. Si Codex reporta algo, Claude lo recibe y lo verifica
 antes de actuar. Sin la variable, o sin `codex` en el PATH, el hook no hace nada.
@@ -68,5 +71,5 @@ antes de actuar. Sin la variable, o sin `codex` en el PATH, el hook no hace nada
 Para prenderlo en tu PC, en `.claude/settings.local.json` (no se versiona):
 
 ```json
-{ "env": { "FIERRO_CODEX_REVIEW": "1" } }
+{ "env": { "CODEX_REVIEW": "1" } }
 ```
