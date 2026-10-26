@@ -112,25 +112,8 @@
     animation: home-resaltar 1400ms ease-out both;
   }
 
-  /* --- Portada: el paisaje respira despacio ---------------------------- */
-
-  /* Solo en pantallas grandes: en el celular, en el corral, la batería vale
-     más que el adorno. Un solo transform, sin repintar la imagen. */
-  @media (min-width: 761px) {
-    @keyframes home-paisaje {
-      from {
-        transform: scale(1.04) translateX(1.5%);
-      }
-      to {
-        transform: scale(1.1) translateX(-1.5%);
-      }
-    }
-
-    .home-paisaje img {
-      animation: home-paisaje 38s ease-in-out infinite alternate;
-      will-change: transform;
-    }
-  }
+  /* El paisaje de la portada no se anima: a medio píxel por segundo el
+     desplazamiento se redondea a saltos sueltos y se lee como un error. */
 
   /* --- Preguntas frecuentes: la respuesta entra, no aparece de golpe --- */
 
