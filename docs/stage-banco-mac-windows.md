@@ -126,7 +126,7 @@ Cada nueva Terminal:
 cd ~/Documents/GitHub/fierroid
 source .venv/bin/activate
 curl -fsS https://fierro-api-stage-yj7cs5a7aq-pv.a.run.app/health
-python -m dotenv -f apps/device-agent/.env run --override -- python -m fierro_device.main
+python -m fierro_device.main
 ```
 
 La respuesta de salud debe incluir `"env":"stage"`.
@@ -134,7 +134,8 @@ El log inicial debe mostrar `device_id=rpi-los-encinos-002`, `mock_hw=False`,
 la URL de stage y la ruta persistente de la Mac. Si alguno difiere, detener con
 Ctrl+C antes de presentar tarjetas.
 
-El agente **no carga `.env` solo**: conservar el prefijo `python -m dotenv`.
+El agente carga `apps/device-agent/.env` solo. `python -m fierro_device.main doctor`
+revisa configuración, puerto, outbox y API antes de presentar tarjetas.
 Al abrir el puerto se puede reiniciar el Arduino; esperar el arranque.
 Mantener la Mac despierta y conectada mientras se realiza la prueba.
 
@@ -147,7 +148,7 @@ Conservar su outbox `${LOCALAPPDATA}/fierro-prototipo-com6.db`.
 cd C:\Users\eduardo\Documents\GitHub\fierroid
 python -m pip install -e './apps/device-agent[bench]'
 python -m serial.tools.list_ports -v
-python -m dotenv -f apps/device-agent/.env run --override -- python -m fierro_device.main
+python -m fierro_device.main
 ```
 
 Instalar solo la primera vez y usar el mismo Python para instalar y ejecutar.
