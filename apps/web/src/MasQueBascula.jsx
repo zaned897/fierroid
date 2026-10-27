@@ -17,7 +17,7 @@ const IDEAS = [
     texto: "Al terminar la jornada, quiénes no ganaron peso desde el último pesaje.",
     disponible: false,
     dato: "3 animales para revisar",
-    foto: "home-corral-ia",
+    foto: "mqb-atras-ia",
   },
   {
     id: "venta",
@@ -25,7 +25,7 @@ const IDEAS = [
     texto: "Tú pones la meta. Fierro cuenta cuántos ya llegaron y cuántos van cerca.",
     disponible: false,
     dato: "Meta 480 kg · 6 ya en peso",
-    foto: "home-paisaje-ia",
+    foto: "mqb-venta-ia",
   },
   {
     id: "equipo",
@@ -33,7 +33,7 @@ const IDEAS = [
     texto: "El último reporte de cada estación y los pesajes que tiene por enviar.",
     disponible: true,
     dato: "Manga 1 · reportó hace 2 min",
-    foto: "home-consulta-ia",
+    foto: "mqb-equipo-ia",
   },
   {
     id: "comprador",
@@ -41,7 +41,7 @@ const IDEAS = [
     texto: "El lote pesado, arete por arete, listo para compartir.",
     disponible: false,
     dato: "Lote 3 · 40 animales · 17,480 kg",
-    foto: "home-corral-v2-ia",
+    foto: "mqb-comprador-ia",
   },
 ];
 

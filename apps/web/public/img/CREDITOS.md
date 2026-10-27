@@ -1,5 +1,19 @@
 # Créditos de imágenes
 
+## Carrusel "Más que una báscula" (2026-10-27)
+
+Cuatro ilustraciones generadas con Codex CLI (image_gen) para el carrusel de la
+propuesta K. Salen en 1672 × 941 y se reescalaron a WebP 1920 × 1080, calidad 80.
+Prompts finales en [carrusel-prompts.md](../../../../docs/design/home/carrusel-prompts.md).
+El carrusel muestra "Ilustración generada con IA" sobre la imagen.
+
+| Archivo | Origen | Dimensiones | Uso |
+|---|---|---|---|
+| `mqb-atras-ia.webp` | Codex image_gen, generación para Fierro | 1920 × 1080 | Animales que se quedan atrás |
+| `mqb-venta-ia.webp` | Codex image_gen, generación para Fierro | 1920 × 1080 | Peso de venta |
+| `mqb-equipo-ia.webp` | Codex image_gen, generación para Fierro | 1920 × 1080 | Tu equipo te avisa |
+| `mqb-comprador-ia.webp` | Codex image_gen, generación para Fierro | 1920 × 1080 | Lista para el comprador |
+
 ## Recursos generados para el nuevo home (2026-09-23)
 
 Revisión de la lámina 02: `home-corral-v2-ia.webp`, 1448 × 1086, generado con
