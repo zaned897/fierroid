@@ -33,7 +33,7 @@ def _fecha(valor: Any) -> datetime | None:
 
 
 def _dia(punto: dict[str, Any]) -> float:
-    return punto["_t"].timestamp() / DAY_S
+    return float(punto["_t"].timestamp()) / DAY_S
 
 
 def es_prueba(lectura: dict[str, Any]) -> bool:
@@ -193,7 +193,7 @@ def animales_a_revisar(
     lecturas: list[dict[str, Any]],
     *,
     ahora: datetime,
-    pesajes: int = REZAGO["pesajes"],
+    pesajes: int = int(REZAGO["pesajes"]),
     dias_sin_pesar: int = 30,
     truncado: bool = False,
 ) -> dict[str, Any]:
@@ -274,7 +274,8 @@ def ficha_animal(
         "alias": ficha.get("alias") if ficha else None,
         "notas": ficha.get("notes") if ficha else None,
         "pesajes_estables": [
-            {**_publico(p), "atipico": p["event_id"] in atipicos} for p in animal["puntos"][-20:]
+            {**(_publico(p) or {}), "atipico": p["event_id"] in atipicos}
+            for p in animal["puntos"][-20:]
         ],
         "pesajes_totales": len(filas),
         "ganancia_diaria_kg": (
@@ -309,11 +310,9 @@ def buscar_animales(
             continue
         ultimo = _animal(tag, grupos.get(tag, []), REZAGO["ganancia_kg"])["ultimo"]
         peso = ultimo["weight_kg"] if ultimo else None
-        if (peso_min_kg is not None or peso_max_kg is not None) and peso is None:
+        if peso_min_kg is not None and (peso is None or peso < peso_min_kg):
             continue
-        if peso_min_kg is not None and peso < peso_min_kg:
-            continue
-        if peso_max_kg is not None and peso > peso_max_kg:
+        if peso_max_kg is not None and (peso is None or peso > peso_max_kg):
             continue
         encontrados.append({"tag_id": tag, "alias": nombre, "ultimo": _publico(ultimo)})
     return {
