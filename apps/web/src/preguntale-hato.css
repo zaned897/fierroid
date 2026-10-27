@@ -236,6 +236,12 @@
     justify-self: start;
   }
 
+  /* En celular el bloque cabe en una pantalla: las tres reglas ya se leen en
+     la conversación de ejemplo. */
+  .preguntale-hato-reglas {
+    display: none;
+  }
+
   .preguntale-hato-conversacion {
     padding: 16px;
   }

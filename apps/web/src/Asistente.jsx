@@ -115,7 +115,8 @@ export default function Asistente({ session, onExpired, onAbrir }) {
     const limpio = (textoPregunta ?? pregunta).trim();
     if (!limpio || esperando) return;
 
-    const previos = turnos.map(({ rol, texto }) => ({ rol, texto }));
+    // La API acepta hasta 20 turnos y solo usa los últimos 10.
+    const previos = turnos.slice(-10).map(({ rol, texto }) => ({ rol, texto }));
     setTurnos((actuales) => [...actuales, { rol: "usuario", texto: limpio }]);
     setPregunta("");
     setError(null);
