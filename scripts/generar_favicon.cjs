@@ -10,19 +10,18 @@ const { chromium } = require("playwright");
 
 const DIR = "apps/web/public";
 const svg = readFileSync(`${DIR}/favicon.svg`, "utf8");
-const ORO = "#c4a35a";
+const BOSQUE = "#143c2d";
 
-// Disco con esquinas transparentes: pestaña y manifest "any".
+// Sello con esquinas transparentes: pestaña y manifest "any".
 const disco = (lado) => `<img src="data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}" width="${lado}" height="${lado}">`;
 
 // A sangre, sin transparencia: iOS compone sobre negro lo transparente y
-// Android recorta los maskable a su forma. La cabeza va dentro de la zona segura,
-// subida 4/64 porque en el SVG su centro cae en y=36, no en 32.
+// Android recorta los maskable a su forma. El sello va dentro de la zona segura.
 const sangre = (lado, escala) => {
   const cabeza = svg.replace(/<circle cx="32" cy="32" r="31"[^>]*\/>/, "");
   const dentro = Math.round(lado * escala);
-  return `<div style="width:${lado}px;height:${lado}px;background:${ORO};display:grid;place-items:center">`
-    + `<img src="data:image/svg+xml;base64,${Buffer.from(cabeza).toString("base64")}" width="${dentro}" height="${dentro}" style="transform:translateY(-${dentro / 16}px)"></div>`;
+  return `<div style="width:${lado}px;height:${lado}px;background:${BOSQUE};display:grid;place-items:center">`
+    + `<img src="data:image/svg+xml;base64,${Buffer.from(cabeza).toString("base64")}" width="${dentro}" height="${dentro}"></div>`;
 };
 
 const salidas = [
