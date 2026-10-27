@@ -1,0 +1,247 @@
+/* Pregúntale a tu hato (#111): bloque estático del home, fondo verde bosque #143c2d. */
+
+.home-publica .preguntale-hato {
+  padding: 88px max(24px, calc((100% - 1200px) / 2));
+  background: #143c2d;
+  color: #edf5ef;
+  scroll-margin-top: 24px;
+}
+
+.preguntale-hato-cabeza {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 48px;
+  align-items: end;
+  margin-bottom: 40px;
+}
+
+.preguntale-hato-ceja {
+  font: 600 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.14em;
+  color: #a4c7b7;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.preguntale-hato-ceja span {
+  display: inline-block;
+  padding: 3px 8px;
+  margin-left: 10px;
+  border: 1px solid #e3a94a;
+  border-radius: 999px;
+  color: #e3a94a;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+
+.preguntale-hato-cabeza h2 {
+  color: #f4faf6;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.preguntale-hato-pitch {
+  max-width: 400px;
+  justify-self: end;
+}
+
+.preguntale-hato-pitch p {
+  color: #c2d9cc;
+  line-height: 1.6;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.preguntale-hato a:focus-visible {
+  outline: 2px solid #6ee7b7;
+  outline-offset: 3px;
+}
+
+.preguntale-hato-marco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  border: 1px solid #2b5c47;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f2e22;
+}
+
+.preguntale-hato-conversacion {
+  padding: 24px;
+  background: #f7f8f3;
+  color: #102b22;
+  min-width: 0;
+}
+
+.preguntale-hato-etiqueta {
+  margin: 0 0 16px;
+  color: #52645d;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preguntale-hato-hilo {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preguntale-hato-par {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.preguntale-hato-usuario {
+  align-self: flex-end;
+  max-width: min(28rem, 90%);
+  padding: 10px 14px;
+  border-radius: 14px 14px 4px 14px;
+  background: #176575;
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.preguntale-hato-usuario p {
+  margin: 0;
+  color: #fff;
+}
+
+.preguntale-hato-respuesta {
+  align-self: flex-start;
+  width: 100%;
+  max-width: 38rem;
+  padding: 14px 16px;
+  border: 1px solid #dce3df;
+  border-radius: 14px;
+  background: #fff;
+  color: #102b22;
+  box-shadow: 0 4px 14px rgba(20, 60, 45, 0.06);
+  overflow-wrap: anywhere;
+}
+
+.preguntale-hato-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.preguntale-hato-chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #e3eee8;
+  color: #143c2d;
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
+.preguntale-hato-respuesta .preguntale-hato-intro {
+  margin: 0;
+  color: #102b22;
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.preguntale-hato-lista {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #102b22;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.preguntale-hato-lista li + li {
+  margin-top: 4px;
+}
+
+.preguntale-hato-respuesta .preguntale-hato-nota {
+  margin: 8px 0 0;
+  color: #52645d;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.preguntale-hato-lateral {
+  padding: 24px 20px;
+  background: #0d261c;
+  border-left: 1px solid #244b3b;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.preguntale-hato-reglas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preguntale-hato-reglas li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(232, 238, 233, 0.12);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.preguntale-hato-reglas strong {
+  color: #f4faf6;
+  font-size: 0.95rem;
+}
+
+.preguntale-hato-reglas span {
+  color: #b5cebf;
+}
+
+@media (max-width: 960px) {
+  .preguntale-hato-marco {
+    grid-template-columns: 1fr;
+  }
+
+  .preguntale-hato-lateral {
+    border-left: 0;
+    border-top: 1px solid #244b3b;
+  }
+}
+
+@media (max-width: 680px) {
+  .home-publica .preguntale-hato {
+    padding: 56px 20px;
+  }
+
+  .preguntale-hato-cabeza {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .preguntale-hato-pitch {
+    justify-self: start;
+  }
+
+  .preguntale-hato-conversacion {
+    padding: 16px;
+  }
+
+  .preguntale-hato-ceja span {
+    margin-left: 0;
+    margin-top: 6px;
+  }
+}

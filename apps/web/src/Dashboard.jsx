@@ -5,6 +5,7 @@ import { CowIcon } from "./icons/cows.jsx";
 const sections = [
   ["pesajes", "Pesajes"],
   ["animales", "Animales"],
+  ["asistente", "Pregúntale"],
   ["estaciones", "Estaciones"],
   ["historial", "Historial"],
   ["admin", "Administración"],
@@ -14,6 +15,7 @@ export function PanelIcon({ name }) {
   if (name === "animales") return <CowIcon size={24} />;
   const paths = {
     pesajes: "M12 3v18M5 21h14M3 7h18M6 7l-4 9h8L6 7Zm12 0-4 9h8l-4-9Z",
+    asistente: "M21 14a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9Z",
     estaciones: "M5 3v18M19 3v18M2 7h20M2 12h20M2 17h20",
     historial: "M6 3h8l4 4v14H6V3Zm8 0v5h4M9 12h6M9 16h6",
     admin: "M4 7h16M4 17h16M8 4v6M16 14v6",
