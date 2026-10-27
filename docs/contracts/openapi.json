@@ -198,6 +198,29 @@
         "title": "OrgIn",
         "type": "object"
       },
+      "PreguntaIn": {
+        "properties": {
+          "pregunta": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Pregunta",
+            "type": "string"
+          },
+          "previos": {
+            "items": {
+              "$ref": "#/components/schemas/TurnoIn"
+            },
+            "maxItems": 20,
+            "title": "Previos",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pregunta"
+        ],
+        "title": "PreguntaIn",
+        "type": "object"
+      },
       "RanchIn": {
         "properties": {
           "name": {
@@ -231,6 +254,29 @@
           }
         },
         "title": "ReadingsBatchIn",
+        "type": "object"
+      },
+      "TurnoIn": {
+        "properties": {
+          "rol": {
+            "enum": [
+              "usuario",
+              "asistente"
+            ],
+            "title": "Rol",
+            "type": "string"
+          },
+          "texto": {
+            "maxLength": 4000,
+            "title": "Texto",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rol",
+          "texto"
+        ],
+        "title": "TurnoIn",
         "type": "object"
       },
       "UserIn": {
@@ -1061,6 +1107,70 @@
           }
         ],
         "summary": "Get Animal Readings"
+      }
+    },
+    "/v1/asistente": {
+      "post": {
+        "description": "Contesta con herramientas de solo lectura sobre el hato de la sesion.",
+        "operationId": "preguntar_v1_asistente_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreguntaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Preguntar V1 Asistente Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Preguntar"
       }
     },
     "/v1/auth/config": {

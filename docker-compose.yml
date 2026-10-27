@@ -51,6 +51,8 @@ services:
       FIERRO_API_DSN: *db-dsn
       # Se toma del .env local. Vacio => el login con Google responde 503.
       FIERRO_GOOGLE_CLIENT_ID: ${FIERRO_GOOGLE_CLIENT_ID:-}
+      # Vacio => el asistente responde 503 y la PWA dice que no esta disponible.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "${FIERRO_API_PORT:-8000}:8000"
     depends_on:
