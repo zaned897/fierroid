@@ -7,7 +7,7 @@
  * casi invisible, y un logotipo que no se ve no es un logotipo.
  *
  * La pestaña del navegador no usa este archivo: el favicon (favicon.svg) es la
- * cabeza de toro sobre disco dorado, que trae su propio fondo.
+ * cabeza de toro en un sello verde con filo dorado, que trae su propio fondo.
  */
 export default function Marca({ size = 48, className = "" }) {
   return (
