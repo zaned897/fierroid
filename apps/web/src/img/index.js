@@ -13,6 +13,46 @@
  */
 
 export const imagenes = {
+  "mqb-atras-ia": {
+    src: "/img/mqb-atras-ia.webp",
+    width: 1920,
+    height: 1080,
+    alt: "Un novillo flaco de raza cebú con arete amarillo, apartado del resto del lote en el corral",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
+  "mqb-venta-ia": {
+    src: "/img/mqb-venta-ia.webp",
+    width: 1920,
+    height: 1080,
+    alt: "Lote de novillos de engorda en un corral con la rampa de embarque al fondo, al amanecer",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
+  "mqb-equipo-ia": {
+    src: "/img/mqb-equipo-ia.webp",
+    width: 1920,
+    height: 1080,
+    alt: "Un ganadero mayor revisa una tablet junto a la manga, al atardecer, con la caja de la estación en un poste",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
+  "mqb-comprador-ia": {
+    src: "/img/mqb-comprador-ia.webp",
+    width: 1920,
+    height: 1080,
+    alt: "Dos ganaderos recargados en la cerca del corral miran el lote; uno sostiene un celular",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
   "home-corral-v2-ia": {
     src: "/img/home-corral-v2-ia.webp",
     width: 1448,

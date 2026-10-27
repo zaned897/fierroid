@@ -264,6 +264,8 @@
   .mqb-cabeza { padding-inline: 20px; margin-bottom: 1.75rem; }
 
   /* A sangre y una pantalla de alto, menos la barra del navegador. */
+  /* Los sujetos van en la mitad derecha de cada imagen. */
+  .mqb-slide img { object-position: 68% center; }
   .mqb-carrusel { --mqb-lado: 22px; height: min(max(560px, calc(100svh - 72px)), 760px); border-radius: 0; }
   .mqb-slide::after { background: linear-gradient(0deg, rgba(10, 22, 17, 0.94) 0%, rgba(10, 22, 17, 0.7) 42%, rgba(10, 22, 17, 0) 72%); }
   .mqb-texto { right: var(--mqb-lado); bottom: 96px; gap: 12px; }
