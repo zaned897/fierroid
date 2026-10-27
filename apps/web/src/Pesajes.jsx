@@ -3,6 +3,8 @@ import { apiFetch } from "./auth.js";
 import { CowIcon } from "./icons/cows.jsx";
 import { capturedLabel, isTestReading, orderedReadings, weightValue } from "./readings.js";
 import usePanelResource from "./usePanelResource.js";
+import { AvisoEstaciones } from "./Estaciones.jsx";
+import ListaComprador from "./ListaComprador.jsx";
 
 function ReadingFlags({ reading }) {
   return <>
@@ -24,7 +26,7 @@ function ReadingTable({ readings }) {
   );
 }
 
-export default function Pesajes({ session, onExpired, historial = false, onHistorial, onRecientes }) {
+export default function Pesajes({ session, onExpired, historial = false, onHistorial, onRecientes, onEstaciones }) {
   const { data, error, busy, updatedAt, refresh } = usePanelResource(
     `/v1/readings?limit=${historial ? 40 : 5}`, session, onExpired, historial ? 0 : 30000,
   );
@@ -72,6 +74,8 @@ export default function Pesajes({ session, onExpired, historial = false, onHisto
   };
 
   return <>
+    {!historial && <AvisoEstaciones session={session} onExpired={onExpired} onVer={onEstaciones} />}
+    {historial && <ListaComprador session={session} onExpired={onExpired} />}
     <div className="dashboard-reading-status">
       <span className={error ? "error" : "muted"}>
         {error ? "No se pudo actualizar" : updatedAt ? `${historial ? "Historial consultado" : "Última consulta"}: ${updatedAt.toLocaleTimeString("es-MX", { hourCycle: "h23" })}` : "Consultando pesajes…"}

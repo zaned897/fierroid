@@ -89,7 +89,7 @@ function Contenido() {
 
   return (
     <Dashboard user={usuario} vista={vista} onVista={(v) => { setArete(null); setVista(v); }} onSalir={salir}>
-      {vista === "pesajes" && <Pesajes key="pesajes" session={session} onExpired={expirada} onHistorial={() => setVista("historial")} />}
+      {vista === "pesajes" && <Pesajes key="pesajes" session={session} onExpired={expirada} onHistorial={() => setVista("historial")} onEstaciones={() => setVista("estaciones")} />}
       {vista === "historial" && <Pesajes key="historial" session={session} onExpired={expirada} historial onRecientes={() => setVista("pesajes")} />}
       {vista === "estaciones" && <Estaciones session={session} onExpired={expirada} />}
       {vista === "animales" && <Animales key={arete || "hato"} session={session} onExpired={expirada} arete={arete} />}

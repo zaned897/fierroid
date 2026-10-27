@@ -1,5 +1,6 @@
-/* Más que una báscula (#94). Tokens del contenedor .home-publica; fondo propio
-   porque .secciones todavía trae el tema oscuro antiguo. */
+/* Más que una báscula (#94) como carrusel (propuesta K). Tokens del
+   contenedor .home-publica; fondo propio porque .secciones todavía trae el
+   tema oscuro antiguo. */
 .home-publica .mas-que-bascula {
   padding: 88px max(24px, calc((100% - 1200px) / 2));
   background: #fff;
@@ -9,7 +10,7 @@
 
 .mqb-cabeza {
   max-width: 40rem;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto 2.25rem;
   text-align: center;
 }
 
@@ -23,102 +24,263 @@
 }
 
 .home-publica .mqb-cabeza h2 {
-  margin-bottom: 0.9rem;
+  margin: 0;
   color: var(--home-bosque);
   font-size: clamp(2rem, 4.2vw, 2.9rem);
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.03em;
 }
-.home-publica .mqb-cabeza p:last-child { font-size: 1.08rem; }
-.mqb-cabeza p:last-child { color: var(--home-muted); }
-.home-publica .mas-que-bascula p { color: var(--home-muted); }
 
-.mqb-ideas {
+/* El carrusel. Las imágenes son oscuras por el degradado, así que el texto
+   va claro sin importar el tema. */
+.mqb-carrusel {
+  --mqb-dur: 7s;
+  --mqb-curva: cubic-bezier(0.7, 0, 0.2, 1);
+  --mqb-lado: clamp(24px, 5vw, 64px);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: clamp(520px, 56vw, 680px);
+  border-radius: 20px;
+  background: #0f1f18;
+  color: #f2f5f1;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.mqb-carrusel:focus-visible { outline: 2px solid var(--home-petroleo); outline-offset: 4px; }
+
+.mqb-slide {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 1.1s var(--mqb-curva);
+}
+
+.mqb-slide.activa { z-index: 2; clip-path: inset(0); }
+.mqb-slide.sale { clip-path: inset(0); }
+
+.mqb-slide img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.12);
+}
+
+/* Acercamiento lento mientras la idea está en pantalla; la que sale se
+   recorre un poco detrás de la cortina. */
+.mqb-slide.activa img { animation: mqb-deriva var(--mqb-dur) linear forwards; }
+.mqb-slide.sale img { transform: scale(1.04) translateX(-4%); transition: transform 1.1s var(--mqb-curva); }
+
+@keyframes mqb-deriva {
+  from { transform: scale(1.12); }
+  to { transform: scale(1.02); }
+}
+
+.mqb-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(10, 22, 17, 0.88) 0%, rgba(10, 22, 17, 0.55) 38%, rgba(10, 22, 17, 0) 70%),
+    linear-gradient(0deg, rgba(10, 22, 17, 0.7) 0%, rgba(10, 22, 17, 0) 45%);
+}
+
+.mqb-texto {
+  position: absolute;
+  z-index: 3;
+  left: var(--mqb-lado);
+  bottom: clamp(96px, 11vw, 124px);
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 14px;
+  max-width: 30rem;
+}
+
+/* Cada línea sube desde una máscara, una tras otra, cuando ya entró la imagen. */
+.mqb-linea { display: block; overflow: hidden; }
+
+.mqb-linea > * {
+  display: block;
+  opacity: 0;
+  transform: translateY(105%);
+  transition: transform 0.9s var(--mqb-curva), opacity 0.6s ease;
+}
+
+.mqb-slide.activa .mqb-linea > * { opacity: 1; transform: none; }
+.mqb-slide.activa .mqb-linea:nth-child(1) > * { transition-delay: 0.42s; }
+.mqb-slide.activa .mqb-linea:nth-child(2) > * { transition-delay: 0.52s; }
+.mqb-slide.activa .mqb-linea:nth-child(3) > * { transition-delay: 0.64s; }
+.mqb-slide.activa .mqb-linea:nth-child(4) > * { transition-delay: 0.78s; }
+
+.mqb-num {
+  color: rgba(242, 245, 241, 0.62);
+  font: 600 0.8rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.14em;
+}
+
+.home-publica .mqb-texto h3 {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  align-items: start;
+  color: #fff;
+  font-size: clamp(2rem, 4.2vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 
-.mqb-idea {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 0.85rem;
-  padding: 1.1rem;
-  border: 1px solid #dce3df;
-  border-radius: 16px;
-  background: var(--home-marfil);
+.home-publica .mas-que-bascula .mqb-texto p {
+  max-width: 26rem;
+  margin: 0;
+  color: rgba(242, 245, 241, 0.84);
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+  line-height: 1.45;
 }
 
-.mqb-icono {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: #e3eee8;
-  color: var(--home-petroleo);
-}
-
-.mqb-cuerpo h3 { margin: 0 0 0.3rem; color: var(--home-bosque); font-size: 1.05rem; }
-.mqb-cuerpo > p { margin: 0 0 0.6rem; color: var(--home-muted); font-size: 0.95rem; line-height: 1.45; }
+.mqb-pie { display: flex !important; flex-wrap: wrap; gap: 10px; align-items: center; }
 
 .mqb-estado {
-  display: inline-block;
-  padding: 0.15rem 0.6rem;
+  padding: 4px 10px;
+  border: 1px solid rgba(227, 169, 74, 0.7);
   border-radius: 999px;
-  background: #fbf1de;
-  color: #8a5710;
-  font-size: 0.78rem;
+  color: #f0c47a;
+  font-size: 0.75rem;
   font-weight: 700;
-}
-
-.mqb-estado.mqb-disponible { background: #e3eee8; color: #1c6b44; }
-
-.mqb-idea > .mqb-vista { grid-column: 1 / -1; }
-
-.mqb-vista {
-  margin: 0.2rem 0 0;
-  padding: 0.95rem;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(20, 60, 45, 0.1);
-}
-
-.mqb-vista-titulo { display: block; margin-bottom: 0.3rem; color: var(--home-bosque); }
-
-.mqb-vista ul { margin: 0; padding: 0; list-style: none; }
-
-.mqb-vista li {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding-block: 0.55rem;
-  border-top: 1px solid #dce3df;
-  font-size: 0.88rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.mqb-vista li small { display: block; color: var(--home-muted); font-size: 0.78rem; }
-.mqb-vista li strong { white-space: nowrap; }
-.mqb-alerta { color: #8a5710; }
-
-.mqb-vista-nota { margin: 0.4rem 0 0; color: var(--home-muted); font-size: 0.8rem; }
-
-.mqb-vista figcaption {
-  margin-top: 0.5rem;
-  color: var(--home-muted);
-  font-size: 0.72rem;
-  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
+.mqb-estado.mqb-disponible { border-color: rgba(108, 197, 150, 0.75); color: #8fdcb2; }
+
+.mqb-dato {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mqb-dato small { margin-left: 6px; font-weight: 500; opacity: 0.6; }
+
+.mqb-marca {
+  position: absolute;
+  z-index: 4;
+  top: clamp(16px, 2.5vw, 24px);
+  right: clamp(16px, 2.5vw, 24px);
+  color: rgba(242, 245, 241, 0.7);
+  font-size: 0.7rem;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.mqb-nav {
+  position: absolute;
+  z-index: 4;
+  left: var(--mqb-lado);
+  right: var(--mqb-lado);
+  bottom: clamp(28px, 3.5vw, 40px);
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+}
+
+.mqb-pasos { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+.mqb-paso {
+  position: relative;
+  min-height: 44px;
+  padding: 12px 0 0;
+  border: 0;
+  background: none;
+  color: rgba(242, 245, 241, 0.6);
+  font: 600 0.8rem/1.2 inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.4s;
+}
+
+.mqb-paso::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(242, 245, 241, 0.22);
+}
+
+.mqb-barra {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.mqb-paso.activo { color: #fff; }
+.mqb-paso.activo .mqb-barra { animation: mqb-llena var(--mqb-dur) linear forwards; }
+.mqb-paso.visto .mqb-barra { width: 100%; }
+
+.mqb-carrusel.pausa .mqb-paso.activo .mqb-barra,
+.mqb-carrusel.pausa .mqb-slide.activa img { animation-play-state: paused; }
+
+@keyframes mqb-llena { to { width: 100%; } }
+
+.mqb-paso:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+.mqb-flechas { display: flex; gap: 8px; }
+
+.mqb-flecha {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(10, 22, 17, 0.25);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.mqb-flecha:hover { border-color: rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.14); }
+.mqb-flecha:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
 @media (max-width: 720px) {
-  .home-publica .mas-que-bascula { padding: 56px 20px; }
-  .mqb-ideas { grid-template-columns: minmax(0, 1fr); }
+  .home-publica .mas-que-bascula { padding: 56px 0 0; }
+  .mqb-cabeza { padding-inline: 20px; margin-bottom: 1.75rem; }
+
+  /* A sangre y una pantalla de alto, menos la barra del navegador. */
+  /* Los sujetos van en la mitad derecha de cada imagen. */
+  .mqb-slide img { object-position: 68% center; }
+  .mqb-carrusel { --mqb-lado: 22px; height: min(max(560px, calc(100svh - 72px)), 760px); border-radius: 0; }
+  .mqb-slide::after { background: linear-gradient(0deg, rgba(10, 22, 17, 0.94) 0%, rgba(10, 22, 17, 0.7) 42%, rgba(10, 22, 17, 0) 72%); }
+  .mqb-texto { right: var(--mqb-lado); bottom: 96px; gap: 12px; }
+  .home-publica .mqb-texto h3 { font-size: 2.1rem; }
+  .mqb-flechas, .mqb-paso-nombre { display: none; }
+  .mqb-nav { bottom: 28px; }
+  .mqb-paso { min-height: 32px; }
+}
+
+/* Con movimiento reducido: solo fundido, sin acercamiento ni avance solo. */
+@media (prefers-reduced-motion: reduce) {
+  .mqb-slide { clip-path: none; opacity: 0; transition: opacity 0.3s ease; }
+  .mqb-slide.activa { opacity: 1; }
+  .mqb-slide.sale { opacity: 0; }
+  .mqb-slide img, .mqb-slide.activa img, .mqb-slide.sale img { animation: none; transform: none; transition: none; }
+  .mqb-linea > * { opacity: 1; transform: none; transition: none; }
+  .mqb-paso.activo .mqb-barra { animation: none; width: 100%; }
 }
