@@ -33,3 +33,29 @@ test("señala el pesaje que se aparta de sus vecinos sin tocar la tendencia norm
   assert.equal(outlierIds(growth).size, 0);
   assert.equal(outlierIds(points.slice(0, 3)).size, 0);
 });
+
+test("un animal se queda atrás tras dos pesajes seguidos ganando 1 kg o menos, y un repeso del mismo día no cuenta", async () => {
+  const { herdReview, stalledCount } = await import("../src/animalTrend.js");
+  const serie = (tag, kgs) => kgs.map((w, i) => row(`${tag}${i}`, `2026-09-${String(i * 7 + 1).padStart(2, "0")}T10:00:00Z`, {weight_kg:w, tag_id:tag}));
+  const parado = serie("A", [400, 410, 409, 409.5]);
+  const crece = serie("B", [400, 407, 414, 421]);
+  const repeso = [...serie("C", [400, 407]), row("C-rep", "2026-09-08T12:00:00Z", {weight_kg:406, tag_id:"C"})];
+  assert.equal(stalledCount(trendReadings(parado)), 2);
+  assert.equal(stalledCount(trendReadings(repeso)), 0);
+  const review = herdReview([...parado, ...crece, ...repeso]);
+  assert.deepEqual(review.behind.map((a) => [a.tag_id, a.stalledKg]), [["A", -0.5]]);
+  assert.equal(review.compared, 3);
+  assert.equal(herdReview([...parado, ...crece], { pesajes: 3, gananciaKg: 1 }).behind.length, 0);
+  assert.equal(herdReview([...crece]).restMedianKg, 1);
+});
+
+test("un solo pesaje no basta para juzgar, y un atípico al final se señala aparte", async () => {
+  const { herdReview } = await import("../src/animalTrend.js");
+  const unico = [row("u0", "2026-09-01", {tag_id:"U"})];
+  const kg = [400, 405, 410, 415, 420, 425, 495];
+  const salto = kg.map((w, i) => row(`s${i}`, `2026-09-${String(i + 1).padStart(2, "0")}`, {weight_kg:w, tag_id:"S"}));
+  const review = herdReview([...unico, ...salto]);
+  assert.equal(review.compared, 1);
+  assert.deepEqual(review.atypical.map((a) => a.tag_id), ["S"]);
+  assert.deepEqual(review.behind, []);
+});

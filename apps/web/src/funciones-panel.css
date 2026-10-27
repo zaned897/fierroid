@@ -1,0 +1,36 @@
+/* Lista para el comprador (#99), Para revisar (#95) y estado de estaciones (#98). */
+.lista-comprador-filtros { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 12px 0 8px; }
+.lista-comprador-filtros .campo { flex: 1 1 180px; margin: 0; }
+.lista-comprador-filtros button { min-height: 44px; }
+.lista-comprador-documento { margin-top: 16px; }
+.lista-comprador-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 12px 0 16px; }
+.lista-comprador-resumen div { padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.lista-comprador-resumen dt { color: var(--muted); font-size: .78rem; }
+.lista-comprador-resumen dd { margin: 4px 0 0; font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lista-comprador-acciones { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.lista-comprador-acciones button { min-height: 44px; }
+.lista-comprador-nota { margin-top: 12px; font-size: .85rem; }
+
+.rezagados-regla { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
+.rezagados-regla select { min-height: 40px; }
+.rezagados-lista { margin: 8px 0 16px; padding: 0; list-style: none; }
+.rezagados-lista li { border-top: 1px solid var(--line); }
+.dashboard .rezagados-lista button { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 4px; border: 0; border-radius: 0; background: transparent; color: var(--ink); text-align: left; }
+.dashboard .rezagados-lista button:hover { background: #f3f6f4; }
+.rezagados-lista small { display: block; color: var(--muted); font-size: .8rem; }
+.rezagados-alerta { color: #8a5710; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.estacion-cabeza { align-items: center; gap: 12px; }
+.estacion-cabeza h3 { margin: 0; }
+.estacion-estado { padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+.estacion-estado.reportando { background: #e3eee8; color: #1c6b44; }
+.estacion-estado.sin-reporte { background: #fbf1de; color: #8a5710; }
+.dashboard .panel.aviso-estaciones { border-color: #e0c48e; background: #fffaf0; }
+.aviso-estaciones p { margin: 6px 0 4px; }
+
+@media print {
+  body.imprimir-lista * { visibility: hidden; }
+  body.imprimir-lista .lista-comprador-documento, body.imprimir-lista .lista-comprador-documento * { visibility: visible; }
+  body.imprimir-lista .lista-comprador-documento { position: absolute; inset: 0 0 auto; padding: 16px; }
+  body.imprimir-lista .lista-comprador-acciones { display: none; }
+}

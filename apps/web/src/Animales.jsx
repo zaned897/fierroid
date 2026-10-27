@@ -5,6 +5,7 @@ import { CowForTag } from "./icons/cows.jsx";
 import { fetchPhotoUrl, reducirImagen } from "./photo.js";
 import HistorialAnimal from "./HistorialAnimal.jsx";
 import BitacoraAnimal from "./BitacoraAnimal.jsx";
+import Rezagados from "./Rezagados.jsx";
 import "./animales.css";
 
 function formatKg(kg) {
@@ -224,7 +225,14 @@ export default function Animales({ session, onExpired }) {
     );
   }
 
+  const abrirPorArete = (tag) => {
+    const animal = animales.find((a) => a.tag_id === tag);
+    if (animal) setAbierto({ tag_id: animal.tag_id, org: animal.org });
+  };
+
   return (
+    <>
+    <Rezagados session={session} onExpired={onExpired} onAbrir={abrirPorArete} />
     <section className="panel" aria-label="Animales">
       <h2>Animales</h2>
       <label className="campo">Buscar por arete o nombre
@@ -257,5 +265,6 @@ export default function Animales({ session, onExpired }) {
         ))}
       </ul>
     </section>
+    </>
   );
 }
