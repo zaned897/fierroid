@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import Admin from "./Admin.jsx";
 import Animales from "./Animales.jsx";
+import Asistente from "./Asistente.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import Dashboard from "./Dashboard.jsx";
@@ -90,6 +91,7 @@ function Contenido() {
       {vista === "historial" && <Pesajes key="historial" session={session} onExpired={expirada} historial onRecientes={() => setVista("pesajes")} />}
       {vista === "estaciones" && <Estaciones session={session} onExpired={expirada} />}
       {vista === "animales" && <Animales session={session} onExpired={expirada} />}
+      {vista === "asistente" && <Asistente session={session} onExpired={expirada} onAbrir={() => setVista("animales")} />}
       {vista === "admin" && usuario.is_superuser && (
         <Admin session={session} onExpired={expirada} />
       )}
