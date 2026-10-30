@@ -299,15 +299,33 @@ def estado() -> int:
     return 0
 
 
+def worktrees_propios(porcelana: str) -> list[str]:
+    """Rutas de los worktrees que creo `crear_worktree`, de `git worktree list --porcelain`.
+
+    `.claude/worktrees` tambien guarda los worktrees de Claude Code y del usuario:
+    solo cuentan los que tienen nombre `delegar-*` y una rama `delegar/*`.
+    """
+    propios = []
+    for bloque in porcelana.split("\n\n"):
+        lineas = bloque.splitlines()
+        ruta = next((x[9:] for x in lineas if x.startswith("worktree ")), "")
+        rama = next((x[7:] for x in lineas if x.startswith("branch ")), "")
+        if (
+            ruta
+            and Path(ruta).resolve().parent == WORKTREES.resolve()
+            and Path(ruta).name.startswith("delegar-")
+            and rama.startswith(f"refs/heads/{PREFIJO_RAMA}")
+        ):
+            propios.append(ruta)
+    return propios
+
+
 def limpiar() -> int:
     """Quita los worktrees y ramas que dejo este script. No toca otras ramas."""
     quitados = 0
-    for bloque in git("worktree", "list", "--porcelain").split("\n\n"):
-        lineas = bloque.splitlines()
-        ruta = next((x[9:] for x in lineas if x.startswith("worktree ")), "")
-        if ruta and Path(ruta).resolve().parent == WORKTREES.resolve():
-            git("worktree", "remove", "--force", ruta)
-            quitados += 1
+    for ruta in worktrees_propios(git("worktree", "list", "--porcelain")):
+        git("worktree", "remove", "--force", ruta)
+        quitados += 1
     git("worktree", "prune")
     ramas = git("branch", "--list", f"{PREFIJO_RAMA}*", "--format=%(refname:short)").splitlines()
     for rama in filter(None, ramas):
