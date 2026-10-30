@@ -1,0 +1,12 @@
+- `agy-01.svg` — Hierro candente con astas sobre fragua — `#1C1917`, `#FF5A1F`, `#FFD166`
+- `agy-02.svg` — Toro bravo frontal en escudo terracota — `#B83B1D`, `#7A220E`, `#FAF0DC`
+- `agy-03.svg` — Toro forjado lineal sobre cuero circular — `#8B4513`, `#D4943A`, `#FFF3D6`
+- `agy-04.svg` — Toro enmarcando aguja de báscula industrial — `#1F5E3B`, `#F4F7F2`, `#F2B705`
+- `agy-05.svg` — Toro geométrico facetado sobre azul cielo — `#1B6CA8`, `#F6D58E`, `#D9822B`, `#FFFFFF`
+- `agy-06.svg` — Toro cebú negativo en pesa industrial — `#F4EAD2`, `#264E2C`, `#D95D24`
+- `agy-07.svg` — Sello ganadero pirograbado sobre cuero crudo — `#EFE0C2`, `#B63E20`, `#3B1F0E`
+- `agy-08.svg` — Astas minimalistas en equilibrio sobre báscula — `#C93018`, `#FFFFFF`, `#141414`
+- `agy-09.svg` — Toro de perfil sobre báscula dorada — `#2A7B9B`, `#F4B942`, `#182026`
+- `agy-10.svg` — Fierro candente vertical estampando placa hexagonal — `#243038`, `#C2D3DC`, `#FF7A00`, `#FFE066`
+- `agy-11.svg` — Testuz negro sobre placa arete amarillo — `#F5B800`, `#4A3212`, `#151513`
+- `agy-12.svg` — Monograma F escultórico con asta taurina — `#133A2B`, `#E06D2B`, `#F9EFE0`
