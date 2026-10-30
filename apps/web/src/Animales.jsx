@@ -182,9 +182,10 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
   );
 }
 
-export default function Animales({ session, onExpired }) {
+export default function Animales({ session, onExpired, arete = null }) {
   const [animales, setAnimales] = useState([]);
-  const [abierto, setAbierto] = useState(null);
+  // Desde el asistente llega solo el arete: la API ya acotó el hato a tu organización.
+  const [abierto, setAbierto] = useState(arete ? { tag_id: arete } : null);
   const [error, setError] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
@@ -210,7 +211,7 @@ export default function Animales({ session, onExpired }) {
     recargar();
   }, [recargar]);
 
-  const seleccionado = animales.find((a) => a.tag_id === abierto?.tag_id && a.org === abierto?.org);
+  const seleccionado = animales.find((a) => a.tag_id === abierto?.tag_id && (!("org" in abierto) || a.org === abierto.org));
 
   if (seleccionado) {
     return (

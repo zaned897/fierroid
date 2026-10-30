@@ -7,6 +7,7 @@ import Referencias from "./Referencias.jsx";
 import GraficaPeso from "./GraficaPeso.jsx";
 import VisionPremium from "./VisionPremium.jsx";
 import MasQueBascula from "./MasQueBascula.jsx";
+import PreguntaleHato from "./PreguntaleHato.jsx";
 
 /** Si el observador no respondió ni una vez para entonces, se revela todo. */
 const RESCATE_MS = 1500;
@@ -124,6 +125,7 @@ export default function Secciones() {
       </section>
 
       <Referencias />
+      <PreguntaleHato />
       <VisionPremium />
       <PreguntasAcceso />
     </div>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import Admin from "./Admin.jsx";
 import Animales from "./Animales.jsx";
+import Asistente from "./Asistente.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import Dashboard from "./Dashboard.jsx";
@@ -47,6 +48,8 @@ export default function App() {
 function Contenido() {
   const [session, setSession] = useState(loadSession);
   const [vista, setVista] = useState("pesajes");
+  // Arete que el asistente pidió abrir; se olvida al cambiar de vista desde el menú.
+  const [arete, setArete] = useState(null);
   const [ruta, ir] = useRuta();
 
   const entrar = useCallback(
@@ -85,11 +88,12 @@ function Contenido() {
   const usuario = session.user || {};
 
   return (
-    <Dashboard user={usuario} vista={vista} onVista={setVista} onSalir={salir}>
+    <Dashboard user={usuario} vista={vista} onVista={(v) => { setArete(null); setVista(v); }} onSalir={salir}>
       {vista === "pesajes" && <Pesajes key="pesajes" session={session} onExpired={expirada} onHistorial={() => setVista("historial")} onEstaciones={() => setVista("estaciones")} />}
       {vista === "historial" && <Pesajes key="historial" session={session} onExpired={expirada} historial onRecientes={() => setVista("pesajes")} />}
       {vista === "estaciones" && <Estaciones session={session} onExpired={expirada} />}
-      {vista === "animales" && <Animales session={session} onExpired={expirada} />}
+      {vista === "animales" && <Animales key={arete || "hato"} session={session} onExpired={expirada} arete={arete} />}
+      {vista === "asistente" && <Asistente session={session} onExpired={expirada} onAbrir={(tag) => { setArete(tag); setVista("animales"); }} />}
       {vista === "admin" && usuario.is_superuser && (
         <Admin session={session} onExpired={expirada} />
       )}

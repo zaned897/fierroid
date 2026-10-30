@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -11,7 +11,7 @@ from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import AwareDatetime, BaseModel, Field, field_validator
 
-from fierro_api import __version__, google_auth, journal, waitlist
+from fierro_api import __version__, asistente, google_auth, journal, waitlist
 from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
 from fierro_api.auth import (
@@ -122,6 +122,16 @@ class UserIn(BaseModel):
     full_name: str | None = None
     org: str | None = None
     is_superuser: bool = False
+
+
+class TurnoIn(BaseModel):
+    rol: Literal["usuario", "asistente"]
+    texto: str = Field(max_length=4000)
+
+
+class PreguntaIn(BaseModel):
+    pregunta: str = Field(min_length=1, max_length=300)
+    previos: list[TurnoIn] = Field(default_factory=list, max_length=20)
 
 
 class HeartbeatIn(BaseModel):
@@ -706,6 +716,84 @@ def main() -> None:
     )
 
 
+
+
+# ---------------------------------------------------------------------------
+# Asistente "Preguntale a tu hato" (#110)
+# ---------------------------------------------------------------------------
+
+# Tope de pesajes que lee una pregunta: 25 paginas de 200, como el panel.
+ASISTENTE_MAX_PESAJES = 5000
+cupo_asistente = asistente.Cupo(limite=settings.asistente_limite_diario)
+
+
+class _DatosHato:
+    """Pesajes y fichas de UNA organizacion, leidos solo si Claude los pide."""
+
+    def __init__(self, org: str | None) -> None:
+        self.org = org
+        self.lecturas = store.list_readings(limit=ASISTENTE_MAX_PESAJES + 1, org_slug=org)
+        self.truncado = len(self.lecturas) > ASISTENTE_MAX_PESAJES
+        self.lecturas = self.lecturas[:ASISTENTE_MAX_PESAJES]
+        # SQLite es el laboratorio sin fichas: el hato sale solo de los pesajes.
+        self.fichas = animals_mod.list_animals(settings.dsn, org_slug=org) if settings.dsn else []
+
+    def bitacora(self, tag_id: str) -> list[dict[str, Any]]:
+        if not (settings.dsn and self.org):
+            return []
+        return journal.list_entries(settings.dsn, org=self.org, tag=tag_id, limit=10, before=None)
+
+
+def _cliente_claude() -> Any:
+    """La clave vive solo aqui, del lado del servidor."""
+    if not settings.anthropic_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El asistente no está disponible: falta configurar ANTHROPIC_API_KEY en la API.",
+        )
+    import anthropic
+
+    return anthropic.Anthropic(api_key=settings.anthropic_api_key, timeout=90.0)
+
+
+@app.post("/v1/asistente")
+def preguntar(
+    body: PreguntaIn, user: CurrentUser, org: str | None = Query(default=None)
+) -> dict[str, Any]:
+    """Contesta con herramientas de solo lectura sobre el hato de la sesion."""
+    # En laboratorio (SQLite) no hay organizaciones; en Postgres se acota
+    # siempre a una, y el superusuario tiene que decir cual.
+    alcance = _write_scope(user, org) if settings.dsn else None
+    cliente = _cliente_claude()
+    import anthropic
+
+    try:
+        cupo_asistente.tomar(alcance or "laboratorio", datetime.now(UTC).date())
+        return asistente.responder(
+            cliente,
+            pregunta=body.pregunta.strip(),
+            previos=[t.model_dump() for t in body.previos],
+            cargar=lambda: _DatosHato(alcance),
+        )
+    except asistente.CupoAgotado as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+    except asistente.AsistenteNoDisponible as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+    except anthropic.APIStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                f"El asistente no pudo contestar ({exc.status_code}). "
+                "Intenta de nuevo en un momento."
+            ),
+        ) from exc
+    except anthropic.APIConnectionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El asistente no pudo conectarse. Revisa tu conexión e intenta de nuevo.",
+        ) from exc
 
 
 @app.post("/v1/waitlist", status_code=202)

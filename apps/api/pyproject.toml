@@ -17,6 +17,8 @@ dependencies = [
   "argon2-cffi>=23.1",
   # Subida de fotos: FastAPI necesita esto para multipart/form-data.
   "python-multipart>=0.0.9",
+  # Asistente "Pregúntale a tu hato" (#110). La clave vive solo en el servidor.
+  "anthropic>=2.0",
 ]
 
 [project.optional-dependencies]
