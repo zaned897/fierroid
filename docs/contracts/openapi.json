@@ -201,7 +201,7 @@
       "PreguntaIn": {
         "properties": {
           "pregunta": {
-            "maxLength": 1000,
+            "maxLength": 300,
             "minLength": 1,
             "title": "Pregunta",
             "type": "string"

@@ -116,7 +116,7 @@ export default function Asistente({ session, onExpired, onAbrir }) {
     if (!limpio || esperando) return;
 
     // La API acepta hasta 20 turnos y solo usa los últimos 10.
-    const previos = turnos.slice(-10).map(({ rol, texto }) => ({ rol, texto }));
+    const previos = turnos.slice(-6).map(({ rol, texto }) => ({ rol, texto }));
     setTurnos((actuales) => [...actuales, { rol: "usuario", texto: limpio }]);
     setPregunta("");
     setError(null);
@@ -223,7 +223,7 @@ export default function Asistente({ session, onExpired, onAbrir }) {
             value={pregunta}
             onChange={(e) => setPregunta(e.target.value)}
             placeholder="Ej. ¿Qué vaca tiene problemas?"
-            maxLength={1000}
+            maxLength={300}
             disabled={esperando}
           />
         </label>

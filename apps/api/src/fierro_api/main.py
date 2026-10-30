@@ -130,7 +130,7 @@ class TurnoIn(BaseModel):
 
 
 class PreguntaIn(BaseModel):
-    pregunta: str = Field(min_length=1, max_length=1000)
+    pregunta: str = Field(min_length=1, max_length=300)
     previos: list[TurnoIn] = Field(default_factory=list, max_length=20)
 
 

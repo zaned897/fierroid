@@ -19,14 +19,23 @@ from typing import Any, Protocol
 
 from fierro_api import hato
 
-MODELO = "claude-opus-5-5"
-MAX_VUELTAS = 6
-MAX_HISTORIAL = 10
+# Demo: el modelo más barato y rápido que sigue usando bien las herramientas.
+# Las preguntas son cortas y los números salen de hato.py, no del modelo.
+MODELO = "claude-haiku-5-5"
+MAX_TOKENS = 1500
+MAX_VUELTAS = 4
+MAX_HISTORIAL = 6
+FUERA_DE_TEMA = "Solo puedo contestar sobre tu hato: tus animales y sus pesajes."
 
-SISTEMA = """Eres el asistente de Fierro, una báscula para ganado. Contestas en español de México, \
+SISTEMA = f"""Eres el asistente de Fierro, una báscula para ganado. Contestas en español \
+de México, \
 claro y breve, a un ganadero que pregunta por su propio hato.
 
 Reglas:
+- Solo contestas sobre los animales, aretes, pesajes, ganancias y la báscula de este rancho. \
+Si la pregunta es de otro tema (clima, precios del mercado, noticias, recetas, salud humana, \
+tareas generales, charla), no llames ninguna herramienta y contesta solo: "{FUERA_DE_TEMA}"
+- Contesta en 4 líneas como máximo.
 - Todo número sobre el hato (animales, pesos, ganancias, fechas) sale de una herramienta. \
 Nunca lo estimes ni lo inventes. Si ninguna herramienta tiene el dato (precio, raza, vacunas, \
 dueño), di que Fierro no lo tiene registrado.
@@ -243,17 +252,13 @@ def responder(
     aretes: set[str] = set()
 
     for _ in range(MAX_VUELTAS):
-        respuesta = cliente.beta.messages.create(
+        respuesta = cliente.messages.create(
             model=modelo,
-            max_tokens=16000,
+            max_tokens=MAX_TOKENS,
             system=SISTEMA,
             tools=HERRAMIENTAS,
             messages=mensajes,
-            output_config={"effort": "medium"},
-            # Si un clasificador de seguridad rechaza por error, la API reintenta
-            # en el modelo de respaldo dentro de la misma llamada.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
+            output_config={"effort": "low"},
         )
         if respuesta.stop_reason == "refusal":
             return {
