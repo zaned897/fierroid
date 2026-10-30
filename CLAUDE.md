@@ -45,7 +45,7 @@ Notas de Cloud Agents: [`AGENTS.md`](AGENTS.md).
 ./scripts/install-deps.sh && source .venv/bin/activate
 pre-commit install            # gate local, una vez
 ruff check apps scripts
-pytest apps/device-agent apps/api -q
+pytest apps/device-agent apps/api tools/agentes -q
 cd apps/web && pnpm lint && pnpm build   # solo si tocaste web
 ```
 
