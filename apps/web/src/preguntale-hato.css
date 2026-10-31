@@ -1,9 +1,9 @@
-/* Pregúntale a tu hato (#111): bloque estático del home, fondo verde bosque #143c2d. */
+/* Pregúntale a tu hato (#111): bloque estático del home, fondo verde bosque var(--home-bosque). */
 
 .home-publica .preguntale-hato {
   padding: 88px max(24px, calc((100% - 1200px) / 2));
-  background: #143c2d;
-  color: #edf5ef;
+  background: var(--home-bosque);
+  color: var(--home-niebla);
   scroll-margin-top: 24px;
 }
 
@@ -27,15 +27,15 @@
   display: inline-block;
   padding: 3px 8px;
   margin-left: 10px;
-  border: 1px solid #e3a94a;
+  border: 1px solid var(--home-ambar);
   border-radius: 999px;
-  color: #e3a94a;
+  color: var(--home-ambar);
   letter-spacing: 0.08em;
   font-size: 11px;
 }
 
 .preguntale-hato-cabeza h2 {
-  color: #f4faf6;
+  color: var(--home-niebla);
   font-size: clamp(2rem, 4vw, 3.2rem);
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -56,7 +56,7 @@
 }
 
 .preguntale-hato a:focus-visible {
-  outline: 2px solid #6ee7b7;
+  outline: 2px solid var(--home-brote);
   outline-offset: 3px;
 }
 
@@ -66,19 +66,19 @@
   border: 1px solid #2b5c47;
   border-radius: 12px;
   overflow: hidden;
-  background: #0f2e22;
+  background: var(--home-noche);
 }
 
 .preguntale-hato-conversacion {
   padding: 24px;
-  background: #f7f8f3;
-  color: #102b22;
+  background: var(--home-marfil);
+  color: var(--home-texto);
   min-width: 0;
 }
 
 .preguntale-hato-etiqueta {
   margin: 0 0 16px;
-  color: #52645d;
+  color: var(--home-muted);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -106,7 +106,7 @@
   max-width: min(28rem, 90%);
   padding: 10px 14px;
   border-radius: 14px 14px 4px 14px;
-  background: #176575;
+  background: var(--home-petroleo);
   color: #fff;
   font-size: 0.92rem;
   font-weight: 550;
@@ -123,10 +123,10 @@
   width: 100%;
   max-width: 38rem;
   padding: 14px 16px;
-  border: 1px solid #dce3df;
+  border: 1px solid var(--home-borde);
   border-radius: 14px;
   background: #fff;
-  color: #102b22;
+  color: var(--home-texto);
   box-shadow: 0 4px 14px rgba(20, 60, 45, 0.06);
   overflow-wrap: anywhere;
 }
@@ -141,15 +141,15 @@
 .preguntale-hato-chip {
   padding: 2px 9px;
   border-radius: 999px;
-  background: #e3eee8;
-  color: #143c2d;
+  background: var(--home-niebla);
+  color: var(--home-bosque);
   font-size: 0.74rem;
   font-weight: 650;
 }
 
 .preguntale-hato-respuesta .preguntale-hato-intro {
   margin: 0;
-  color: #102b22;
+  color: var(--home-texto);
   font-size: 0.94rem;
   font-weight: 600;
   line-height: 1.45;
@@ -158,7 +158,7 @@
 .preguntale-hato-lista {
   margin: 8px 0 0;
   padding-left: 18px;
-  color: #102b22;
+  color: var(--home-texto);
   font-size: 0.9rem;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
@@ -170,14 +170,14 @@
 
 .preguntale-hato-respuesta .preguntale-hato-nota {
   margin: 8px 0 0;
-  color: #52645d;
+  color: var(--home-muted);
   font-size: 0.8rem;
   line-height: 1.45;
 }
 
 .preguntale-hato-lateral {
   padding: 24px 20px;
-  background: #0d261c;
+  background: var(--home-noche);
   border-left: 1px solid #244b3b;
   display: flex;
   flex-direction: column;
@@ -202,7 +202,7 @@
 }
 
 .preguntale-hato-reglas strong {
-  color: #f4faf6;
+  color: var(--home-niebla);
   font-size: 0.95rem;
 }
 
