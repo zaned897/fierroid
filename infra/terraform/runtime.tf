@@ -64,6 +64,12 @@ resource "google_secret_manager_secret_iam_member" "api_dsn" {
   member    = "serviceAccount:${google_service_account.api.email}"
 }
 
+resource "google_secret_manager_secret_iam_member" "api_anthropic" {
+  secret_id = data.google_secret_manager_secret.anthropic.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.api.email}"
+}
+
 # El job de migraciones lee la cadena directa, que es otro secreto.
 resource "google_secret_manager_secret_iam_member" "migrate_dsn" {
   secret_id = google_secret_manager_secret.dsn_directo.id
@@ -132,6 +138,17 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
+      # Sin ella la API arranca igual y el asistente responde 503.
+      env {
+        name = "ANTHROPIC_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret.anthropic.secret_id
+            version = "latest"
+          }
+        }
+      }
+
       startup_probe {
         http_get {
           path = "/health"
@@ -153,6 +170,7 @@ resource "google_cloud_run_v2_service" "api" {
   depends_on = [
     google_secret_manager_secret_version.dsn,
     google_secret_manager_secret_iam_member.api_dsn,
+    google_secret_manager_secret_iam_member.api_anthropic,
   ]
 }
 
