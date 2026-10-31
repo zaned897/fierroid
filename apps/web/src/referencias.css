@@ -1,7 +1,7 @@
 /* Por qué pesar y lecturas: misma superficie clara que Beneficios. */
 .home-referencias {
-  --ink: #102b22;
-  --muted: #52645d;
+  --ink: var(--home-texto);
+  --muted: var(--home-muted);
   --line: rgba(20, 60, 45, 0.14);
   scroll-margin-top: 1rem;
   background: #fff;
@@ -44,7 +44,7 @@
   padding: 1.4rem;
   border: 1px solid var(--line);
   border-radius: 0.7rem;
-  background: #f7f8f3;
+  background: var(--home-marfil);
 }
 
 .home-dato-icono {
@@ -52,7 +52,7 @@
   width: 2.6rem;
   height: 2.6rem;
   margin-bottom: 1rem;
-  color: #176575;
+  color: var(--home-petroleo);
 }
 
 .home-dato-icono svg {
@@ -76,7 +76,7 @@
 .home-cita {
   display: inline-block;
   min-width: 2.75rem;
-  color: #176575;
+  color: var(--home-petroleo);
   font-weight: 650;
   text-decoration: none;
 }
@@ -95,14 +95,14 @@
   align-items: center;
   min-height: 44px;
   margin-bottom: 1rem;
-  color: #176575;
+  color: var(--home-petroleo);
   font-size: 1.05rem;
   font-weight: 650;
   cursor: pointer;
 }
 
 .home-lecturas-titulo:focus-visible {
-  outline: 3px solid #176575;
+  outline: 3px solid var(--home-petroleo);
   outline-offset: 3px;
 }
 
@@ -134,19 +134,19 @@
   height: 1.6rem;
   place-items: center;
   border-radius: 50%;
-  background: #e3f1f3;
-  color: #176575;
+  background: var(--home-niebla);
+  color: var(--home-petroleo);
   font-size: 0.8rem;
   font-weight: 700;
 }
 
 .home-lectura:target::before {
-  background: #176575;
+  background: var(--home-petroleo);
   color: #fff;
 }
 
 .home-lectura-tipo {
-  color: #176575;
+  color: var(--home-petroleo);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;

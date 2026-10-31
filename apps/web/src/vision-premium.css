@@ -2,8 +2,8 @@
 
 .home-publica .vision-premium {
   padding: 88px max(24px, calc((100% - 1200px) / 2));
-  background: #081a15;
-  color: #edf5ef;
+  background: var(--home-noche);
+  color: var(--home-niebla);
   scroll-margin-top: 24px;
 }
 
@@ -28,15 +28,15 @@
   display: inline-block;
   padding: 3px 8px;
   margin-left: 10px;
-  border: 1px solid #e3a94a;
+  border: 1px solid var(--home-ambar);
   border-radius: 999px;
-  color: #e3a94a;
+  color: var(--home-ambar);
   letter-spacing: 0.08em;
   font-size: 11px;
 }
 
 .vision-heading h2 {
-  color: #f4faf6;
+  color: var(--home-niebla);
   font-size: clamp(2rem, 4vw, 3.4rem);
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -57,7 +57,7 @@
 }
 
 .vision-premium :is(a, summary):focus-visible {
-  outline: 2px solid #6ee7b7;
+  outline: 2px solid var(--home-brote);
   outline-offset: 3px;
 }
 
@@ -68,13 +68,13 @@
   border: 1px solid #244b3b;
   border-radius: 12px;
   overflow: hidden;
-  background: #0f241d;
+  background: var(--home-noche);
 }
 
 .vision-canvas {
   margin: 0;
   padding: 16px;
-  background: #050d0a;
+  background: var(--home-noche);
   min-width: 0;
 }
 
@@ -82,7 +82,7 @@
   width: 100%;
   display: block;
   border-radius: 6px;
-  background: #050d0a;
+  background: var(--home-noche);
   border: 1px solid #19382b;
 }
 
@@ -108,7 +108,7 @@
 
 .vision-inspector {
   padding: 24px 20px;
-  background: #0d211a;
+  background: var(--home-noche);
   border-left: 1px solid #1f3f32;
   display: flex;
   flex-direction: column;
@@ -144,12 +144,12 @@
 
 .vision-capacidades .en-prueba {
   background: rgba(108, 197, 150, 0.18);
-  color: #6cc596;
+  color: var(--home-brote);
 }
 
 .vision-capacidades .por-validar {
   background: rgba(227, 169, 74, 0.16);
-  color: #e3a94a;
+  color: var(--home-ambar);
 }
 
 .vision-detalles summary {
@@ -198,7 +198,7 @@
 
 .badge-bovino {
   background: rgba(16, 185, 129, 0.2);
-  color: #6ee7b7;
+  color: var(--home-brote);
   border: 1px solid #059669;
 }
 
@@ -216,7 +216,7 @@
 
 .badge-persona {
   background: rgba(245, 158, 11, 0.2);
-  color: #fde68a;
+  color: var(--home-ambar-claro);
   border: 1px solid #d97706;
 }
 
@@ -229,8 +229,8 @@
   margin-top: auto;
   display: block;
   text-align: center;
-  border: 1px solid #6cc596;
-  color: #6cc596;
+  border: 1px solid var(--home-brote);
+  color: var(--home-brote);
   font-weight: 700;
   font-size: 0.95rem;
   padding: 12px 14px;

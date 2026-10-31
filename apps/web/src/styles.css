@@ -1180,12 +1180,23 @@ button.contraste:hover {
 
 /* --- Home público: encabezado y portada -------------------------------- */
 
+/* Paleta única del home. Las hojas del home (styles.css desde aquí,
+   mas-que-bascula, vision-premium, preguntale-hato, referencias,
+   preguntas-acceso, lista-espera) usan estos tokens, no hexadecimales sueltos.
+   Bosque y noche para superficies oscuras, marfil y niebla para las claras,
+   petróleo para acciones, ámbar para "próximamente" y brote para "disponible". */
 .home-publica {
   --home-bosque: #143c2d;
+  --home-noche: #0f241d;
   --home-marfil: #f7f8f3;
+  --home-niebla: #edf5ef;
+  --home-borde: #dce3df;
   --home-petroleo: #176575;
   --home-texto: #102b22;
   --home-muted: #52645d;
+  --home-ambar: #e3a94a;
+  --home-ambar-claro: #f0c47a;
+  --home-brote: #6cc596;
   min-height: 100vh;
   background: var(--home-marfil);
   color: var(--home-texto);
@@ -1351,10 +1362,10 @@ a.home-entrar:focus-visible {
 /* Las secciones antiguas conservan temporalmente su tema hasta ser sustituidas
    una por una. Evita texto claro sobre el fondo marfil de la nueva portada. */
 .home-publica .secciones {
-  --bg0: #142018;
-  --ink: #f2efe6;
+  --bg0: var(--home-noche);
+  --ink: var(--home-marfil);
   --muted: #a8b5a8;
-  --accent: #c4a35a;
+  --accent: var(--home-ambar);
   --line: rgba(242, 239, 230, 0.12);
   --danger: #e07a5f;
   background: var(--bg0);
@@ -1546,7 +1557,7 @@ a.home-entrar:focus-visible {
 
 .home-demo-estado {
   margin-top: 0.3rem;
-  color: #176575;
+  color: var(--home-petroleo);
   font-size: 0.72rem;
   font-weight: 650;
 }
@@ -1604,7 +1615,7 @@ a.home-entrar:focus-visible {
 .home-demo-cabecera {
   border-radius: 0.25rem;
   background: #f1f3f2;
-  color: #52645d;
+  color: var(--home-muted);
 }
 
 .home-demo > figcaption {
@@ -1750,7 +1761,7 @@ a.home-entrar:focus-visible {
 .home-sellos li {
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  background: #e3eee8;
+  background: var(--home-niebla);
   color: var(--home-bosque);
   font-size: 0.88rem;
   font-weight: 600;
@@ -1864,8 +1875,8 @@ a.home-entrar:focus-visible {
   border: 0;
   background:
     radial-gradient(circle at 12% 18%, rgba(23, 101, 117, 0.32), transparent 24rem),
-    #143c2d;
-  color: #f7f8f3;
+    var(--home-bosque);
+  color: var(--home-marfil);
 }
 
 .como-funciona .bloque-cabeza {
@@ -1927,7 +1938,7 @@ a.home-entrar:focus-visible {
   height: 1.55rem;
   place-items: center;
   border-radius: 50%;
-  background: #176575;
+  background: var(--home-petroleo);
   color: #fff;
   font-size: 0.8rem;
   transform: translateY(-50%);
@@ -2103,7 +2114,7 @@ a.home-entrar:focus-visible {
   border: 0;
   border-radius: 50%;
   background: #b7e3e8;
-  color: #143c2d;
+  color: var(--home-bosque);
   font-size: 1rem;
   font-weight: 750;
   letter-spacing: 0;
@@ -2246,11 +2257,11 @@ a.home-entrar:focus-visible {
 /* --- Beneficios: segunda mitad de la lámina 02 -------------------------- */
 
 .home-beneficios {
-  --ink: #102b22;
-  --muted: #52645d;
+  --ink: var(--home-texto);
+  --muted: var(--home-muted);
   --line: rgba(20, 60, 45, 0.14);
   scroll-margin-top: 1rem;
-  background: #f7f8f3;
+  background: var(--home-marfil);
   color: var(--ink);
 }
 
@@ -2261,7 +2272,7 @@ a.home-entrar:focus-visible {
 
 .home-beneficios h2 {
   margin-bottom: clamp(2rem, 4vw, 3rem);
-  color: #102b22;
+  color: var(--home-texto);
   font-size: clamp(2rem, 4vw, 3.2rem);
   letter-spacing: -0.035em;
   line-height: 1.1;
@@ -2319,12 +2330,12 @@ a.home-entrar:focus-visible {
 
 .home-beneficio h3 {
   margin: 0 0 0.45rem;
-  color: #102b22;
+  color: var(--home-texto);
   font-size: 1.25rem;
 }
 
 .home-beneficio p {
-  color: #52645d;
+  color: var(--home-muted);
   font-size: 0.98rem;
 }
 
@@ -2377,7 +2388,7 @@ a.home-entrar:focus-visible {
   border: 6px solid #17201e;
   border-radius: 1.6rem;
   overflow: hidden;
-  background: #f7f8f3;
+  background: var(--home-marfil);
   box-shadow: 0.7rem 1rem 1.6rem #0006;
   transform: rotate(9deg);
   transform-origin: center top;
@@ -2389,7 +2400,7 @@ a.home-entrar:focus-visible {
   align-items: center;
   gap: 0.5em;
   padding: 1em 0.8em;
-  background: #143c2d;
+  background: var(--home-bosque);
   color: #fff;
   font-weight: 750;
   letter-spacing: 0.08em;
@@ -2397,13 +2408,13 @@ a.home-entrar:focus-visible {
 
 .home-telefono-pantalla { padding: 1em; }
 .home-telefono-marca .marca-fierro { background-color: currentColor; }
-.home-telefono-rancho { display: block; color: #52645d; font-size: 0.85em; }
+.home-telefono-rancho { display: block; color: var(--home-muted); font-size: 0.85em; }
 .home-telefono-titulo { display: block; margin-block: 0.4em 0.65em; font-size: 1.5em; }
-.home-telefono-peso { display: grid; gap: 0.35em; padding: 0.8em; border: 1px solid #dce3df; border-radius: 0.5em; background: #fff; }
+.home-telefono-peso { display: grid; gap: 0.35em; padding: 0.8em; border: 1px solid var(--home-borde); border-radius: 0.5em; background: #fff; }
 .home-telefono-peso strong { font-size: 2em; letter-spacing: -0.05em; }
 .home-telefono-peso span:last-child { display: flex; align-items: center; gap: 0.3em; font-size: 0.85em; }
 .home-telefono-subtitulo { display: block; margin-block: 1em 0.5em; }
-.home-telefono-lectura { display: flex; justify-content: space-between; gap: 0.4em; padding-block: 0.65em; border-top: 1px solid #dce3df; font-size: 0.85em; }
+.home-telefono-lectura { display: flex; justify-content: space-between; gap: 0.4em; padding-block: 0.65em; border-top: 1px solid var(--home-borde); font-size: 0.85em; }
 
 .home-telefono-escena figcaption {
   position: absolute;
@@ -2417,4 +2428,73 @@ a.home-entrar:focus-visible {
   background: rgba(8, 31, 23, 0.85);
   color: #fff;
   font-size: 0.65rem;
+}
+
+/* --- Demo: barra que sigue al scroll y portada a pantalla completa ------ */
+
+/* Sticky y no fixed: así queda debajo del aviso de entorno en stage. */
+.home-encabezado {
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  width: auto;
+  padding-inline: max(1.5rem, calc((100% - 80rem) / 2));
+  border-bottom: 1px solid transparent;
+  transition: transform 0.35s ease, background-color 0.35s ease, border-color 0.35s ease;
+}
+
+.home-encabezado.fija {
+  border-bottom-color: var(--home-borde);
+  background: color-mix(in srgb, var(--home-marfil) 92%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.home-encabezado.oculta {
+  transform: translateY(-100%);
+}
+
+.home-portada {
+  display: grid;
+  align-items: center;
+  min-height: calc(100svh - 5.5rem);
+  border-top: 0;
+}
+
+.home-portada-principal {
+  width: min(calc(100% - 3rem), 80rem);
+  padding: clamp(2.5rem, 5vh, 4rem) 0 clamp(3rem, 6vh, 4.5rem);
+  gap: clamp(2.5rem, 5vw, 5rem);
+}
+
+.home-portada h1 {
+  max-width: 12ch;
+  font-size: clamp(3.2rem, 6.2vw, 6rem);
+}
+
+.home-descripcion {
+  font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+}
+
+@media (max-width: 760px) {
+  .home-encabezado {
+    padding-inline: 1rem;
+  }
+
+  .home-portada {
+    min-height: 0;
+  }
+
+  .home-portada-principal {
+    width: min(calc(100% - 2rem), 34rem);
+    padding-top: 2rem;
+  }
+
+  .home-portada h1 {
+    font-size: clamp(2.6rem, 12vw, 3.6rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-encabezado { transition: none; }
 }
