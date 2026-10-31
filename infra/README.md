@@ -183,6 +183,18 @@ docker push "$IMG"
 
 ### 4. Aplicar todo lo demás
 
+Antes, la clave de Anthropic del asistente. Terraform **lee** el secreto pero no
+lo crea: así la clave no pasa por el `.tfvars` ni queda en claro en el estado.
+Una vez por entorno (`stage`, `production`):
+
+```bash
+gcloud secrets create fierro-production-anthropic --replication-policy=automatic
+echo -n "sk-ant-..." | gcloud secrets versions add fierro-production-anthropic --data-file=-
+```
+
+Sin el secreto el `plan` falla al leerlo. Para cambiar la clave basta otra
+`versions add`; la API toma `latest` en el siguiente arranque.
+
 ```bash
 terraform plan  "-var-file=production.tfvars"
 terraform apply "-var-file=production.tfvars"

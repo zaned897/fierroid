@@ -44,3 +44,14 @@ resource "google_secret_manager_secret_version" "dsn_directo" {
   secret      = google_secret_manager_secret.dsn_directo.id
   secret_data = var.db_dsn_direct
 }
+
+# --- Clave de Anthropic, para el asistente ---------------------------------
+#
+# El secreto y su valor se crean a mano con gcloud, una vez por entorno (pasos
+# en infra/README.md). A diferencia de los DSN, la clave no pasa por .tfvars:
+# asi no queda en claro en el estado local de Terraform. Aqui solo se lee, para
+# dar acceso a la API y montarla como variable.
+
+data "google_secret_manager_secret" "anthropic" {
+  secret_id = "fierro-${var.environment}-anthropic"
+}
