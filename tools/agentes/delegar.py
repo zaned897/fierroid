@@ -327,10 +327,21 @@ def limpiar() -> int:
         git("worktree", "remove", "--force", ruta)
         quitados += 1
     git("worktree", "prune")
+    # Una rama delegar/* que sigue en un worktree (el checkout principal u otro
+    # que no es del script) esta en uso: git se niega a borrarla y no se toca.
+    en_uso = {
+        x[18:] for x in git("worktree", "list", "--porcelain").splitlines()
+        if x.startswith("branch refs/heads/")
+    }
     ramas = git("branch", "--list", f"{PREFIJO_RAMA}*", "--format=%(refname:short)").splitlines()
+    borradas = 0
     for rama in filter(None, ramas):
+        if rama in en_uso:
+            print(f"[delegar] {rama} esta en uso en un worktree; no se borra")
+            continue
         git("branch", "-D", rama)
-    print(f"[delegar] {quitados} worktrees y {len([r for r in ramas if r])} ramas quitadas")
+        borradas += 1
+    print(f"[delegar] {quitados} worktrees y {borradas} ramas quitadas")
     return 0
 
 
