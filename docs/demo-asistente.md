@@ -56,43 +56,28 @@ verse, con cualquier fecha de siembra.
 
 ## Pasos, en orden
 
-### 1. La clave de Anthropic en Cloud Run
+### 1 y 2. La clave de Anthropic y una imagen con el asistente
 
 Sin `ANTHROPIC_API_KEY` el asistente responde 503 ("falta configurar
-ANTHROPIC_API_KEY"). Va por Terraform, como las cadenas de Neon. Ponerla a mano
-con `gcloud run services update` no sirve: el siguiente `apply` la quitaría.
+ANTHROPIC_API_KEY"), y si la imagen de stage es anterior a #112,
+`/v1/asistente` ni existe. Las dos cosas se resuelven con el mismo
+despliegue: [#115](https://github.com/zaned897/fierroid/pull/115) lleva la
+clave a Cloud Run como secreto por Terraform (ponerla a mano con `gcloud run
+services update` no sirve: el siguiente `apply` la quitaría), y el ciclo de
+siempre de [`infra/README.md`](../infra/README.md#desplegar-una-versión-nueva-de-la-api)
+sube la imagen. Basta con stage para la demo.
 
-1. Crea una clave en [console.anthropic.com](https://console.anthropic.com),
-   en **API Keys**, y ponle un límite de gasto mensual. La API ya topa a 200
-   preguntas por rancho al día (`FIERRO_ASISTENTE_LIMITE_DIARIO`).
-2. Agrégala a tu `infra/terraform/stage.tfvars` local (está en `.gitignore`):
+Ponle a la clave un límite de gasto mensual en la consola de Anthropic. La API
+ya topa a 200 preguntas por rancho al día (`FIERRO_ASISTENTE_LIMITE_DIARIO`).
 
-   ```hcl
-   anthropic_api_key = "sk-ant-..."
-   ```
-
-3. Aplica. El `plan` debe mostrar 3 recursos nuevos (secreto, versión y
-   permiso) y el servicio cambiando:
-
-   ```bash
-   terraform "-chdir=infra/terraform" plan  "-var-file=stage.tfvars"
-   terraform "-chdir=infra/terraform" apply "-var-file=stage.tfvars"
-   ```
-
-### 2. Que stage corra una imagen con el asistente
-
-El asistente llegó en #112. Si la imagen de stage es anterior, `/v1/asistente`
-no existe:
+Para comprobar que la imagen ya trae el asistente:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" -X POST \
   https://fierro-api-stage-yj7cs5a7aq-pv.a.run.app/v1/asistente
 ```
 
-`401` o `422` = el endpoint existe. `404` = hay que desplegar con el ciclo de
-siempre de [`infra/README.md`](../infra/README.md#desplegar-una-versión-nueva-de-la-api):
-construir desde `stage`, `docker push`, poner el digest en `api_image` y
-`apply`. Se puede hacer en el mismo `apply` del paso 1.
+`401` o `422` = el endpoint existe. `404` = falta desplegar.
 
 ### 3. Tu llave de superusuario
 
@@ -140,7 +125,7 @@ Con esa cuenta, en la PWA de stage: **Pregúntale** y el guion de arriba.
 
 | Lo que ves | Causa |
 |---|---|
-| "falta configurar ANTHROPIC_API_KEY" | Paso 1 sin aplicar, o el servicio no reinició con el secreto |
+| "falta configurar ANTHROPIC_API_KEY" | El despliegue de #115 no llegó a stage, o el servicio no tomó el secreto |
 | "Como superusuario, indica la organización" | Entraste con tu cuenta, no con la de la demo |
 | "Tu cuenta no tiene organización asignada" | El paso 4 corrió sin `--usuario` |
 | "no tienes animales pesados" | La cuenta está en un rancho sembrado con `seed_synthetic.py` |
