@@ -22,3 +22,6 @@ max_instances = 4
 # Este entorno es el dueno del Artifact Registry del proyecto. Exactamente
 # un .tfvars debe traerlo en true.
 crea_registro = true
+
+# Asistente "Preguntale a tu hato". Vacia o ausente = responde 503. NO se commitea.
+# anthropic_api_key = "sk-ant-..."

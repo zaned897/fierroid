@@ -78,6 +78,18 @@ variable "google_client_id" {
   default     = ""
 }
 
+variable "anthropic_api_key" {
+  description = <<-EOT
+    Clave de la API de Anthropic para el asistente "Preguntale a tu hato".
+
+    Vacia = el asistente responde 503. Como las cadenas de Neon, va solo en el
+    .tfvars local y de ahi a Secret Manager.
+  EOT
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "api_key_ttl_days" {
   description = "Vida de la API key de sesion, en dias. 0 = sin expiracion."
   type        = number

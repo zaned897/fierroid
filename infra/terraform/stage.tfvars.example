@@ -18,3 +18,6 @@ db_dsn_direct = "postgresql://USUARIO:CLAVE@ep-XXXX.REGION.aws.neon.tech/fierro?
 # Escala a cero: stage pasa la mayor parte del tiempo sin nadie usandolo.
 min_instances = 0
 max_instances = 2
+
+# Asistente "Preguntale a tu hato". Vacia o ausente = responde 503. NO se commitea.
+# anthropic_api_key = "sk-ant-..."

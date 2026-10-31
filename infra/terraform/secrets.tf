@@ -44,3 +44,24 @@ resource "google_secret_manager_secret_version" "dsn_directo" {
   secret      = google_secret_manager_secret.dsn_directo.id
   secret_data = var.db_dsn_direct
 }
+
+# --- Clave de Anthropic, para el asistente (#110) ----------------------------
+#
+# Opcional: sin ella el asistente responde 503 y la PWA lo dice, nunca inventa.
+# El secreto solo existe si el .tfvars trae la clave. Ponerla a mano con
+# `gcloud run services update` no sirve: el siguiente apply la quitaria.
+
+resource "google_secret_manager_secret" "anthropic" {
+  count     = var.anthropic_api_key == "" ? 0 : 1
+  secret_id = "fierro-${var.environment}-anthropic-api-key"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "anthropic" {
+  count       = var.anthropic_api_key == "" ? 0 : 1
+  secret      = google_secret_manager_secret.anthropic[0].id
+  secret_data = var.anthropic_api_key
+}

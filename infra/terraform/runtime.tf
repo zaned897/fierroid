@@ -64,6 +64,13 @@ resource "google_secret_manager_secret_iam_member" "api_dsn" {
   member    = "serviceAccount:${google_service_account.api.email}"
 }
 
+resource "google_secret_manager_secret_iam_member" "api_anthropic" {
+  count     = var.anthropic_api_key == "" ? 0 : 1
+  secret_id = google_secret_manager_secret.anthropic[0].id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.api.email}"
+}
+
 # El job de migraciones lee la cadena directa, que es otro secreto.
 resource "google_secret_manager_secret_iam_member" "migrate_dsn" {
   secret_id = google_secret_manager_secret.dsn_directo.id
@@ -132,6 +139,19 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
+      dynamic "env" {
+        for_each = google_secret_manager_secret.anthropic
+        content {
+          name = "ANTHROPIC_API_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = env.value.secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
       startup_probe {
         http_get {
           path = "/health"
@@ -153,6 +173,8 @@ resource "google_cloud_run_v2_service" "api" {
   depends_on = [
     google_secret_manager_secret_version.dsn,
     google_secret_manager_secret_iam_member.api_dsn,
+    google_secret_manager_secret_version.anthropic,
+    google_secret_manager_secret_iam_member.api_anthropic,
   ]
 }
 
