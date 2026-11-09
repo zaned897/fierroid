@@ -37,7 +37,7 @@ export const imagenes = {
     src: "/img/mqb-equipo-ia.webp",
     width: 1920,
     height: 1080,
-    alt: "Un ganadero mayor revisa una tablet junto a la manga, al atardecer, con la caja de la estación en un poste",
+    alt: "Ganadero de espaldas con sombrero y celular junto a un corral de piedra y una puerta de madera en Zacatecas, con ganado al fondo y una caja electrónica con antena en un poste al atardecer",
     autor: "Generada con IA para Fierro",
     licencia: "Recurso generado; no es fotografía documental",
     fuente: "/img/CREDITOS.md",

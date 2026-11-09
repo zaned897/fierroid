@@ -1,8 +1,8 @@
 /* Lámina 03: reglas acotadas al home público. */
 .home-preguntas-acceso,
 .home-pie {
-  color: #143c2d;
-  background: #f7f8f3;
+  color: var(--home-bosque);
+  background: var(--home-marfil);
 }
 
 .home-acceso-contenido {
@@ -17,13 +17,13 @@
   letter-spacing: -0.025em;
   font-weight: 750;
 }
-.home-preguntas-acceso p { margin: 0.65rem 0 0; color: #40534b; line-height: 1.55; }
+.home-preguntas-acceso p { margin: 0.65rem 0 0; color: var(--home-muted); line-height: 1.55; }
 
 .home-faq { padding-block: 3.25rem 3.75rem; background: #fff; scroll-margin-top: 1rem; }
 .home-faq h2 { margin-bottom: 1.75rem; }
 .home-faq-lista { display: grid; gap: 0.85rem; }
 .home-faq-item {
-  border: 1px solid #dce2dd;
+  border: 1px solid var(--home-borde);
   border-radius: 0.5rem;
   background: #fff;
   overflow: clip;
@@ -43,9 +43,9 @@
   line-height: 1.4;
 }
 .home-faq-item summary::-webkit-details-marker { display: none; }
-.home-faq-item summary:hover { background: #f7f8f3; }
-.home-faq-item summary:focus-visible { outline: 3px solid #176575; outline-offset: -4px; }
-.home-faq-signo { position: relative; flex: none; width: 1.1rem; height: 1.1rem; color: #176575; }
+.home-faq-item summary:hover { background: var(--home-marfil); }
+.home-faq-item summary:focus-visible { outline: 3px solid var(--home-petroleo); outline-offset: -4px; }
+.home-faq-signo { position: relative; flex: none; width: 1.1rem; height: 1.1rem; color: var(--home-petroleo); }
 .home-faq-signo::before,
 .home-faq-signo::after {
   content: "";
@@ -59,19 +59,19 @@
 .home-faq-item > p {
   margin: 0;
   padding: 1rem 1.5rem 1.25rem;
-  border-top: 1px solid #e6eae7;
-  background: #f9faf8;
+  border-top: 1px solid var(--home-borde);
+  background: var(--home-marfil);
   font-size: 1rem;
 }
 
 
 .home-pie { padding: 1.75rem 1.5rem; }
 .home-pie-contenido { max-width: 76rem; margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
-.home-pie-marca { display: flex; align-items: center; gap: 0.9rem; color: #143c2d; text-decoration: none; }
+.home-pie-marca { display: flex; align-items: center; gap: 0.9rem; color: var(--home-bosque); text-decoration: none; }
 .home-pie-marca .marca-fierro { background-color: currentColor; }
 .home-pie-marca > span:last-child { display: grid; gap: 0.2rem; }
 .home-pie-marca strong { font-size: 1.9rem; letter-spacing: 0.02em; }
-.home-pie-marca span span { font-size: 0.8rem; color: #40534b; }
+.home-pie-marca span span { font-size: 0.8rem; color: var(--home-muted); }
 .home-pie nav { display: flex; align-items: center; gap: 1.75rem; }
 .home-pie nav a,
 .home-pie nav button {
@@ -81,15 +81,15 @@
   padding: 0.25rem 0;
   border: 0;
   background: transparent;
-  color: #40534b;
+  color: var(--home-muted);
   text-decoration: none;
   font: inherit;
   font-size: 0.85rem;
 }
 .home-pie nav a:hover,
-.home-pie nav button:hover { color: #176575; text-decoration: underline; }
+.home-pie nav button:hover { color: var(--home-petroleo); text-decoration: underline; }
 .home-pie a:focus-visible,
-.home-pie button:focus-visible { outline: 3px solid #176575; outline-offset: 4px; }
+.home-pie button:focus-visible { outline: 3px solid var(--home-petroleo); outline-offset: 4px; }
 
 @media (max-width: 800px) {
   .home-encabezado .home-navegacion { display: none; }

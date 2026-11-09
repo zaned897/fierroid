@@ -20,8 +20,10 @@ Photorealistic editorial photograph, wide 16:9, 2400x1350. A uniform group of he
 
 ## mqb-equipo-ia.webp — Tu equipo te avisa
 
+- **Reemplazo:** 2026-10-30, generado con `image_gen`; un intento, revisado sin texto ni anomalías visibles en manos, anatomía o cercas. Original PNG 1672×941, reescalado a WebP 1920×1080, calidad 80, con Pillow LANCZOS.
+
 ```text
-Photorealistic editorial photograph, wide 16:9, 2400x1350. Early evening at a modest Mexican cattle ranch: an older rancher in their sixties, weathered face, straw hat, denim work shirt, standing calmly beside a weathered steel cattle chute and looking at a tablet held in both hands, a small plain gray weatherproof enclosure on a post next to the chute. Natural, unposed, warm low light; a few cattle in soft focus behind. Person and chute in the right half; left 40 percent is quiet, darker field and sky so white text can sit over it. Tablet screen glows softly but is turned away and not readable. No brand, logos, text, numbers or futuristic electronics.
+Photorealistic documentary photograph, wide 16:9. A Mexican rancher seen FROM BEHIND, face not visible, wearing a worn palm-straw sombrero, faded denim shirt and leather belt, standing by a traditional dry-stone corral wall and an old mesquite-wood gate in the semi-arid highlands of Zacatecas, Mexico: pale ochre soil, huizache and mesquite shrubs, nopal cactus, a distant blue sierra and wide sky at late golden hour. A small herd of criollo and Charolais-cross cattle grazes beyond. On a wooden post of the corral a small plain gray weatherproof electronics box with a short antenna, and the rancher holds a phone at chest height with the screen turned away and not readable. Mood: traditional cattle ranching working together with modern technology, quiet, sober, honest, not staged. Subject in the right half; left 40 percent is calm darker land and sky so white text can sit over it. Natural colors, no oversaturation. No text, logos, numbers, readable screens, futuristic or glowing devices.
 ```
 
 ## mqb-comprador-ia.webp — Lista para el comprador

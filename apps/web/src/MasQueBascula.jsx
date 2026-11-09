@@ -126,8 +126,6 @@ export default function MasQueBascula() {
           if (Math.abs(dx) > DESLIZAR_PX) ir(actual + (dx < 0 ? 1 : -1));
         }}
       >
-        <small className="mqb-marca">Ilustración generada con IA</small>
-
         {IDEAS.map((idea, k) => {
           const img = imagenes[idea.foto];
           const estado = k === actual ? " activa" : k === previa ? " sale" : "";
