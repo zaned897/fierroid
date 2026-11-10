@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "./auth.js";
+import { clearDraft, draftKey, loadDraft, saveDraft } from "./bitacoraDraft.js";
 import { capturedLabel } from "./readings.js";
 
 const categories = { observacion: "Observación", alimentacion: "Alimentación", manejo: "Manejo", salud: "Salud" };
@@ -9,16 +10,29 @@ function localNow() {
 }
 
 export default function BitacoraAnimal({ animal, session, onExpired }) {
+  // Borrador local por usuario+org+arete: sobrevive a recargar o cerrar la ficha
+  // y conserva el UUID del envío para que un reintento no duplique la nota.
+  const draftId = draftKey(session?.user, animal);
+  const [inicial] = useState(() => loadDraft(draftId));
+  const [sinBorrador, setSinBorrador] = useState(!inicial.disponible);
   const [entries, setEntries] = useState([]);
   const [cursor, setCursor] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [saved, setSaved] = useState(false);
-  const [body, setBody] = useState("");
-  const [category, setCategory] = useState("observacion");
-  const [occurred, setOccurred] = useState(localNow);
+  const [body, setBody] = useState(inicial.draft?.body ?? "");
+  const [category, setCategory] = useState(inicial.draft?.category ?? "observacion");
+  const [occurred, setOccurred] = useState(inicial.draft?.occurred ?? localNow);
   const request = useRef(null);
-  const pending = useRef(null);
+  const pending = useRef(inicial.draft?.entry_id
+    ? { fingerprint: inicial.draft.fingerprint, entry_id: inicial.draft.entry_id }
+    : null);
+
+  useEffect(() => {
+    if (!body.trim() && !pending.current) { clearDraft(draftId); return; }
+    const ok = saveDraft(draftId, { body, category, occurred, ...(pending.current || {}) });
+    if (!ok) setSinBorrador(true);
+  }, [draftId, body, category, occurred]);
   const path = `/v1/animals/${encodeURIComponent(animal.tag_id)}/journal?org=${encodeURIComponent(animal.org)}`;
 
   const load = useCallback(async (next = null) => {
@@ -59,6 +73,9 @@ export default function BitacoraAnimal({ animal, session, onExpired }) {
     if (pending.current?.fingerprint !== fingerprint) {
       pending.current = { fingerprint, entry_id: crypto.randomUUID() };
     }
+    // El UUID queda guardado antes de enviar: si se pierde el ACK y se recarga,
+    // el reintento usa el mismo.
+    if (!saveDraft(draftId, { body, category, occurred, ...pending.current })) setSinBorrador(true);
     const controller = new AbortController();
     request.current = controller;
     const timer = setTimeout(() => controller.abort(), 15000);
@@ -70,6 +87,7 @@ export default function BitacoraAnimal({ animal, session, onExpired }) {
       });
       if (request.current !== controller) return;
       pending.current = null;
+      clearDraft(draftId);
       setBody(""); setOccurred(localNow()); setSaved(true);
       request.current = null;
       await load();
@@ -85,13 +103,14 @@ export default function BitacoraAnimal({ animal, session, onExpired }) {
 
   return <section className="animal-journal" aria-label="Bitácora del animal">
     <div className="row"><h3>Bitácora</h3><button type="button" disabled={busy} onClick={() => load()}>Actualizar bitácora</button></div>
-    <p className="muted">Registra eventos del animal. Las anotaciones se conservan; agrega otra para aclarar o corregir. Guarda antes de cerrar la ficha.</p>
+    <p className="muted">Registra eventos del animal. Las anotaciones se conservan; agrega otra para aclarar o corregir. Si cierras la ficha sin guardar, el texto te espera aquí en este navegador.</p>
     <form onSubmit={save}>
       <label className="campo">Fecha del evento (hora local)<input type="datetime-local" value={occurred} required disabled={busy} onChange={(e) => { setOccurred(e.target.value); setSaved(false); }} /></label>
       <label className="campo">Categoría<select value={category} disabled={busy} onChange={(e) => { setCategory(e.target.value); setSaved(false); }}>{Object.entries(categories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label className="campo">Anotación<textarea rows="3" maxLength={4000} required value={body} disabled={busy} onChange={(e) => { setBody(e.target.value); setSaved(false); }} /></label>
       <button type="submit" disabled={busy || !body.trim()}>Guardar anotación</button>
     </form>
+    {sinBorrador && <p className="muted">Este navegador no permite guardar borradores: la anotación solo se conserva mientras la ficha esté abierta.</p>}
     {busy && <p role="status">Procesando bitácora…</p>}
     {saved && <p role="status">Anotación guardada.</p>}
     {error && <p className="error" role="alert">{error}</p>}
