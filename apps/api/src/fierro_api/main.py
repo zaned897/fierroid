@@ -828,9 +828,14 @@ def client_ip(request: Request) -> str:
 
 @app.post("/v1/waitlist", status_code=202)
 def join_waitlist(body: WaitlistIn, request: Request) -> dict[str, bool]:
-    # El HMAC usa el secreto del borde si existe; si no, una sal fija basta
-    # para no guardar la IP en claro.
-    cliente = waitlist.client_key(client_ip(request), settings.edge_secret or "fierro-waitlist")
+    # Sin secreto del borde no hay limite por cliente: todo lo que llega por
+    # Vercel compartiria la IP de salida de Vercel y 5 intentos por hora
+    # bloquearian a todos. Queda el cupo global hasta configurar el secreto.
+    cliente = (
+        waitlist.client_key(client_ip(request), settings.edge_secret)
+        if settings.edge_secret
+        else None
+    )
     try:
         waitlist.register(_require_postgres(), name=body.name, email=body.email,
                           stations=body.stations, client=cliente)
