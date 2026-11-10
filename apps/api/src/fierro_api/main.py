@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import base64
+import hmac
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile, status
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -802,11 +803,39 @@ def preguntar(
         ) from exc
 
 
+def client_ip(request: Request) -> str:
+    """IP del cliente para el limite de la lista de espera (#74).
+
+    La URL de Cloud Run es publica, asi que cualquier encabezado que mande el
+    cliente se puede inventar. Dos fuentes confiables:
+
+    1. Si llega por Vercel, el middleware (`apps/web/middleware.js`) pone la IP
+       real en `x-fierro-client-ip` junto con `x-fierro-edge` = secreto
+       compartido. Sin el secreto correcto ese encabezado se ignora.
+    2. Si no, la ultima entrada de `X-Forwarded-For`, que la agrega el frente
+       de Google con la IP que se conecto: el cliente no la controla.
+    """
+    secreto = settings.edge_secret
+    if secreto and hmac.compare_digest(request.headers.get("x-fierro-edge", ""), secreto):
+        ip = request.headers.get("x-fierro-client-ip", "").strip()
+        if ip:
+            return ip
+    reenviado = [x.strip() for x in request.headers.get("x-forwarded-for", "").split(",")]
+    if reenviado and reenviado[-1]:
+        return reenviado[-1]
+    return request.client.host if request.client else "desconocido"
+
+
 @app.post("/v1/waitlist", status_code=202)
-def join_waitlist(body: WaitlistIn) -> dict[str, bool]:
+def join_waitlist(body: WaitlistIn, request: Request) -> dict[str, bool]:
+    # El HMAC usa el secreto del borde si existe; si no, una sal fija basta
+    # para no guardar la IP en claro.
+    cliente = waitlist.client_key(client_ip(request), settings.edge_secret or "fierro-waitlist")
     try:
         waitlist.register(_require_postgres(), name=body.name, email=body.email,
-                          stations=body.stations)
+                          stations=body.stations, client=cliente)
+    except waitlist.TooManyFromClient as exc:
+        raise HTTPException(429, "Inténtalo más tarde.", headers={"Retry-After": "3600"}) from exc
     except waitlist.WaitlistFull as exc:
         raise HTTPException(429, "Inténtalo más tarde.", headers={"Retry-After": "3600"}) from exc
     return {"accepted": True}
