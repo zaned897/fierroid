@@ -29,6 +29,7 @@ cliente sale de dos fuentes que el cliente no controla:
    `fierro-api-production` (ideal en Secret Manager, como la de Anthropic).
 4. Correr la migración `010` con `fierro-migrate-<entorno>`.
 
-Sin el secreto todo funciona, pero los usuarios que llegan por Vercel
-comparten cupo por IP de salida de Vercel: configurar antes de anunciar el
-formulario.
+Sin el secreto **no hay límite por cliente** (solo el global de 100/h): si lo
+hubiera, todos los que llegan por Vercel compartirían la IP de salida de Vercel
+y se bloquearían entre sí. El límite por cliente se activa solo al configurar
+el secreto en los dos lados.

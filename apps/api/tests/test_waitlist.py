@@ -196,3 +196,15 @@ def test_la_paginacion_no_repite_ni_omite(api):
         emails |= {e["email"] for e in client.get(
             f"/v1/admin/waitlist?limit=100&before={vistos[i] + 1}").json()["entries"]}
     assert set(correos) <= emails
+
+
+def test_sin_secreto_no_hay_limite_por_cliente(api, monkeypatch):
+    """Sin secreto, todo Vercel compartiria una IP: el limite bloquearia a todos."""
+    from fierro_api import main
+    from fierro_api.waitlist import CLIENT_LIMIT
+
+    client, correos = api
+    monkeypatch.setattr(main, "settings", replace(main.settings, edge_secret=""))
+    vercel = {"x-forwarded-for": "76.76.21.1"}
+    for _ in range(CLIENT_LIMIT + 2):
+        assert _alta(client, correos, vercel).status_code == 202
