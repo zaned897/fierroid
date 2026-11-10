@@ -7,6 +7,8 @@
  * siguiente request, cosa que con un JWT era imposible.
  */
 
+import { clearAllDrafts } from "./bitacoraDraft.js";
+
 const STORAGE_KEY = "fierro.session";
 
 export function loadSession() {
@@ -95,4 +97,5 @@ export async function logout(session) {
     }
   }
   clearSession();
+  clearAllDrafts();
 }
