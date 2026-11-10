@@ -17,10 +17,10 @@ function Retrato({ animal, session, size = 56, recarga }) {
   const [url, setUrl] = useState(null);
 
   useEffect(() => {
-    if (!animal.has_photo) {
-      setUrl(null);
-      return undefined;
-    }
+    // Al cambiar de ficha u organizacion, nunca mostrar la foto anterior
+    // mientras llega la nueva.
+    setUrl(null);
+    if (!animal.has_photo) return undefined;
     let vivo = true;
     let actual = null;
 

@@ -264,3 +264,69 @@ def test_el_superusuario_debe_indicar_organizacion_para_escribir(client, mundo):
 def test_las_fichas_exigen_credencial(client):
     assert client.get("/v1/animals").status_code == 401
     assert client.get(f"/v1/animals/{TAG_A}/photo").status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# #73: mismo arete en dos organizaciones, ficha y foto exactas
+# ---------------------------------------------------------------------------
+
+TAG_C = f"48433300000{SUFIJO[:4]}"[:15]
+
+
+@pytest.fixture
+def arete_compartido(client, mundo):
+    """Mismo arete en las dos organizaciones, con alias y fotos distintas."""
+    import psycopg
+
+    a = entrar(client, mundo["a"])
+    b = entrar(client, mundo["b"])
+    client.put(f"/v1/animals/{TAG_C}", json={"alias": "Encinos"}, headers=a)
+    client.put(f"/v1/animals/{TAG_C}", json={"alias": "Valle"}, headers=b)
+    ruta = f"/v1/animals/{TAG_C}/photo"
+    client.post(ruta, files={"file": ("a.png", PNG, "image/png")}, headers=a)
+    client.post(ruta, files={"file": ("b.jpg", JPEG, "image/jpeg")}, headers=b)
+    yield a, b
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM animals WHERE tag_id = %s", (TAG_C,))
+        conn.commit()
+
+
+@pg
+def test_superusuario_obtiene_la_ficha_y_foto_de_la_org_que_pide(client, mundo, arete_compartido):
+    su = entrar(client, mundo["su"])
+
+    for org, alias, foto in (("los-encinos", "Encinos", PNG), ("valle-verde", "Valle", JPEG)):
+        ficha = client.get(f"/v1/animals/{TAG_C}?org={org}", headers=su)
+        assert ficha.status_code == 200
+        assert ficha.json()["alias"] == alias
+        assert ficha.json()["org"] == org
+        imagen = client.get(f"/v1/animals/{TAG_C}/photo?org={org}", headers=su)
+        assert imagen.status_code == 200
+        assert imagen.content == foto
+
+
+@pg
+def test_superusuario_sin_org_recibe_error_claro(client, mundo, arete_compartido):
+    su = entrar(client, mundo["su"])
+
+    for ruta in (f"/v1/animals/{TAG_C}", f"/v1/animals/{TAG_C}/photo"):
+        resp = client.get(ruta, headers=su)
+        assert resp.status_code == 400
+        assert "org=" in resp.json()["detail"]
+
+
+@pg
+def test_usuario_normal_no_cruza_de_org_manipulando_el_query(client, mundo, arete_compartido):
+    a, _ = arete_compartido
+
+    # Pide la de valle-verde: recibe siempre la suya.
+    ficha = client.get(f"/v1/animals/{TAG_C}?org=valle-verde", headers=a)
+    assert ficha.json()["alias"] == "Encinos"
+    assert client.get(f"/v1/animals/{TAG_C}/photo?org=valle-verde", headers=a).content == PNG
+
+    # Escribir y borrar con org ajena tampoco toca la otra organizacion.
+    client.put(f"/v1/animals/{TAG_C}?org=valle-verde", json={"alias": "Hackeado"}, headers=a)
+    client.delete(f"/v1/animals/{TAG_C}/photo?org=valle-verde", headers=a)
+    su = entrar(client, mundo["su"])
+    assert client.get(f"/v1/animals/{TAG_C}?org=valle-verde", headers=su).json()["alias"] == "Valle"
+    assert client.get(f"/v1/animals/{TAG_C}/photo?org=valle-verde", headers=su).content == JPEG
