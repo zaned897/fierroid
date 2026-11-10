@@ -163,6 +163,10 @@ por raza y sexo, y redondea a la división real del indicador (0.5 kg, OIML R76)
 Es **idempotente**: la misma `--seed` produce los mismos `event_id`. Correrlo dos
 veces es la prueba más barata de que el ingest no duplica.
 
+El asistente "Pregúntale a tu hato" descarta estos pesajes (`source="synthetic"`).
+Para enseñarlo en vivo, `scripts/seed_demo_hato.py` siembra un rancho demo cuyos
+pesajes sí cuentan: ver [`docs/demo-asistente.md`](docs/demo-asistente.md).
+
 ### Multi-cliente (organizaciones y ranchos)
 
 ```
