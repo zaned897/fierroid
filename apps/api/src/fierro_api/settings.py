@@ -30,6 +30,9 @@ class Settings:
     # Asistente (#110). Sin clave, el endpoint responde 503: nunca inventa.
     anthropic_api_key: str = field(default="", repr=False)
     asistente_limite_diario: int = 200
+    # Secreto compartido con el middleware de Vercel (#74). Con el, la API
+    # confia en la IP que Vercel firma; sin el, usa la IP que ve Cloud Run.
+    edge_secret: str = field(default="", repr=False)
 
     @property
     def is_deployed(self) -> bool:
@@ -54,6 +57,7 @@ class Settings:
             api_key_ttl_days=int(os.getenv("FIERRO_API_KEY_TTL_DAYS", "90")),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", "").strip(),
             asistente_limite_diario=int(os.getenv("FIERRO_ASISTENTE_LIMITE_DIARIO", "200")),
+            edge_secret=os.getenv("FIERRO_EDGE_SECRET", "").strip(),
         )
 
     def validate(self) -> None:

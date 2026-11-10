@@ -15,10 +15,13 @@ export default function ListaEsperaAdmin({ session, onExpired }) {
     const timer = setTimeout(() => controller.abort(), 15000);
     try {
       const data = await apiFetch(`/v1/admin/waitlist${next ? `?before=${next}` : ''}`, { session, signal: controller.signal });
-      setEntries((old) => next ? [...old, ...data.entries] : data.entries);
+      // Por id: un reintento de "Ver anteriores" nunca duplica filas.
+      setEntries((old) => [...new Map((next ? [...old, ...data.entries] : data.entries).map((e) => [e.id, e])).values()]);
       setCursor(data.next_cursor); setLoaded(true);
     } catch (err) {
       if (err.unauthorized) onExpired();
+      else if (err.status === 403) setError('Solo un superusuario puede ver la lista de espera.');
+      else if (err.name === 'AbortError') setError('La consulta tardó demasiado. Vuelve a intentar.');
       else setError('No se pudo cargar la lista de espera.');
     } finally { clearTimeout(timer); request.current = false; setBusy(false); }
   }
