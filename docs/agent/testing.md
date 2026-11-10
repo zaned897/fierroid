@@ -12,7 +12,7 @@ ruff check apps scripts
 pytest apps/device-agent apps/api -q
 
 # Web (si hubo cambios en apps/web)
-cd apps/web && pnpm lint && pnpm build
+cd apps/web && pnpm lint && pnpm test && pnpm build
 ```
 
 Instalar deps: `./scripts/install-deps.sh`
@@ -103,7 +103,7 @@ No agregar tests triviales que solo assertan getters obvios.
 | Job | Que valida |
 |-----|------------|
 | `python` | `ruff check apps scripts` + `pytest` con servicio Postgres real |
-| `web` | `pnpm lint` + `pnpm build` con lockfile congelado |
+| `web` | `pnpm lint` + `pnpm test` (`node --test`, `tests/*.test.mjs`) + `pnpm build` con lockfile congelado |
 | `compose` | Build de imagenes, health de la API, siembra sintetica y persistencia |
 
 `FIERRO_MOCK_HW=1` esta fijado a nivel workflow: ningun job toca hardware.

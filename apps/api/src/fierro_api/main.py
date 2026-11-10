@@ -475,9 +475,13 @@ def get_animal_readings(
 
 
 @app.get("/v1/animals/{tag_id}")
-def get_animal(tag_id: str, user: CurrentUser) -> dict[str, Any]:
+def get_animal(
+    tag_id: str, user: CurrentUser, org: str | None = Query(default=None)
+) -> dict[str, Any]:
+    # El mismo arete puede existir en dos organizaciones: sin org explicita el
+    # superusuario recibiria la primera que aparezca, no la que selecciono.
     animal = animals_mod.get_animal(
-        _require_postgres(), tag_id=tag_id, org_slug=_scope(user)
+        _require_postgres(), tag_id=tag_id, org_slug=_write_scope(user, org)
     )
     if animal is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Animal no encontrado")
@@ -530,9 +534,11 @@ async def post_animal_photo(
 
 
 @app.get("/v1/animals/{tag_id}/photo")
-def get_animal_photo(tag_id: str, user: CurrentUser) -> Response:
+def get_animal_photo(
+    tag_id: str, user: CurrentUser, org: str | None = Query(default=None)
+) -> Response:
     photo = animals_mod.load_photo(
-        _require_postgres(), tag_id=tag_id, org_slug=_scope(user)
+        _require_postgres(), tag_id=tag_id, org_slug=_write_scope(user, org)
     )
     if photo is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sin foto")

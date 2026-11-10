@@ -93,6 +93,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Tests de logica
+        run: pnpm test
+
       - name: Build
         run: pnpm build
 

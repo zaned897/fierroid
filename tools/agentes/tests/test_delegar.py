@@ -56,3 +56,21 @@ def test_limpiar_respeta_worktrees_ajenos(repo: Path, monkeypatch) -> None:
     ramas = _git(repo, "branch", "--format=%(refname:short)").splitlines()
     assert rama_propia not in ramas
     assert {"claude/favicon", "mi-rama", "main"} <= set(ramas)
+
+
+def test_limpiar_no_borra_la_rama_delegar_en_uso(repo: Path, monkeypatch) -> None:
+    delegar = _cargar()
+    worktrees = repo / ".claude" / "worktrees"
+    monkeypatch.setattr(delegar, "RAIZ", repo)
+    monkeypatch.setattr(delegar, "WORKTREES", worktrees)
+    monkeypatch.setattr(delegar, "git", lambda *a, cwd=repo: _git(cwd, *a))
+
+    # Alguien siguio trabajando sobre una rama delegar/* en el checkout principal.
+    _git(repo, "checkout", "-q", "-b", "delegar/agy-en-uso")
+    _, rama_vieja = delegar.crear_worktree("codex", "otra tarea", "HEAD")
+
+    assert delegar.limpiar() == 0
+
+    ramas = _git(repo, "branch", "--format=%(refname:short)").splitlines()
+    assert "delegar/agy-en-uso" in ramas
+    assert rama_vieja not in ramas
