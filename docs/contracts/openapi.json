@@ -582,6 +582,22 @@
               "title": "Tag Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
           }
         ],
         "responses": {
@@ -917,6 +933,22 @@
             "schema": {
               "title": "Tag Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
             }
           }
         ],
