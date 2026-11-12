@@ -20,6 +20,8 @@ un relevo escrito. No intentar terminar toda la pantalla en una ejecución.
 3. Consultar el grafo para encontrar componentes y dependencias existentes.
 4. Revisar `git status` y preservar archivos ajenos.
 5. Elegir una unidad con máximo tres resultados verificables.
+6. Para HTML/CSS/JS de cliente, consultar `modern-web-guidance` antes de
+   escribir (ver `docs/agent/modern-web-guidance.md`).
 
 Para el home, `docs/frontend-home.md` manda sobre los mockups. Estos solo
 orientan composición y jerarquía; no autorizan controles, textos ni funciones.

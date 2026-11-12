@@ -31,6 +31,7 @@ En `.claude/skills/` (espejo de `.cursor/skills/`). Cargar la que aplique **ante
 | `fierro-hardware-boundary` | Drivers serial, RFID/báscula, PCB, gabinete, BOM |
 | `fierro-unblock` | Desarrollo estancado |
 | `fierro-delegar` | Pasar una tarea acotada a Codex o Antigravity (`tools/agentes/delegar.py`) |
+| `modern-web-guidance` (plugin) | **Antes de escribir HTML/CSS/JS de cliente** en `apps/web`. Ver [`docs/agent/modern-web-guidance.md`](docs/agent/modern-web-guidance.md) |
 | `fierro-sprints` | Planear, partir trabajo, abrir o cerrar tickets |
 | `fierro-dev-workflow` | Flujo general |
 | `fierro-pull-requests` | Ramas y PRs |
