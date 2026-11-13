@@ -16,3 +16,25 @@
   stroke-width: 1.5;
   opacity: 0;
 }
+
+/* El trazado usa CSS y el revelado compartido; sin JS queda completo. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes grafica-trazar {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  .secciones.con-revelado .dato.visible .grafica-linea {
+    stroke-dasharray: 1;
+    animation: grafica-trazar 1500ms linear both;
+  }
+
+  @supports (animation-timeline: view()) {
+    .secciones.con-revelado .dato.visible .grafica-linea {
+      stroke-dasharray: 1;
+      animation: grafica-trazar 1s linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 40%;
+    }
+  }
+}

@@ -6,9 +6,9 @@ import "./vision-premium.css";
  * lo que aún no se valida no se presenta como resultado (#77, #78).
  */
 const CAPACIDADES = [
-  { texto: "Separar a cada animal en la foto, aunque estén amontonados", estado: "En prueba", probado: true },
-  { texto: "Estimar medidas del cuerpo", estado: "Por validar", probado: false },
-  { texto: "Seguir a cada animal entre una pasada y la siguiente", estado: "Por validar", probado: false },
+  { texto: "Separar animales", estado: "En prueba", probado: true },
+  { texto: "Estimar medidas", estado: "Por validar", probado: false },
+  { texto: "Seguir animales entre pasadas", estado: "Por validar", probado: false },
 ];
 
 const DETECCIONES = [
@@ -46,12 +46,11 @@ export default function VisionPremium() {
           <p className="vision-eyebrow">
             FIERRO VISION <span>EN DESARROLLO</span>
           </p>
-          <h2 id="vision-heading">Una cámara en la manga que reconoce a cada animal.</h2>
+          <h2 id="vision-heading">Cada animal, por separado.</h2>
         </div>
         <div className="vision-pitch">
           <p>
-            Estamos probando visión por computadora para separar a cada animal en
-            la foto aunque estén amontonados. Se suma a la báscula; no la reemplaza.
+            En prueba. Complementa la báscula; no la reemplaza.
           </p>
         </div>
       </div>
@@ -62,6 +61,7 @@ export default function VisionPremium() {
             viewBox="0 0 1200 874"
             role="img"
             aria-label="Foto de prueba con cada animal y la persona marcados por separado"
+            aria-describedby="vision-descripcion"
           >
             <image href={photo.src} width="1200" height="874" />
             <rect width="1200" height="874" fill="#041b16" opacity=".18" />
@@ -211,6 +211,11 @@ export default function VisionPremium() {
                 </g>
               </g>
           </svg>
+          <p id="vision-descripcion" className="home-solo-lectores">
+            La foto de prueba distingue una vaca blanca, una vaca gris, un caballo
+            y una persona. Separar animales está en prueba; estimar medidas y
+            seguir animales entre pasadas están por validar.
+          </p>
           <figcaption>
             <span>Ejemplo sobre una foto de prueba</span>
             <a href={photo.fuente} target="_blank" rel="noreferrer">
