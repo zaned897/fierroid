@@ -32,6 +32,7 @@ propuestas, riesgos y primera unidad de trabajo.
 | [`jira.md`](jira.md) | Cuándo abrir tickets, plantillas, duplicados, Atlassian MCP |
 | [`testing.md`](testing.md) | Lint, tests, evidencia, mock hardware |
 | [`delegar.md`](delegar.md) | Qué tareas pasar a Codex o Antigravity y cómo revisar lo que devuelven |
+| [`modern-web-guidance.md`](modern-web-guidance.md) | Skill externa de Chrome/MDN con prácticas web modernas: instalación por agente y cuándo usarla |
 
 ## Skills en el repo
 
