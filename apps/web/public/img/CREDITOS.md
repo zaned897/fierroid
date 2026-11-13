@@ -1,5 +1,21 @@
 # Créditos de imágenes
 
+## Muestras campo v3 — primera entrega (2026-11-12)
+
+Imágenes ilustrativas generadas con la herramienta integrada OpenAI `image_gen`.
+No son fotografías de clientes ni instalaciones reales. Solo muestras para
+revisión; no están integradas en el home ni en `src/img/index.js`.
+Prompts exactos: [campo-v3-prompts.md](../../../../docs/design/home/campo-v3-prompts.md).
+PNG original 1672 × 941 convertido con Pillow a WebP sin reescalar, `method=6`.
+
+| Archivo | Origen / fecha | Dimensiones | Calidad WebP | Bytes | Propuesta |
+|---|---|---|---|---|---|
+| `muestras/home-paisaje-ia-v3.webp` | OpenAI image_gen / 2026-11-12 | 1672 × 941 | 55 | 191460 | Portada |
+| `muestras/mqb-equipo-ia-v3.webp` | OpenAI image_gen / 2026-11-12 | 1672 × 941 | 45 | 190866 | Tu equipo te avisa |
+| `muestras/mqb-comprador-ia-v3.webp` | OpenAI image_gen / 2026-11-12 | 1672 × 941 | 45 | 193380 | Lista para el comprador |
+
+Al integrarlas, conservar el pie «Imagen ilustrativa generada con IA».
+
 ## Carrusel "Más que una báscula" (2026-10-27)
 
 Cuatro ilustraciones generadas con Codex CLI (image_gen) para el carrusel de la
