@@ -40,15 +40,8 @@ export default function PreguntaleHato() {
             Pregúntale a tu hato <span>Premium · Próximamente</span>
           </p>
           <h2 id="preguntale-hato-titulo">
-            Pregúntale a Fierro como le preguntarías a tu vaquero.
+            De la pregunta al dato.
           </h2>
-        </div>
-        <div className="preguntale-hato-pitch">
-          <p>
-            Escribe tu duda y recibe la respuesta con los números exactos de tus
-            pesajes, diciendo siempre qué animales entraron en la cuenta y cuáles
-            quedaron fuera.
-          </p>
         </div>
       </div>
 
@@ -62,22 +55,25 @@ export default function PreguntaleHato() {
                   <p>{item.pregunta}</p>
                 </div>
                 <div className="preguntale-hato-respuesta">
-                  <div className="preguntale-hato-chips">
-                    {item.chips.map((chip) => (
-                      <span key={chip} className="preguntale-hato-chip">
-                        {chip}
-                      </span>
-                    ))}
-                  </div>
                   <p className="preguntale-hato-intro">{item.introduccion}</p>
-                  {item.puntos.length > 0 && (
-                    <ul className="preguntale-hato-lista">
-                      {item.puntos.map((punto) => (
-                        <li key={punto}>{punto}</li>
+                  <details className="home-faq-item">
+                    <summary>Ver cálculo<span className="home-faq-signo" aria-hidden="true" /></summary>
+                    <div className="preguntale-hato-chips">
+                      {item.chips.map((chip) => (
+                        <span key={chip} className="preguntale-hato-chip">
+                          {chip}
+                        </span>
                       ))}
-                    </ul>
-                  )}
-                  <p className="preguntale-hato-nota">{item.nota}</p>
+                    </div>
+                    {item.puntos.length > 0 && (
+                      <ul className="preguntale-hato-lista">
+                        {item.puntos.map((punto) => (
+                          <li key={punto}>{punto}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="preguntale-hato-nota">{item.nota}</p>
+                  </details>
                 </div>
               </li>
             ))}
@@ -85,20 +81,23 @@ export default function PreguntaleHato() {
         </div>
 
         <aside className="preguntale-hato-lateral">
-          <ul className="preguntale-hato-reglas">
-            <li>
-              <strong>Cuentas claras</strong>
-              <span>Cada cifra sale de los pesajes registrados en tu rancho, sin estimaciones.</span>
-            </li>
-            <li>
-              <strong>Aretes a un toque</strong>
-              <span>Toca cualquier arete en la respuesta para abrir su ficha e historial.</span>
-            </li>
-            <li>
-              <strong>Sin ocultar datos dudosos</strong>
-              <span>Las lecturas inestables o atípicas se avisan aparte para no inflar el total.</span>
-            </li>
-          </ul>
+          <details className="home-faq-item">
+            <summary>Cómo responderá<span className="home-faq-signo" aria-hidden="true" /></summary>
+            <ul className="preguntale-hato-reglas">
+              <li>
+                <strong>Cuentas claras</strong>
+                <span>Cada cifra sale de los pesajes registrados en tu rancho, sin estimaciones.</span>
+              </li>
+              <li>
+                <strong>Aretes a un toque</strong>
+                <span>Toca cualquier arete en la respuesta para abrir su ficha e historial.</span>
+              </li>
+              <li>
+                <strong>Sin ocultar datos dudosos</strong>
+                <span>Las lecturas inestables o atípicas se avisan aparte para no inflar el total.</span>
+              </li>
+            </ul>
+          </details>
 
           <a href="#lista-espera" className="vision-btn-reserve preguntale-hato-cta">
             Avísame cuando esté listo <span aria-hidden="true">→</span>

@@ -14,21 +14,21 @@ import "./referencias.css";
 const DATOS = [
   {
     icono: "alimento",
-    titulo: "El alimento es el mayor costo",
+    titulo: "Alimento",
     texto:
       "Extensión de Penn State recuerda que el alimento suele ser el gasto más alto de un productor de carne. Saber cuánto pesa cada animal ayuda a no dar de más ni de menos.",
     fuente: "penn-state",
   },
   {
     icono: "dosis",
-    titulo: "La dosis depende del peso",
+    titulo: "Dosis",
     texto:
       "La misma guía señala que, cuando un animal enferma, la dosis correcta del medicamento depende de conocer su peso real.",
     fuente: "penn-state",
   },
   {
     icono: "camara",
-    titulo: "Las cámaras ya estiman el peso",
+    titulo: "Visión: investigación",
     texto:
       "En un estudio con ganado de carne en Brasil, un sistema de visión estimó el peso con un error típico de 7.7 a 11.4 kg según la etapa. La báscula sigue siendo la referencia.",
     fuente: "cominotte-2020",
@@ -110,21 +110,20 @@ export default function Referencias() {
     <section className="bloque home-referencias" id="por-que-pesar" aria-labelledby="por-que-pesar-titulo" data-revelar>
       <div className="home-referencias-contenido">
         <h2 id="por-que-pesar-titulo">Por qué pesar seguido</h2>
-        <p className="home-referencias-intro">
-          Lo que dicen la investigación y la extensión ganadera sobre conocer el peso de cada animal.
-        </p>
+        <p className="home-referencias-intro">Investigación y extensión ganadera.</p>
 
         <ul className="home-datos">
           {DATOS.map((dato) => (
             <li className="home-dato" key={dato.titulo}>
               <span className="home-dato-icono"><IconoDato tipo={dato.icono} /></span>
               <h3>{dato.titulo}</h3>
-              <p>
-                {dato.texto}{" "}
+              <details className="home-faq-item">
+                <summary>Leer hallazgo<span className="home-faq-signo" aria-hidden="true" /></summary>
+                <p>{dato.texto}{" "}
                 <a className="home-cita" href={`#lectura-${dato.fuente}`} onClick={abrirFuentes} aria-label={`Fuente ${numeroDe[dato.fuente]}`}>
                   [{numeroDe[dato.fuente]}]
-                </a>
-              </p>
+                </a></p>
+              </details>
             </li>
           ))}
         </ul>
