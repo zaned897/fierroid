@@ -7,6 +7,7 @@ __pycache__/
 apps/web/node_modules/
 apps/web/dist/
 apps/web/.vite/
+apps/web/test-results/
 *.db
 .DS_Store
 .env
