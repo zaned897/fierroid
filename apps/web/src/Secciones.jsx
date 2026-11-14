@@ -2,12 +2,14 @@ import { useEffect, useRef } from "react";
 
 import Beneficios from "./Beneficios.jsx";
 import Diagrama from "./Diagrama.jsx";
+import Foto from "./Foto.jsx";
 import PreguntasAcceso from "./PreguntasAcceso.jsx";
 import Referencias from "./Referencias.jsx";
 import GraficaPeso from "./GraficaPeso.jsx";
 import VisionPremium from "./VisionPremium.jsx";
 import MasQueBascula from "./MasQueBascula.jsx";
 import PreguntaleHato from "./PreguntaleHato.jsx";
+import "./home-composicion.css";
 
 /** Si el observador no respondió ni una vez para entonces, se revela todo. */
 const RESCATE_MS = 1500;
@@ -99,8 +101,9 @@ export default function Secciones() {
         aria-labelledby="como-funciona-titulo"
         data-revelar
       >
+        <Foto nombre="banda-campo-ia" className="home-pasos-foto" pie="Imagen ilustrativa generada con IA" />
         <div className="bloque-cabeza">
-          <h2 id="como-funciona-titulo">Del pesaje al historial, en tres pasos</h2>
+          <h2 id="como-funciona-titulo">Del corral al celular</h2>
         </div>
         <Diagrama />
       </section>
@@ -108,18 +111,10 @@ export default function Secciones() {
       <Beneficios />
 
       {/* 3. Dato. La gráfica manda y el texto la acompaña. */}
-      <section className="bloque dato" data-revelar>
+      <section className="bloque dato" aria-labelledby="home-historial-titulo" data-revelar>
         <div className="dato-texto">
-          <h2>El historial de cada animal</h2>
-          <p>
-            Del arete al peso, a lo largo del tiempo. Cuánto ganó entre una
-            pasada y la siguiente, y cuándo dejó de ganar.
-          </p>
-          <p className="dato-apunte">
-            Fíjate en el 27 de agosto: la báscula no se estabilizó y esa lectura
-            queda marcada. Se guarda igual, señalada — un dato dudoso avisado es
-            útil; uno maquillado, no.
-          </p>
+          <h2 id="home-historial-titulo">El peso, a lo largo del tiempo</h2>
+          <p className="home-sr">Las lecturas inestables se guardan y se marcan en el historial.</p>
         </div>
         <GraficaPeso />
       </section>
