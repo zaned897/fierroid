@@ -92,7 +92,6 @@
 .home-pie button:focus-visible { outline: 3px solid var(--home-petroleo); outline-offset: 4px; }
 
 @media (max-width: 800px) {
-  .home-encabezado .home-navegacion { display: none; }
   .home-acceso-contenido { width: calc(100% - 2.5rem); }
   .home-faq { padding-block: 2.5rem; }
   .home-faq h2 { font-size: 1.5rem; margin-bottom: 1.25rem; }
