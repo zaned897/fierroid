@@ -29,6 +29,8 @@ export default function Foto({ nombre, className = "", pie = "" }) {
     <figure className={`foto ${className}`.trim()}>
       <img
         src={img.src}
+        srcSet={img.srcSet}
+        sizes={img.srcSet ? (img.sizes ?? "100vw") : undefined}
         width={img.width}
         height={img.height}
         alt={img.alt}

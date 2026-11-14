@@ -192,6 +192,15 @@
   margin: 0 var(--mqb-lado) var(--mqb-abajo);
 }
 
+.mqb-credito {
+  position: absolute;
+  z-index: 4;
+  inset: auto var(--mqb-lado) 0.2rem auto;
+  color: var(--home-marfil);
+  font-size: 0.68rem;
+  pointer-events: none;
+}
+
 .mqb-pasos { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 
 .mqb-paso {
