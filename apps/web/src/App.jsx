@@ -1,11 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
-import Admin from "./Admin.jsx";
-import Animales from "./Animales.jsx";
-import Asistente from "./Asistente.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
-import Dashboard from "./Dashboard.jsx";
 import {
   clearSession,
   exchangeGoogleToken,
@@ -13,9 +9,9 @@ import {
   logout,
   saveSession,
 } from "./auth.js";
-import Pesajes from "./Pesajes.jsx";
-import Estaciones from "./Estaciones.jsx";
 import Entorno from "./Entorno.jsx";
+
+const PanelAutenticado = lazy(() => import("./PanelAutenticado.jsx"));
 
 /**
  * Rutas minimas, sin router.
@@ -85,18 +81,17 @@ function Contenido() {
     );
   }
 
-  const usuario = session.user || {};
-
   return (
-    <Dashboard user={usuario} vista={vista} onVista={(v) => { setArete(null); setVista(v); }} onSalir={salir}>
-      {vista === "pesajes" && <Pesajes key="pesajes" session={session} onExpired={expirada} onHistorial={() => setVista("historial")} onEstaciones={() => setVista("estaciones")} />}
-      {vista === "historial" && <Pesajes key="historial" session={session} onExpired={expirada} historial onRecientes={() => setVista("pesajes")} />}
-      {vista === "estaciones" && <Estaciones session={session} onExpired={expirada} />}
-      {vista === "animales" && <Animales key={arete || "hato"} session={session} onExpired={expirada} arete={arete} />}
-      {vista === "asistente" && <Asistente session={session} onExpired={expirada} onAbrir={(tag) => { setArete(tag); setVista("animales"); }} />}
-      {vista === "admin" && usuario.is_superuser && (
-        <Admin session={session} onExpired={expirada} />
-      )}
-    </Dashboard>
+    <Suspense fallback={<main className="panel" role="status">Cargando panel…</main>}>
+      <PanelAutenticado
+        session={session}
+        vista={vista}
+        arete={arete}
+        onVista={setVista}
+        onArete={setArete}
+        onSalir={salir}
+        onExpired={expirada}
+      />
+    </Suspense>
   );
 }

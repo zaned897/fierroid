@@ -50,12 +50,6 @@
     }
   }
 
-  @keyframes home-resaltar {
-    from {
-      background-color: rgba(118, 196, 208, 0.35);
-    }
-  }
-
   /* --- Cómo funciona: los pasos se encienden en orden ------------------ */
 
   /* Pasos y conectores solo se animan cuando la sección se revela; antes la
@@ -105,12 +99,6 @@
   .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(4) { animation-delay: 360ms; }
   .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(5) { animation-delay: 480ms; }
   .secciones.con-revelado .visible :is(.home-beneficio, .home-lectura, .home-dato):nth-child(6) { animation-delay: 600ms; }
-
-  /* --- Panel demo: la lectura nueva entra a la tabla ------------------- */
-
-  .home-demo.guardado .home-demo-fila:nth-child(2) {
-    animation: home-resaltar 1400ms ease-out both;
-  }
 
   /* El paisaje de la portada no se anima: a medio píxel por segundo el
      desplazamiento se redondea a saltos sueltos y se lee como un error. */

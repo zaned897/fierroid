@@ -145,7 +145,7 @@ export default function MasQueBascula() {
                 height={img.height}
                 alt=""
                 draggable="false"
-                loading={k === 0 ? "eager" : "lazy"}
+                loading="lazy"
                 decoding="async"
               />
               <div className="mqb-texto">

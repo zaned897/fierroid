@@ -1,5 +1,14 @@
 # Créditos de imágenes
 
+## Portada del home (2026-11-13)
+
+Ilustración generada con OpenAI image_gen para Fierro. La versión horizontal
+se sirve en WebP a 768 o 1536 px. El recorte vertical se sirve en AVIF
+o WebP a 480 o 576 px. Los archivos usan el prefijo `portada-campo-`. Representa un potrero y un hato
+ilustrativos.
+
+Prompt: Fotografía editorial fotorrealista horizontal 3:2 para portada de Fierro, proyecto ganadero del norte de México. Un potrero realista de Chihuahua al final de una tarde clara, serranías bajas de la Sierra Madre al fondo, pasto seco con parches verdes, huizaches dispersos y una cerca rural de madera y alambre. Grupo pequeño de ganado comercial mestizo: un bovino colorado visto de lado, entero, alrededor del 48 % del ancho y 58 % de la altura, con 3 o 4 reses a media distancia. Encuadre amplio a altura de los ojos, sujeto también reconocible al recortar en vertical alrededor del centro, montañas y cielo visibles. Primer plano a la izquierda con pasto y tierra tranquilos, dejando sitio para texto web agregado después. Luz natural suave ligeramente cálida, colores terrosos equilibrados, sombras creíbles, texturas de campo, estilo documental sin tratamiento publicitario ni HDR. Sin personas, texto, logotipos, marcas de agua, interfaz, ni marcos.
+
 ## Carrusel "Más que una báscula" (2026-10-27)
 
 Cuatro ilustraciones generadas con Codex CLI (image_gen) para el carrusel de la
