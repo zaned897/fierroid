@@ -156,6 +156,8 @@ export default function MasQueBascula() {
             >
               <img
                 src={img.src}
+                srcSet={img.srcSet}
+                sizes={img.srcSet ? "100vw" : undefined}
                 width={img.width}
                 height={img.height}
                 alt=""
@@ -224,6 +226,7 @@ export default function MasQueBascula() {
             </button>
           </div>
         </div>
+        <small className="mqb-credito">Imagen ilustrativa generada con IA</small>
       </div>
     </section>
   );
