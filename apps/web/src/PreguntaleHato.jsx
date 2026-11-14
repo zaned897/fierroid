@@ -34,57 +34,36 @@ export default function PreguntaleHato() {
       aria-labelledby="preguntale-hato-titulo"
       data-revelar
     >
-      <div className="preguntale-hato-cabeza">
-        <div>
-          <p className="preguntale-hato-ceja">
-            Pregúntale a tu hato <span>Premium · Próximamente</span>
-          </p>
-          <h2 id="preguntale-hato-titulo">
-            Pregúntale a Fierro como le preguntarías a tu vaquero.
-          </h2>
-        </div>
-        <div className="preguntale-hato-pitch">
-          <p>
-            Escribe tu duda y recibe la respuesta con los números exactos de tus
-            pesajes, diciendo siempre qué animales entraron en la cuenta y cuáles
-            quedaron fuera.
-          </p>
-        </div>
-      </div>
+      <header className="preguntale-hato-cabeza">
+        <h2 id="preguntale-hato-titulo">Pregúntale a tu hato</h2>
+        <p className="preguntale-hato-ceja"><span>Premium · Próximamente</span></p>
+      </header>
 
       <div className="preguntale-hato-marco">
         <div className="preguntale-hato-conversacion">
-          <p className="preguntale-hato-etiqueta">Conversación de ejemplo</p>
+          <p className="preguntale-hato-etiqueta">Ejemplo</p>
           <ol className="preguntale-hato-hilo" aria-label="Conversación de ejemplo">
-            {INTERCAMBIOS.map((item) => (
-              <li key={item.id} className="preguntale-hato-par">
+              <li className="preguntale-hato-par">
                 <div className="preguntale-hato-usuario">
-                  <p>{item.pregunta}</p>
+                  <p>{INTERCAMBIOS[0].pregunta}</p>
                 </div>
                 <div className="preguntale-hato-respuesta">
-                  <div className="preguntale-hato-chips">
-                    {item.chips.map((chip) => (
-                      <span key={chip} className="preguntale-hato-chip">
-                        {chip}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="preguntale-hato-intro">{item.introduccion}</p>
-                  {item.puntos.length > 0 && (
-                    <ul className="preguntale-hato-lista">
-                      {item.puntos.map((punto) => (
-                        <li key={punto}>{punto}</li>
-                      ))}
-                    </ul>
-                  )}
-                  <p className="preguntale-hato-nota">{item.nota}</p>
+                  <p className="preguntale-hato-intro">2 animales para revisar.</p>
                 </div>
               </li>
-            ))}
           </ol>
         </div>
 
-        <aside className="preguntale-hato-lateral">
+        <details className="preguntale-hato-lateral">
+          <summary>Ver cómo responde</summary>
+          {INTERCAMBIOS.map((item) => (
+            <div className="preguntale-hato-ejemplo" key={item.id}>
+              <strong>{item.pregunta}</strong>
+              <p>{item.chips.join(" · ")}. {item.introduccion}</p>
+              {!!item.puntos.length && <ul>{item.puntos.map((punto) => <li key={punto}>{punto}</li>)}</ul>}
+              <p>{item.nota}</p>
+            </div>
+          ))}
           <ul className="preguntale-hato-reglas">
             <li>
               <strong>Cuentas claras</strong>
@@ -100,10 +79,10 @@ export default function PreguntaleHato() {
             </li>
           </ul>
 
-          <a href="#lista-espera" className="vision-btn-reserve preguntale-hato-cta">
-            Avísame cuando esté listo <span aria-hidden="true">→</span>
-          </a>
-        </aside>
+        </details>
+        <a href="#lista-espera" className="vision-btn-reserve preguntale-hato-cta" aria-label="Avísame cuando esté listo Pregúntale a tu hato">
+          Avísame <span aria-hidden="true">→</span>
+        </a>
       </div>
     </section>
   );

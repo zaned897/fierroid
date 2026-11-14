@@ -150,6 +150,19 @@ Medido con Playwright sobre `vite preview`: alto en celular (390 px) de 9,856
 a 7,521 px; escritorio (1280 px) de 7,517 a 5,979 px. Sin desbordamiento
 horizontal. `pnpm lint` y `pnpm build` pasan.
 
+## 2026-11-13 — Imágenes de campo y composición del home (#155–#158)
+
+- Seis escenas ilustrativas de campo en dos tamaños. Las personas trabajan de
+  espaldas. La foto acreditada de Vision se conserva con sus máscaras.
+- Línea de tiempo, foto anotada, gráfica, lista de fuentes, conversación de
+  ejemplo, comparador de Vision y preguntas frecuentes con acordeón.
+- Chrome a 375 y 1440 px. El texto visible se redujo de 717 a 286 palabras
+  en móvil y de 794 a 316 en escritorio, sin contar preguntas frecuentes.
+- El directorio de WebP bajó de 2 517 114 a 2 158 528 bytes. El JS inicial
+  pasó de 81.47 a 79.81 KB gzip. Lint, 28 pruebas y build correctos.
+- La revisión de muestras y el PR de este trabajo siguen locales. Las fotos
+  reales del equipo corresponden al #128.
+
 ## 2026-11-13 — Barra superior y portada de campo (#152 y #153)
 
 - Dirección tomada de los comentarios de aprobación en los issues

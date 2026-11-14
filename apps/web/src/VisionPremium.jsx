@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { imagenes } from "./img/index.js";
 import "./vision-premium.css";
 
@@ -33,6 +34,7 @@ const yoloPersonMask =
 
 export default function VisionPremium() {
   const photo = imagenes["seccion-hato"];
+  const [division, setDivision] = useState(52);
 
   return (
     <section
@@ -41,30 +43,21 @@ export default function VisionPremium() {
       aria-labelledby="vision-heading"
       data-revelar
     >
-      <div className="vision-heading">
-        <div>
-          <p className="vision-eyebrow">
-            FIERRO VISION <span>EN DESARROLLO</span>
-          </p>
-          <h2 id="vision-heading">Una cámara en la manga que reconoce a cada animal.</h2>
-        </div>
-        <div className="vision-pitch">
-          <p>
-            Estamos probando visión por computadora para separar a cada animal en
-            la foto aunque estén amontonados. Se suma a la báscula; no la reemplaza.
-          </p>
-        </div>
-      </div>
+      <header className="vision-heading">
+        <h2 id="vision-heading">Fierro Vision</h2>
+        <p className="vision-eyebrow"><span>En desarrollo</span></p>
+      </header>
 
       <div className="vision-canvas-grid">
         <figure className="vision-canvas">
+          <div className="vision-comparacion" style={{ "--vision-division": `${division}%` }}>
+          <img src={photo.src} srcSet={photo.srcSet} sizes="(max-width: 65rem) 94vw, 910px"
+            width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" decoding="async" />
           <svg
             viewBox="0 0 1200 874"
-            role="img"
-            aria-label="Foto de prueba con cada animal y la persona marcados por separado"
+            aria-hidden="true"
+            className="vision-mascaras"
           >
-            <image href={photo.src} width="1200" height="874" />
-            <rect width="1200" height="874" fill="#041b16" opacity=".18" />
               <g strokeLinejoin="round">
                 {/* DETECCIÓN 1: PERSONA / VAQUERO (conf 0.85) */}
                 <polygon
@@ -211,8 +204,19 @@ export default function VisionPremium() {
                 </g>
               </g>
           </svg>
+          <span className="vision-division" aria-hidden="true" />
+          </div>
           <figcaption>
-            <span>Ejemplo sobre una foto de prueba</span>
+            <label className="vision-rango">
+              <span>Foto</span>
+              <input type="range" min="0" max="100" value={division}
+                aria-label="Comparar foto original y segmentación"
+                aria-valuetext={`${100 - division} % de la imagen con segmentación`}
+                aria-describedby="vision-comparacion-descripcion"
+                onChange={(event) => setDivision(Number(event.target.value))} />
+              <span>Segmentación</span>
+            </label>
+            <span id="vision-comparacion-descripcion" className="home-sr">La foto de prueba muestra las máscaras de dos bovinos, un caballo y una persona. Las flechas ajustan cuánto se ve de la segmentación.</span>
             <a href={photo.fuente} target="_blank" rel="noreferrer">
               {photo.autor} · {photo.licencia}
             </a>
@@ -220,6 +224,9 @@ export default function VisionPremium() {
         </figure>
 
         <aside className="vision-inspector">
+          <details className="vision-detalles">
+          <summary>Qué estamos probando</summary>
+          <p>La cámara complementa el pesaje de la báscula.</p>
           <ul className="vision-capacidades">
             {CAPACIDADES.map((capacidad) => (
               <li key={capacidad.texto}>
@@ -230,9 +237,6 @@ export default function VisionPremium() {
               </li>
             ))}
           </ul>
-
-          <details className="vision-detalles">
-            <summary>Detalles técnicos</summary>
             <p>
               Segmentación con YOLOv8m-seg, un modelo abierto. En esta foto separa
               la vaca gris aunque la blanca le tapa la cabeza.
