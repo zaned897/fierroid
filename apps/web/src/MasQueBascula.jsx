@@ -58,18 +58,20 @@ const DESLIZAR_PX = 40;
  */
 export default function MasQueBascula() {
   const raiz = useRef(null);
-  const x0 = useRef(null);
+  const gesto = useRef(null);
   const [actual, setActual] = useState(0);
   const [previa, setPrevia] = useState(null);
-  const [encima, setEncima] = useState(false);
+  const [reproduccion, setReproduccion] = useState("automatica");
   const [aLaVista, setALaVista] = useState(false);
-  const [oculta, setOculta] = useState(false);
+  const [oculta, setOculta] = useState(() => document.hidden);
 
   const ir = (n) => {
     const siguiente = (n + IDEAS.length) % IDEAS.length;
-    if (siguiente === actual) return;
-    setPrevia(actual);
-    setActual(siguiente);
+    if (siguiente !== actual) {
+      setPrevia(actual);
+      setActual(siguiente);
+    }
+    return siguiente;
   };
 
   useEffect(() => {
@@ -84,7 +86,10 @@ export default function MasQueBascula() {
       setALaVista(true);
       return undefined;
     }
-    const observador = new IntersectionObserver(([e]) => setALaVista(e.isIntersecting), { threshold: 0.4 });
+    const observador = new IntersectionObserver(
+      ([e]) => setALaVista(e.intersectionRatio >= 0.4),
+      { threshold: 0.4 },
+    );
     observador.observe(nodo);
     return () => observador.disconnect();
   }, []);
@@ -95,37 +100,47 @@ export default function MasQueBascula() {
     return () => document.removeEventListener("visibilitychange", cambio);
   }, []);
 
-  const pausa = encima || !aLaVista || oculta;
+  const detenida = reproduccion === "pausada";
+  const pausa = detenida || !aLaVista || oculta;
 
   return (
     <section className="bloque mas-que-bascula" id="mas-que-bascula" aria-labelledby="mqb-titulo" data-revelar>
-      <div className="mqb-cabeza">
-        <p className="mqb-ceja">Más que una báscula</p>
-        <h2 id="mqb-titulo">Tus pesajes, convertidos en decisiones.</h2>
-      </div>
-
       <div
         ref={raiz}
-        className={`mqb-carrusel${pausa ? " pausa" : ""}`}
+        className={`mqb-carrusel${pausa ? " pausa" : ""}${reproduccion === "reanudada" ? " reanudado" : ""}`}
         role="region"
         aria-roledescription="carrusel"
         aria-label="Lo que Fierro hace con tus pesajes"
         tabIndex={0}
-        onMouseEnter={() => setEncima(true)}
-        onMouseLeave={() => setEncima(false)}
-        onFocus={() => setEncima(true)}
-        onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setEncima(false); }}
         onKeyDown={(e) => {
-          if (e.key === "ArrowRight") ir(actual + 1);
-          if (e.key === "ArrowLeft") ir(actual - 1);
+          const pestanas = e.target.closest('[role="tablist"]');
+          let siguiente;
+          if (e.key === "ArrowRight") siguiente = actual + 1;
+          else if (e.key === "ArrowLeft") siguiente = actual - 1;
+          else if (pestanas && e.key === "Home") siguiente = 0;
+          else if (pestanas && e.key === "End") siguiente = IDEAS.length - 1;
+          else return;
+          e.preventDefault();
+          const indice = ir(siguiente);
+          pestanas?.querySelectorAll('[role="tab"]')[indice].focus();
         }}
-        onPointerDown={(e) => { x0.current = e.clientX; }}
+        onPointerDown={(e) => {
+          if (e.pointerType !== "touch" || !e.isPrimary || e.target.closest("button")) return;
+          gesto.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+        }}
         onPointerUp={(e) => {
-          const dx = x0.current === null ? 0 : e.clientX - x0.current;
-          x0.current = null;
-          if (Math.abs(dx) > DESLIZAR_PX) ir(actual + (dx < 0 ? 1 : -1));
+          if (gesto.current?.id !== e.pointerId) return;
+          const dx = e.clientX - gesto.current.x;
+          const dy = e.clientY - gesto.current.y;
+          gesto.current = null;
+          if (Math.abs(dx) > Math.max(DESLIZAR_PX, Math.abs(dy))) ir(actual + (dx < 0 ? 1 : -1));
         }}
+        onPointerCancel={(e) => { if (gesto.current?.id === e.pointerId) gesto.current = null; }}
       >
+        <div className="mqb-cabeza">
+          <p className="mqb-ceja">Más que una báscula</p>
+          <h2 id="mqb-titulo">Tus pesajes, convertidos en decisiones.</h2>
+        </div>
         {IDEAS.map((idea, k) => {
           const img = imagenes[idea.foto];
           const estado = k === actual ? " activa" : k === previa ? " sale" : "";
@@ -136,7 +151,7 @@ export default function MasQueBascula() {
               className={`mqb-slide${estado}`}
               role="tabpanel"
               aria-roledescription="idea"
-              aria-label={`${k + 1} de ${IDEAS.length}: ${idea.titulo}`}
+              aria-labelledby={`mqb-pestana-${idea.id}`}
               aria-hidden={k !== actual}
             >
               <img
@@ -166,21 +181,35 @@ export default function MasQueBascula() {
         })}
 
         <div className="mqb-nav">
+          <button
+            type="button"
+            className="mqb-flecha mqb-reproducir"
+            aria-label={detenida ? "Reproducir carrusel" : "Pausar carrusel"}
+            onClick={() => setReproduccion(detenida ? "reanudada" : "pausada")}
+            onBlur={() => { if (reproduccion === "reanudada") setReproduccion("automatica"); }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d={detenida ? "M8 5v14l11-7z" : "M7 5h3v14H7zm7 0h3v14h-3z"} />
+            </svg>
+          </button>
           <div className="mqb-pasos" role="tablist" aria-label="Ideas">
             {IDEAS.map((idea, k) => (
               <button
                 key={idea.id}
                 type="button"
                 role="tab"
+                id={`mqb-pestana-${idea.id}`}
+                aria-label={`${k + 1} de ${IDEAS.length}: ${idea.titulo}`}
                 aria-selected={k === actual}
                 aria-controls={`mqb-${idea.id}`}
+                tabIndex={k === actual ? 0 : -1}
                 className={`mqb-paso${k === actual ? " activo" : ""}${k < actual ? " visto" : ""}`}
                 onClick={() => ir(k)}
               >
                 <span
                   key={k === actual ? `activa-${actual}` : "quieta"}
                   className="mqb-barra"
-                  onAnimationEnd={k === actual ? () => ir(actual + 1) : undefined}
+                  onAnimationEnd={k === actual && !pausa ? () => ir(actual + 1) : undefined}
                 />
                 <span className="mqb-paso-nombre">{idea.titulo}</span>
               </button>
