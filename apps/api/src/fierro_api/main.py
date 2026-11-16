@@ -88,10 +88,16 @@ class AnimalIn(BaseModel):
     notes: str | None = None
 
 
+JournalCategory = Literal[
+    "observacion", "alimentacion", "manejo", "salud",
+    "clima", "insumos", "equipo", "general",
+]
+
+
 class JournalIn(BaseModel):
     entry_id: UUID
     occurred_at: AwareDatetime
-    category: Literal["observacion", "alimentacion", "manejo", "salud"]
+    category: JournalCategory
     body: str = Field(min_length=1, max_length=4000)
 
     @field_validator("body")
@@ -101,6 +107,20 @@ class JournalIn(BaseModel):
         if not value:
             raise ValueError("Escribe una anotación")
         return value
+
+
+class DiarioIn(JournalIn):
+    """Entrada del diario del rancho: sin animal o con varios (#149)."""
+
+    animals: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("animals")
+    @classmethod
+    def clean_tags(cls, value: list[str]) -> list[str]:
+        tags = [tag.strip() for tag in value]
+        if any(not tag or len(tag) > 64 for tag in tags):
+            raise ValueError("Cada arete debe tener entre 1 y 64 caracteres")
+        return tags
 
 
 class OrgIn(BaseModel):
@@ -407,6 +427,77 @@ def get_animals(user: CurrentUser) -> dict[str, Any]:
     return {"animals": animals_mod.list_animals(_require_postgres(), org_slug=_scope(user))}
 
 
+def _journal_cursor(cursor: str | None) -> tuple[datetime, UUID] | None:
+    if not cursor:
+        return None
+    try:
+        decoded = _decode_cursor(cursor)
+        if decoded is None:
+            raise ValueError("cursor vacío")
+        date, key = decoded
+        parsed = datetime.fromisoformat(date)
+        if parsed.tzinfo is None:
+            raise ValueError("fecha sin zona")
+        return parsed, UUID(key)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail="Cursor inválido") from exc
+
+
+def _journal_page(entries: list[dict[str, Any]], limit: int) -> dict[str, Any]:
+    next_cursor = None
+    if len(entries) == limit:
+        last = entries[-1]
+        next_cursor = _encode_cursor({
+            "captured_at": last["occurred_at"], "event_id": last["entry_id"],
+        })
+    return {"entries": entries, "next_cursor": next_cursor}
+
+
+def _aware(value: datetime | None, name: str) -> datetime | None:
+    if value is not None and value.tzinfo is None:
+        raise HTTPException(
+            status_code=400, detail=f"`{name}` necesita zona horaria (por ejemplo Z o -06:00)",
+        )
+    return value
+
+
+@app.post("/v1/journal")
+def post_journal(
+    body: DiarioIn, user: CurrentUser, org: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Entrada del diario del rancho, con 0..n animales. Idempotente por `entry_id`."""
+    data = body.model_dump()
+    tags = data.pop("animals")
+    try:
+        return journal.add_journal_entry(
+            _require_postgres(), org=_write_scope(user, org), author_id=user.id,
+            tags=tags, **data,
+        )
+    except journal.EntryConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/v1/journal")
+def get_journal(
+    user: CurrentUser,
+    org: str | None = Query(default=None),
+    desde: Annotated[datetime | None, Query()] = None,
+    hasta: Annotated[datetime | None, Query()] = None,
+    tag: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+    cursor: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Diario de la organización. `desde` inclusivo, `hasta` exclusivo."""
+    entries = journal.list_journal(
+        _require_postgres(), org=_write_scope(user, org), limit=limit, tag=tag,
+        desde=_aware(desde, "desde"), hasta=_aware(hasta, "hasta"),
+        before=_journal_cursor(cursor),
+    )
+    return _journal_page(entries, limit)
+
+
 @app.post("/v1/animals/{tag_id}/journal")
 def post_animal_journal(
     tag_id: str, body: JournalIn, user: CurrentUser,
@@ -429,30 +520,11 @@ def get_animal_journal(
     limit: int = Query(default=20, ge=1, le=100),
     cursor: str | None = Query(default=None),
 ) -> dict[str, Any]:
-    before = None
-    if cursor:
-        try:
-            decoded = _decode_cursor(cursor)
-            if decoded is None:
-                raise ValueError("cursor vacío")
-            date, key = decoded
-            parsed = datetime.fromisoformat(date)
-            if parsed.tzinfo is None:
-                raise ValueError("fecha sin zona")
-            before = (parsed, UUID(key))
-        except (ValueError, TypeError) as exc:
-            raise HTTPException(status_code=400, detail="Cursor inválido") from exc
     entries = journal.list_entries(
         _require_postgres(), org=_write_scope(user, org), tag=tag_id,
-        limit=limit, before=before,
+        limit=limit, before=_journal_cursor(cursor),
     )
-    next_cursor = None
-    if len(entries) == limit:
-        last = entries[-1]
-        next_cursor = _encode_cursor({
-            "captured_at": last["occurred_at"], "event_id": last["entry_id"],
-        })
-    return {"entries": entries, "next_cursor": next_cursor}
+    return _journal_page(entries, limit)
 
 
 @app.get("/v1/animals/{tag_id}/readings")
@@ -503,6 +575,7 @@ def put_animal(
             tag_id=tag_id,
             alias=body.alias,
             notes=body.notes,
+            author_id=user.id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
