@@ -136,3 +136,19 @@ Diseño aprobado: https://claude.ai/artifact/LS3Vcw3zrJK2aaxNZJMCP6 (#88, #89, #
 Medido con Playwright sobre `vite preview`: alto en celular (390 px) de 9,856
 a 7,521 px; escritorio (1280 px) de 7,517 a 5,979 px. Sin desbordamiento
 horizontal. `pnpm lint` y `pnpm build` pasan.
+
+## 2026-11-13 — Barra superior y portada de campo (#152 y #153)
+
+- Dirección tomada de los comentarios de aprobación en los issues
+  [#152](https://github.com/zaned897/fierroid/issues/152) y
+  [#153](https://github.com/zaned897/fierroid/issues/153). Referencia de
+  [diseño](https://claude.ai/artifact/MdQfLzp4Wn5SkHqx6c3Lzu).
+- Barra con fondo translúcido al reaparecer, sección activa y menú móvil
+  nativo. Portada de una pantalla con una acción principal, imagen ilustrativa
+  responsiva y pesaje demo animado en CSS. Sellos y crédito después de la portada.
+- Verificado en Chrome a 375 × 667 y 1440 × 900, incluida la navegación con
+  teclado, Esc, foco, contraste de la barra y movimiento reducido.
+  `pnpm lint`, `pnpm test` y `pnpm build` pasan.
+- Lighthouse móvil sobre el compilado local: queda pendiente llegar a
+  2.5 s de LCP con la simulación predeterminada. El recorrido de las secciones
+  de imágenes del #155 queda abierto.

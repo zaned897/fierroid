@@ -11,6 +11,9 @@
     <!-- iOS compone sobre negro lo que sea transparente: aqui va la opaca. -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- React monta la portada. El navegador puede pedir la imagen desde el HTML. -->
+    <link rel="preload" as="image" type="image/avif" media="(max-width: 40rem)" imagesrcset="/img/portada-campo-vertical-480.avif 480w, /img/portada-campo-vertical-576.avif 576w" imagesizes="100vw" fetchpriority="high" />
+    <link rel="preload" as="image" media="(width > 40rem)" imagesrcset="/img/portada-campo-768.webp 768w, /img/portada-campo-1536.webp 1536w" imagesizes="100vw" fetchpriority="high" />
     <title>Fierro</title>
   </head>
   <body>

@@ -13,6 +13,19 @@
  */
 
 export const imagenes = {
+  "portada-campo-ia": {
+    src: "/img/portada-campo-1536.webp",
+    srcSet: "/img/portada-campo-768.webp 768w, /img/portada-campo-1536.webp 1536w",
+    srcSetVerticalAvif: "/img/portada-campo-vertical-480.avif 480w, /img/portada-campo-vertical-576.avif 576w",
+    srcSetVertical: "/img/portada-campo-vertical-480.webp 480w, /img/portada-campo-vertical-576.webp 576w",
+    width: 1536,
+    height: 1024,
+    alt: "Ganado en un potrero del norte de México con serranías al fondo",
+    autor: "Generada con IA para Fierro",
+    licencia: "Recurso generado; no es fotografía documental",
+    fuente: "/img/CREDITOS.md",
+    requiereAtribucion: false,
+  },
   "mqb-atras-ia": {
     src: "/img/mqb-atras-ia.webp",
     width: 1920,
