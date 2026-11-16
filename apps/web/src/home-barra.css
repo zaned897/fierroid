@@ -1,0 +1,249 @@
+.home-publica {
+  --home-altura-barra: 5rem;
+  --home-margen: max(1.5rem, calc((100% - 80rem) / 2));
+}
+
+.home-publica main :is(
+  #mas-que-bascula, #como-funciona, #beneficios, #por-que-pesar,
+  #fierro-vision, #preguntas-frecuentes, #lista-espera
+) {
+  scroll-margin-block-start: calc(var(--home-altura-barra) + 0.5rem);
+}
+
+.home-encabezado {
+  --barra-tinta: var(--home-texto);
+  --barra-acento: var(--home-petroleo);
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.65rem, 1.7vw, 1.6rem);
+  min-height: var(--home-altura-barra);
+  font-family: system-ui, sans-serif;
+  padding-inline: var(--home-margen);
+  border-bottom: 1px solid transparent;
+  color: var(--barra-tinta);
+}
+
+.home-encabezado.fija {
+  --barra-tinta: var(--home-texto);
+  --barra-acento: var(--home-petroleo);
+  border-bottom-color: var(--home-borde);
+  background: var(--home-marfil);
+  box-shadow: 0 4px 20px rgb(15 36 29 / 9%);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .home-encabezado.fija {
+    background: color-mix(in srgb, var(--home-marfil) 92%, transparent);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+}
+
+.home-encabezado.oculta:not(:focus-within, :has(:popover-open, details[open])) {
+  transform: translateY(-100%);
+}
+
+.home-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.home-marca .marca-fierro {
+  flex: none;
+  background-color: currentColor;
+}
+
+.home-navegacion {
+  margin-inline-start: auto;
+}
+
+.home-enlaces {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.65rem, 1.4vw, 1.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-enlaces a,
+.home-encabezado button.home-login,
+.home-encabezado .home-menu-abrir {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-enlaces a::after,
+.home-login::after,
+.home-menu-abrir::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 5px;
+  border-bottom: 2px solid var(--barra-acento);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.home-enlaces a:is(:hover, [aria-current])::after,
+.home-login:hover::after,
+.home-menu-abrir:is(:hover, :focus-visible)::after {
+  transform: scaleX(1);
+}
+
+.home-encabezado :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--barra-acento, #fff);
+  outline-offset: 3px;
+}
+
+.home-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--home-bosque);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.home-encabezado .home-cta {
+  flex: none;
+}
+
+.home-cta:hover {
+  background: var(--home-noche);
+  color: #fff;
+}
+
+.home-encabezado .home-menu-abrir {
+  gap: 0.45rem;
+  cursor: pointer;
+}
+
+.home-menu-abrir[popovertarget] {
+  anchor-name: --home-menu-trigger;
+}
+
+.home-menu-icono {
+  width: 0.9rem;
+  height: 0.58rem;
+  border-block: 2px solid currentColor;
+}
+
+.home-menu {
+  --barra-acento: var(--home-petroleo);
+  position: fixed;
+  inset: calc(var(--home-altura-barra) + 0.5rem) var(--home-margen) auto auto;
+  display: grid;
+  gap: 0.15rem;
+  width: min(19rem, calc(100% - 2 * var(--home-margen)));
+  max-height: calc(100dvh - var(--home-altura-barra) - 1rem);
+  overflow: auto;
+  margin: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--home-borde);
+  border-radius: 1rem;
+  background: var(--home-marfil);
+  color: var(--home-texto);
+  box-shadow: 0 12px 32px rgb(15 36 29 / 20%);
+}
+
+.home-menu[popover]:not(:popover-open) {
+  display: none;
+}
+
+@supports (top: anchor(bottom)) {
+  .home-menu[popover] {
+    top: max(calc(var(--home-altura-barra) + 0.5rem), calc(anchor(--home-menu-trigger bottom, var(--home-altura-barra)) + 0.65rem));
+  }
+}
+
+.home-menu-respaldo:not([open]) .home-menu {
+  display: none;
+}
+
+.home-menu li {
+  padding-inline: 0.65rem;
+}
+
+.home-menu li:last-child {
+  margin-top: 0.35rem;
+  border-top: 1px solid var(--home-borde);
+}
+
+@media (max-width: 70rem) {
+  .home-publica {
+    --home-altura-barra: 4.25rem;
+  }
+}
+
+@media (max-width: 40rem) {
+  .home-publica {
+    --home-margen: 1rem;
+  }
+
+  .home-encabezado {
+    gap: 0.65rem;
+  }
+
+  .home-marca {
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .home-marca .marca-fierro {
+    max-width: 30px;
+    max-height: 30px;
+  }
+
+  .home-encabezado .home-cta {
+    padding-inline: 0.75rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-encabezado {
+    transition: transform 200ms ease, background-color 180ms ease,
+      border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .home-encabezado:focus-within {
+    transition-property: background-color, border-color, box-shadow;
+  }
+
+  .home-enlaces a::after,
+  .home-login::after,
+  .home-menu-abrir::after {
+    transition: transform 160ms ease;
+  }
+}
