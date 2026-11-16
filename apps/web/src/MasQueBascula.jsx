@@ -156,9 +156,12 @@ export default function MasQueBascula() {
             >
               <img
                 src={img.src}
+                srcSet={img.srcSet}
+                sizes={img.srcSet ? "(max-aspect-ratio: 1/1) 178vh, 100vw" : undefined}
                 width={img.width}
                 height={img.height}
                 alt=""
+                style={img.posicion ? { "--mqb-foco": img.posicion } : undefined}
                 draggable="false"
                 loading="lazy"
                 decoding="async"
@@ -224,6 +227,7 @@ export default function MasQueBascula() {
             </button>
           </div>
         </div>
+        <small className="mqb-credito">Imagen ilustrativa generada con IA</small>
       </div>
     </section>
   );

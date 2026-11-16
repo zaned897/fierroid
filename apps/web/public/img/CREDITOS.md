@@ -1,5 +1,23 @@
 # Créditos de imágenes
 
+## Escenas de campo del home (2026-11-13)
+
+Escenas ilustrativas generadas con OpenAI ImageGen. Los prompts de cada
+escena están en [prompts-campo.md](../../../../docs/design/home/prompts-campo.md).
+Las versiones con sufijo `-640` son derivados WebP para móvil.
+
+| Archivo base | Prompt | Uso |
+|---|---|---|
+| `home-corral-v2-ia.webp` | corral | Beneficios |
+| `banda-campo-ia.webp` | pasos | Cómo funciona |
+| `mqb-atras-ia.webp` | atras | Animales que se quedan atrás |
+| `mqb-venta-ia.webp` | venta | Peso de venta |
+| `mqb-equipo-ia.webp` | equipo | Tu equipo te avisa |
+| `mqb-comprador-ia.webp` | comprador | Lista para el comprador |
+
+`seccion-hato-640.webp` deriva de la foto acreditada de dany13 (CC BY
+2.0), con el mismo encuadre que la foto de prueba de Vision.
+
 ## Portada del home (2026-11-13)
 
 Ilustración generada con OpenAI image_gen para Fierro. La versión horizontal
