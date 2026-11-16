@@ -282,3 +282,10 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Posterga el layout y pintado de las secciones bajo el pliegue para proteger el LCP de la portada. */
+.home-publica .secciones > section,
+.home-publica .waitlist-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
