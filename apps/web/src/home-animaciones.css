@@ -24,12 +24,6 @@
     }
   }
 
-  @keyframes home-trazar-y {
-    from {
-      clip-path: inset(0 0 100% 0);
-    }
-  }
-
   @keyframes home-latido {
     0%,
     100% {
@@ -78,12 +72,6 @@
   /* La nube "recibe" el dato: dos subidas cortas y se queda quieta. */
   .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) .paso-icono {
     animation: home-subida-nube 700ms ease-in-out 1600ms 2 both;
-  }
-
-  @media (max-width: 760px) {
-    .secciones.con-revelado .como-funciona.visible .paso::after {
-      animation-name: home-trazar-y;
-    }
   }
 
   /* --- Beneficios y lecturas: tarjetas escalonadas -------------------- */

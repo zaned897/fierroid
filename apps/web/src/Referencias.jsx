@@ -110,21 +110,16 @@ export default function Referencias() {
     <section className="bloque home-referencias" id="por-que-pesar" aria-labelledby="por-que-pesar-titulo" data-revelar>
       <div className="home-referencias-contenido">
         <h2 id="por-que-pesar-titulo">Por qué pesar seguido</h2>
-        <p className="home-referencias-intro">
-          Lo que dicen la investigación y la extensión ganadera sobre conocer el peso de cada animal.
-        </p>
-
-        <ul className="home-datos">
+        <ul className="home-datos home-razones">
           {DATOS.map((dato) => (
             <li className="home-dato" key={dato.titulo}>
               <span className="home-dato-icono"><IconoDato tipo={dato.icono} /></span>
               <h3>{dato.titulo}</h3>
-              <p>
-                {dato.texto}{" "}
+              <div>
                 <a className="home-cita" href={`#lectura-${dato.fuente}`} onClick={abrirFuentes} aria-label={`Fuente ${numeroDe[dato.fuente]}`}>
                   [{numeroDe[dato.fuente]}]
                 </a>
-              </p>
+              </div>
             </li>
           ))}
         </ul>
@@ -133,6 +128,9 @@ export default function Referencias() {
           <summary className="home-lecturas-titulo">
             Ver las {LECTURAS.length} fuentes
           </summary>
+          <ul className="home-razones-detalles">
+            {DATOS.map((dato) => <li key={dato.titulo}><strong>{dato.titulo}.</strong> {dato.texto}</li>)}
+          </ul>
           <ol className="home-lecturas">
             {LECTURAS.map((lectura) => (
               <li className="home-lectura" key={lectura.id} id={`lectura-${lectura.id}`}>
