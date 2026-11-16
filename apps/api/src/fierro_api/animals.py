@@ -88,26 +88,39 @@ def upsert_animal(
     tag_id: str,
     alias: str | None = None,
     notes: str | None = None,
+    author_id: int | None = None,
 ) -> dict[str, Any]:
-    """Crea o actualiza la ficha. Idempotente por (organizacion, arete)."""
+    """Crea o actualiza la ficha. Idempotente por (organizacion, arete).
+
+    `notes` ya no se escribe en `animals.notes` (#149): cada cambio queda como
+    entrada `general` del diario y la ficha muestra la mas reciente.
+    """
     import psycopg
     from psycopg.rows import dict_row
+
+    from fierro_api.journal import current_ficha_note, record_ficha_note
 
     with psycopg.connect(dsn, row_factory=dict_row) as conn, conn.cursor() as cur:
         org_id = _org_id(cur, org_slug)
         cur.execute(
             """
-            INSERT INTO animals (org_id, tag_id, alias, notes)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO animals (org_id, tag_id, alias)
+            VALUES (%s, %s, %s)
             ON CONFLICT (org_id, tag_id) DO UPDATE SET
               alias      = COALESCE(EXCLUDED.alias, animals.alias),
-              notes      = COALESCE(EXCLUDED.notes, animals.notes),
               updated_at = now()
-            RETURNING id, tag_id, alias, notes, created_at, updated_at
+            RETURNING id, tag_id, alias, created_at, updated_at
             """,
-            (org_id, tag_id, alias, notes),
+            (org_id, tag_id, alias),
         )
         fila = dict(require_row(cur.fetchone(), "guardar ficha del animal"))
+        if notes is not None:
+            record_ficha_note(
+                cur, org_id=org_id, animal_id=fila["id"], author_id=author_id,
+                text=notes, occurred_at=fila["updated_at"],
+            )
+        actual = current_ficha_note(cur, fila["id"])
+        fila["notes"] = actual["body"] if actual else None
         conn.commit()
 
     fila["created_at"] = fila["created_at"].isoformat()
@@ -146,7 +159,12 @@ def list_animals(dsn: str, *, org_slug: str | None = None) -> list[dict[str, Any
               SELECT o.id, o.slug, a.tag_id
               FROM animals a JOIN alcance o ON o.id = a.org_id
             )
-            SELECT t.tag_id, t.org, a.alias, a.notes,
+            SELECT t.tag_id, t.org, a.alias,
+                   -- Notas = ultima entrada del diario que salio de la ficha.
+                   (SELECT e.body FROM journal_entries e
+                    JOIN journal_entry_animals ea ON ea.entry_id = e.entry_id
+                    WHERE ea.animal_id = a.id AND e.source = 'ficha'
+                    ORDER BY e.created_at DESC, e.entry_id DESC LIMIT 1) AS notes,
                    (ph.animal_id IS NOT NULL) AS has_photo,
                    u.weight_kg AS last_weight_kg,
                    u.captured_at AS last_captured_at,

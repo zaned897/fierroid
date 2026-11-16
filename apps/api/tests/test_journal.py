@@ -37,7 +37,7 @@ def world(monkeypatch):
     yield TestClient(main.app), users, tag
     main.app.dependency_overrides.pop(main.current_user, None)
     with psycopg.connect(DSN) as conn, conn.cursor() as cur:
-        cur.execute("DELETE FROM animal_journal WHERE author_id=ANY(%s)", ([u.id for u in users],))
+        cur.execute("DELETE FROM journal_entries WHERE author_id=ANY(%s)", ([u.id for u in users],))
         cur.execute("DELETE FROM animals WHERE tag_id=%s", (tag,))
         cur.execute("DELETE FROM users WHERE email=ANY(%s)", (emails,))
 
