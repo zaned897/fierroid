@@ -8,6 +8,19 @@ pasos: [avance del dashboard](dashboard-progress.md).
 
 ## Unidades de implementación
 
+### 2026-11-13 — Carrusel de «Más que una báscula» (#154)
+
+- El título, las láminas y la navegación comparten una altura mínima de
+  una pantalla. En ventanas muy bajas el contenido puede crecer.
+- El avance continúa con el puntero encima. El botón pausa y reanuda.
+  El foco visible de teclado, una pestaña oculta o menos de 40 % de la
+  sección visible detienen el avance. Con movimiento reducido la navegación
+  queda manual.
+- Chrome comprobado a 375 × 667, 390 × 700, 768 × 768, 1366 × 768 y
+  1440 × 900. Se probaron las cuatro láminas en cada tamaño, el intervalo
+  real de 7 segundos, el teclado, los gestos táctiles y el acceso por ancla.
+  `pnpm lint`, `pnpm test` y `pnpm build` pasan.
+
 ### 2026-09-24 — Animación de la gráfica existente
 
 La curva se dibuja progresivamente al entrar en pantalla, seguida de puntos
