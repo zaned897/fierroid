@@ -279,11 +279,14 @@
 .mqb-flecha:hover { border-color: rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.14); }
 .mqb-flecha:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
+/* Los sujetos van en la mitad derecha de cada imagen. */
+@media (max-aspect-ratio: 1/1) {
+  .mqb-slide img { object-position: var(--mqb-foco, 68% center); }
+}
+
 @media (max-width: 720px) {
   .home-publica .mas-que-bascula { --mqb-lado: 22px; }
 
-  /* Los sujetos van en la mitad derecha de cada imagen. */
-  .mqb-slide img { object-position: 68% center; }
   .mqb-slide::after {
     background:
       linear-gradient(180deg, rgba(10, 22, 17, 0.65), transparent 25%),

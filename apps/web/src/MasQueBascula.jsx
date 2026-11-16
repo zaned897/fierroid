@@ -157,10 +157,11 @@ export default function MasQueBascula() {
               <img
                 src={img.src}
                 srcSet={img.srcSet}
-                sizes={img.srcSet ? "100vw" : undefined}
+                sizes={img.srcSet ? "(max-aspect-ratio: 1/1) 178vh, 100vw" : undefined}
                 width={img.width}
                 height={img.height}
                 alt=""
+                style={img.posicion ? { "--mqb-foco": img.posicion } : undefined}
                 draggable="false"
                 loading="lazy"
                 decoding="async"
