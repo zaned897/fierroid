@@ -99,6 +99,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Install Chromium for UI smoke tests
+        run: pnpm exec playwright install --with-deps --only-shell chromium
+
+      - name: UI smoke tests with mocked API
+        run: pnpm test:smoke
+
   compose:
     name: docker compose smoke
     runs-on: ubuntu-latest

@@ -17,6 +17,30 @@ cd apps/web && pnpm lint && pnpm test && pnpm build
 
 Instalar deps: `./scripts/install-deps.sh`
 
+## Smoke de interfaz web (#131)
+
+Desde `apps/web`:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm exec playwright install --only-shell chromium
+pnpm test:smoke
+```
+
+En Linux, agrega `--with-deps` al instalar Chromium si faltan bibliotecas
+del sistema. Playwright arranca Vite en `127.0.0.1:4178` y usa respuestas
+simuladas en el navegador. La instalación inicial descarga dependencias y
+Chromium. La ejecución de los casos solo usa el servidor local y falla si
+el navegador intenta acceder a un servicio externo o a una ruta de API sin
+simular.
+
+- Lista de espera (HTTP 202, 409 y 500). Comprueba el envío, la confirmación y
+  la conservación de los datos tras un error.
+- Bitácora. Guarda una nota y comprueba que aparece en el historial. En el
+  caso de respuesta perdida, el servidor simulado guarda primero la nota.
+  Al recargar y reintentar, se vuelve a enviar el mismo `entry_id` y el
+  historial muestra una sola anotación.
+
 ## Qué debe probarse
 
 | Tipo de cambio | Mínimo |
@@ -103,7 +127,7 @@ No agregar tests triviales que solo assertan getters obvios.
 | Job | Que valida |
 |-----|------------|
 | `python` | `ruff check apps scripts` + `pytest` con servicio Postgres real |
-| `web` | `pnpm lint` + `pnpm test` (`node --test`, `tests/*.test.mjs`) + `pnpm build` con lockfile congelado |
+| `web` | `pnpm lint`, `pnpm test` (lógica), `pnpm build` y `pnpm test:smoke` (Chromium con API simulada) con lockfile congelado |
 | `compose` | Build de imagenes, health de la API, siembra sintetica y persistencia |
 
 `FIERRO_MOCK_HW=1` esta fijado a nivel workflow: ningun job toca hardware.
