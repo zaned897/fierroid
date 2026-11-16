@@ -58,8 +58,12 @@ function useSeccionActiva(encabezado) {
     const observar = () => {
       observador?.disconnect();
       // Una franja de 2 px bajo la barra evita depender del alto de cada sección.
-      const inicio = Math.min(encabezado.current.offsetHeight + 24, window.innerHeight - 2);
-      const fin = window.innerHeight - inicio - 2;
+      const inicio = Math.max(
+        0,
+        Math.round(Math.min(encabezado.current.offsetHeight + 24, window.innerHeight - 2)),
+      );
+      if (window.innerHeight <= inicio + 2) return;
+      const fin = Math.max(0, Math.round(window.innerHeight - inicio - 2));
       observador = new IntersectionObserver(() => {
         const actual = secciones.find((seccion) => {
           const { top, bottom } = seccion.getBoundingClientRect();
@@ -73,7 +77,7 @@ function useSeccionActiva(encabezado) {
     window.addEventListener("resize", observar);
     return () => {
       window.removeEventListener("resize", observar);
-      observador.disconnect();
+      observador?.disconnect();
     };
   }, [encabezado]);
 
