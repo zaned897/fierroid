@@ -1206,7 +1206,7 @@ button.contraste:hover {
   position: fixed;
   top: 0.75rem;
   left: 0.75rem;
-  z-index: 20;
+  z-index: 40;
   padding: 0.65rem 0.9rem;
   border-radius: 0.35rem;
   background: var(--home-bosque);
@@ -2430,7 +2430,7 @@ a.home-entrar:focus-visible {
   font-size: 0.65rem;
 }
 
-/* --- Demo: barra que sigue al scroll y portada a pantalla completa ------ */
+/* --- Barra: variante A aprobada en #152, cristal a lo ancho ------------- */
 
 /* Sticky y no fixed: así queda debajo del aviso de entorno en stage. */
 .home-encabezado {
@@ -2440,18 +2440,205 @@ a.home-entrar:focus-visible {
   width: auto;
   padding-inline: max(1.5rem, calc((100% - 80rem) / 2));
   border-bottom: 1px solid transparent;
-  transition: transform 0.35s ease, background-color 0.35s ease, border-color 0.35s ease;
+  background: transparent;
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .home-encabezado.fija {
   border-bottom-color: var(--home-borde);
-  background: color-mix(in srgb, var(--home-marfil) 92%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  /* Respaldo opaco: el contraste no depende de que exista backdrop-filter. */
+  background: var(--home-marfil);
+  box-shadow: 0 3px 12px rgb(15 36 29 / 5%);
+}
+
+@supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+  .home-encabezado.fija {
+    background: rgb(247 248 243 / 94%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
 }
 
 .home-encabezado.oculta {
   transform: translateY(-100%);
+}
+
+.home-encabezado:focus-within {
+  transform: none;
+}
+
+.home-encabezado .home-navegacion {
+  position: relative;
+  display: flex;
+  gap: clamp(0.65rem, 1vw, 1rem);
+  margin: 0 0 0 auto;
+}
+
+.home-encabezado .home-navegacion a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 2px solid transparent;
+  color: var(--home-texto);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.home-navegacion a[aria-current="location"] {
+  border-bottom-color: currentColor;
+}
+
+/* Un solo subrayado anclado al enlace activo; sin soporte queda el borde. */
+@supports (position-anchor: --home-current) {
+  .home-navegacion a[aria-current="location"] {
+    anchor-name: --home-current;
+    border-bottom-color: transparent;
+  }
+
+  .home-navegacion:has(a[aria-current="location"])::after {
+    content: "";
+    position: absolute;
+    position-anchor: --home-current;
+    top: calc(anchor(bottom) - 2px);
+    left: anchor(left);
+    right: anchor(right);
+    border-bottom: 2px solid var(--home-texto);
+    pointer-events: none;
+  }
+}
+
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: none;
+}
+
+.home-header-login,
+.home-menu-trigger,
+.home-menu-close {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--home-texto);
+  font-size: 0.85rem;
+}
+
+.home-header-login {
+  padding-inline: 0.4rem;
+}
+
+.home-header-join {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 2rem;
+  background: var(--home-petroleo);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-header-join:hover {
+  background: var(--home-bosque);
+  color: #fff;
+}
+
+.home-encabezado .home-navegacion a:hover,
+.home-header-login:hover,
+.home-menu-trigger:hover,
+.home-menu-close:hover,
+.home-menu nav a:hover {
+  border-color: transparent;
+  background: var(--home-niebla);
+  color: var(--home-petroleo);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.home-header-actions :focus-visible,
+.home-menu :focus-visible {
+  outline: 3px solid var(--home-petroleo);
+  outline-offset: 3px;
+}
+
+.home-menu-trigger {
+  display: none;
+  border-color: var(--home-borde);
+}
+
+.home-menu {
+  position: fixed;
+  inset: 6rem 1rem auto auto;
+  width: min(22rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 7rem);
+  margin: 0;
+  padding: 1rem;
+  overflow: auto;
+  border: 1px solid var(--home-borde);
+  border-radius: 0.75rem;
+  background: var(--home-marfil);
+  color: var(--home-texto);
+  box-shadow: 0 8px 24px rgb(15 36 29 / 12%);
+}
+
+.home-menu nav {
+  display: grid;
+  margin-block: 0.5rem 1rem;
+}
+
+.home-menu nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.6rem;
+  border-bottom: 2px solid transparent;
+  color: var(--home-texto);
+  text-decoration: none;
+}
+
+.home-menu nav a[aria-current="location"] {
+  border-bottom-color: currentColor;
+}
+
+.home-menu-close {
+  display: block;
+  margin-left: auto;
+}
+
+.home-menu .home-header-join {
+  width: 100%;
+}
+
+/* Seis destinos y dos acciones requieren más espacio que el antiguo menú. */
+@media (max-width: 1199px) {
+  .home-encabezado .home-navegacion,
+  .home-header-actions > .home-header-join {
+    display: none;
+  }
+
+  .home-header-actions { margin-left: auto; }
+  .home-menu-trigger { display: inline-flex; align-items: center; }
+}
+
+@media (max-width: 600px) {
+  .home-encabezado { gap: 0.5rem; }
+  .home-header-actions { gap: 0.4rem; }
+  .home-header-login { font-size: 0.8rem; }
+  .home-menu-trigger { padding-inline: 0.65rem; }
+  .home-menu { top: 4.75rem; max-height: calc(100dvh - 5.75rem); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-navegacion::after { transition: left 180ms ease, right 180ms ease; }
+}
+
+.home-publica :is(#mas-que-bascula, #como-funciona, #beneficios, #por-que-pesar, #fierro-vision, #preguntas-frecuentes, #lista-espera) {
+  scroll-margin-top: 6.5rem;
 }
 
 .home-portada {

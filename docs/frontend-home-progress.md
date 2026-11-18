@@ -1,5 +1,22 @@
 # Relevo del frontend del home
 
+## 2026-11-17 — Barra superior #152
+
+Implementada la variante A previamente aprobada: cristal a lo ancho, subrayado
+activo con anchor positioning y borde de respaldo, login de texto y lista como
+acción sólida. Menú móvil con Popover API y respaldo dialog, manteniendo los
+seis destinos. Sin listeners nuevos de scroll ni dependencias añadidas.
+
+Lint, 28 pruebas web y build correctos. También pasan ruff, mypy y el espejo de
+skills; pytest: 193 aprobadas y 101 omitidas por PostgreSQL ausente. Integración
+DOM verificada para ambos menús con APIs nativas simuladas. Contraste calculado
+AA. Pendientes capturas, teclado/Esc real y CLS: el navegador no estuvo disponible.
+
+[Evidencia, aprobación y pendientes](design/home/barra-superior.md).
+Sin commit ni PR. No se pudo crear la rama solicitada por restricciones sobre
+`.git`; cambios locales en `exp/codex-sol-152`. Siguiente paso: revisión real a
+375, 390, 768 y 1440 px y capturas arriba/fija antes de declarar aceptación visual.
+
 ## 2026-09-25 — Panel privado
 
 El estilo aprobado del panel se implementó reutilizando la marca y componentes
