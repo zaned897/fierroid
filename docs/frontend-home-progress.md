@@ -1,5 +1,22 @@
 # Relevo del frontend del home
 
+## 2026-11-17 — #152, barra superior
+
+Unidad: encabezado (apariencia, sección activa y navegación móvil).
+Implementada la variante A ya aprobada por el dueño. Archivos: `Home.jsx`,
+`HomeNavigation.jsx`, `homeNavigationText.js`, `home-navigation.css` y ajustes
+acotados en `styles.css`. Sin cambios en marca, destinos ni pantallas privadas.
+
+Lint, 28 pruebas web, build, ruff, mypy y espejo de skills correctos. Python:
+193 correctas y 101 omitidas sin PostgreSQL. Comportamiento del hook y respaldo
+de navegación comprobados con React/JSDOM; no equivalen a revisión visual.
+
+Estado parcial: faltan las cuatro capturas, teclado nativo y medición CLS porque
+el entorno bloquea los navegadores. No se hizo commit ni PR. Asignación y rama
+también bloqueadas por permisos. [Evidencia y relevo completos](design/home/revision-152.md).
+Siguiente unidad: validar este encabezado a 375/390/768/1440 px en un navegador
+autorizado y adjuntar las capturas. No ampliar a otras secciones.
+
 ## 2026-09-25 — Panel privado
 
 El estilo aprobado del panel se implementó reutilizando la marca y componentes

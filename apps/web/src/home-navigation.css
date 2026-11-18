@@ -1,0 +1,186 @@
+/* #152: cristal a lo ancho. Solo afecta al encabezado público. */
+.home-saltar:focus { z-index: 40; }
+
+.home-publica .home-encabezado .home-navegacion {
+  display: block;
+  margin: 0 0 0 auto;
+  min-width: 0;
+}
+
+.home-encabezado .home-nav-links {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  scroll-target-group: auto;
+}
+
+.home-encabezado .home-nav-links a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.25rem 0;
+  border-block-end: 2px solid transparent;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.home-encabezado :is(a, button):focus-visible {
+  outline: 3px solid var(--home-petroleo);
+  outline-offset: 3px;
+}
+
+.home-encabezado .home-nav-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.home-encabezado .home-nav-links a[aria-current] {
+  border-block-end-color: var(--home-petroleo);
+  anchor-name: --home-current;
+}
+
+/* El estado visual nativo no espera al evento scrollend de aria-current. */
+@supports (scroll-target-group: auto) and selector(:target-current) {
+  .home-encabezado .home-nav-links a[aria-current] {
+    border-block-end-color: transparent;
+    anchor-name: none;
+  }
+  .home-encabezado .home-nav-links a:target-current {
+    border-block-end-color: var(--home-petroleo);
+    anchor-name: --home-current;
+  }
+}
+
+@supports (left: anchor(left)) {
+  @media (min-width: 1200px) {
+    .home-encabezado .home-nav-links a:is([aria-current], :target-current) {
+      border-block-end-color: transparent;
+    }
+    .home-encabezado .home-nav-links:has(a:is([aria-current], :target-current))::after {
+      content: "";
+      position: absolute;
+      position-anchor: --home-current;
+      inset-block-start: anchor(bottom);
+      inset-inline-start: anchor(left);
+      inset-inline-end: anchor(right);
+      border-block-end: 2px solid var(--home-petroleo);
+      pointer-events: none;
+      position-visibility: anchors-visible;
+    }
+  }
+}
+
+.home-encabezado .home-menu-panel {
+  position: static;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--home-texto);
+}
+
+.home-encabezado :is(.home-menu-trigger, .home-menu-close, .home-menu-waitlist) {
+  display: none;
+}
+
+.home-encabezado button.home-entrar-cabecera {
+  flex: none;
+  margin: 0;
+  padding-inline: 0.5rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--home-texto);
+  font-size: 0.85rem;
+}
+
+.home-encabezado button.home-entrar-cabecera:hover {
+  color: var(--home-petroleo);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.home-encabezado a.home-entrar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.home-encabezado a.home-menu-waitlist { display: none; }
+
+/* Margen estable: el estado de scroll no cambia la geometría de la barra. */
+.home-publica :is(#mas-que-bascula, #como-funciona, #beneficios, #por-que-pesar,
+  #fierro-vision, #preguntas-frecuentes, #lista-espera) {
+  scroll-margin-top: 6.5rem;
+}
+
+@media (max-width: 1199px) {
+  .home-publica .home-encabezado .home-navegacion { order: 2; margin: 0; }
+  .home-encabezado button.home-entrar-cabecera { margin-left: auto; }
+  .home-encabezado a.home-lista-cabecera { display: none; }
+
+  .home-encabezado :is(.home-menu-trigger, .home-menu-close) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-width: 44px;
+    border-color: var(--home-borde);
+    background: var(--home-marfil);
+    color: var(--home-texto);
+    font-size: 0.85rem;
+  }
+  .home-encabezado :is(.home-menu-trigger, .home-menu-close):hover {
+    background: var(--home-niebla);
+    border-color: var(--home-petroleo);
+  }
+  .home-menu-trigger { anchor-name: --home-menu-trigger; }
+  .home-encabezado .home-menu-panel {
+    position: fixed;
+    inset: auto 1rem auto auto;
+    top: 5.5rem;
+    top: calc(anchor(--home-menu-trigger bottom) + 0.75rem);
+    width: min(21rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 7rem);
+    overflow: auto;
+    padding: 1rem;
+    border: 1px solid var(--home-borde);
+    border-radius: 1rem;
+    background: var(--home-marfil);
+    box-shadow: 0 8px 24px rgb(15 36 29 / 12%);
+  }
+  .home-encabezado .home-nav-links { display: grid; gap: 0.25rem; }
+  .home-encabezado .home-nav-links a { font-size: 0.95rem; white-space: normal; }
+  .home-encabezado .home-menu-close { display: flex; margin: 0 0 0.5rem auto; }
+  .home-encabezado a.home-menu-waitlist { display: flex; margin-top: 1rem; }
+  .home-menu-panel::backdrop { background: rgb(15 36 29 / 12%); }
+}
+
+@media (max-width: 760px) {
+  .home-publica .home-encabezado { gap: 0.5rem; }
+  .home-encabezado .home-menu-panel {
+    top: 4.25rem;
+    top: calc(anchor(--home-menu-trigger bottom) + 0.75rem);
+    max-height: calc(100dvh - 5.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-nav-links::after { transition: inset 180ms ease; }
+}
+
+@media (forced-colors: active) {
+  .home-encabezado .home-nav-links a:is([aria-current], :target-current) {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+  .home-encabezado .home-nav-links::after { border-color: LinkText; }
+}

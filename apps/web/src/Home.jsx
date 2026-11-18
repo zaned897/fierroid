@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 
 import Marca from "./Marca.jsx";
+import HomeNavigation from "./HomeNavigation.jsx";
+import { homeNavigationText } from "./homeNavigationText.js";
 import ListaEspera from "./ListaEspera.jsx";
 import { PieHome } from "./PreguntasAcceso.jsx";
 import Secciones from "./Secciones.jsx";
@@ -20,24 +22,29 @@ function useBarraConScroll() {
 
   useEffect(() => {
     let previo = window.scrollY;
-    let pendiente = false;
-    const medir = () => {
-      pendiente = false;
+    let pendiente = 0;
+    const medir = (inicial = false) => {
+      pendiente = 0;
       const y = window.scrollY;
       const arriba = y < 24;
       const delta = y - previo;
-      if (Math.abs(delta) < UMBRAL_PX && !arriba) return;
-      const enfocada = document.activeElement?.closest?.(".home-encabezado");
-      setEstado({ arriba, oculta: !arriba && delta > 0 && !enfocada });
+      if (!inicial && Math.abs(delta) < UMBRAL_PX && !arriba) return;
+      const encabezado = document.querySelector(".home-encabezado");
+      const ocupada = encabezado.contains(document.activeElement) ||
+        encabezado.querySelector(":is(:popover-open, dialog:modal)");
+      setEstado({ arriba, oculta: !inicial && !arriba && delta > 0 && !ocupada });
       previo = y;
     };
     const alScroll = () => {
       if (pendiente) return;
-      pendiente = true;
-      requestAnimationFrame(medir);
+      pendiente = requestAnimationFrame(() => medir());
     };
+    medir(true);
     window.addEventListener("scroll", alScroll, { passive: true });
-    return () => window.removeEventListener("scroll", alScroll);
+    return () => {
+      window.removeEventListener("scroll", alScroll);
+      cancelAnimationFrame(pendiente);
+    };
   }, []);
 
   return estado;
@@ -57,18 +64,12 @@ export default function Home({ onEntrar }) {
           <Marca size={38} />
           <span>Fierro</span>
         </a>
-        <nav className="home-navegacion" aria-label="Navegación principal">
-          <a href="#mas-que-bascula">Lo que hace</a>
-          <a href="#como-funciona">Cómo funciona</a>
-          <a href="#beneficios">Beneficios</a>
-          <a href="#por-que-pesar">Por qué pesar</a>
-          <a href="#fierro-vision">Vision Premium</a>
-          <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
-        </nav>
+        <HomeNavigation />
         <button type="button" className="home-entrar home-entrar-cabecera" onClick={onEntrar}>
-          <span className="home-entrar-largo">Iniciar sesión</span>
-          <span className="home-entrar-corto">Entrar</span>
+          <span className="home-entrar-largo">{homeNavigationText.login}</span>
+          <span className="home-entrar-corto">{homeNavigationText.loginShort}</span>
         </button>
+        <a className="home-entrar home-lista-cabecera" href="#lista-espera">{homeNavigationText.waitlist}</a>
       </header>
 
       <main id="contenido-home">

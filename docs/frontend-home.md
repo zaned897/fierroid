@@ -100,10 +100,14 @@ borrar texto (#89) y Fierro Vision dice el estado real de cada capacidad (#90).
 | Preguntas frecuentes | Ancla #preguntas-frecuentes. |
 | Iniciar sesión | Usar el flujo existente, hoy mediante onEntrar. |
 
-En móvil, mantener visible Iniciar sesión; Entrar es una abreviación aceptable
-solo si el ancho lo exige. No esconder la única entrada detrás de un menú.
-Los enlaces secundarios pueden omitirse del encabezado móvil: no agregar un
-menú hamburguesa sin contenido necesario. Ofrecer Saltar al contenido para teclado.
+Actualización #152, aprobada el 2026-11-12: [variante A, cristal a lo ancho](https://claude.ai/artifact/MdQfLzp4Wn5SkHqx6c3Lzu),
+con [visto bueno del dueño](https://github.com/zaned897/fierroid/issues/152#issuecomment-6843233188).
+Transparente sobre la portada; marfil translúcido, línea fina y sombra suave al
+fijarse. Subrayado de sección activa; Unirme a la lista como píldora sólida e
+Iniciar sesión como texto. Conservar los seis destinos actuales de navegación.
+En móvil, mantener visible Iniciar sesión (Entrar si el ancho lo exige) y mostrar
+los destinos en un Popover nativo, con dialog como respaldo. Ofrecer Saltar al
+contenido para teclado. Evidencia de implementación: [revisión #152](design/home/revision-152.md).
 
 ## 5. Portada — lámina 01
 

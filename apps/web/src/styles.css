@@ -2440,19 +2440,28 @@ a.home-entrar:focus-visible {
   width: auto;
   padding-inline: max(1.5rem, calc((100% - 80rem) / 2));
   border-bottom: 1px solid transparent;
-  transition: transform 0.35s ease, background-color 0.35s ease, border-color 0.35s ease;
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .home-encabezado.fija {
-  border-bottom-color: var(--home-borde);
-  background: color-mix(in srgb, var(--home-marfil) 92%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  border-bottom-color: rgb(20 60 45 / 12%);
+  background: var(--home-marfil);
+  box-shadow: 0 3px 12px rgb(15 36 29 / 6%);
 }
 
-.home-encabezado.oculta {
+@supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+  .home-encabezado.fija {
+    background: rgb(247 248 243 / 94%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
+.home-encabezado.oculta:not(:focus-within) {
   transform: translateY(-100%);
 }
+
+.home-encabezado.oculta:has(:is(:popover-open, dialog:modal)) { transform: none; }
 
 .home-portada {
   display: grid;
