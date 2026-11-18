@@ -15,6 +15,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
+from uuid import uuid4
 
 if TYPE_CHECKING:
     from psycopg import Cursor
@@ -88,6 +89,7 @@ def upsert_animal(
     tag_id: str,
     alias: str | None = None,
     notes: str | None = None,
+    author_id: int | None = None,
 ) -> dict[str, Any]:
     """Crea o actualiza la ficha. Idempotente por (organizacion, arete)."""
     import psycopg
@@ -97,17 +99,45 @@ def upsert_animal(
         org_id = _org_id(cur, org_slug)
         cur.execute(
             """
-            INSERT INTO animals (org_id, tag_id, alias, notes)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO animals (org_id, tag_id, alias)
+            VALUES (%s, %s, %s)
             ON CONFLICT (org_id, tag_id) DO UPDATE SET
               alias      = COALESCE(EXCLUDED.alias, animals.alias),
-              notes      = COALESCE(EXCLUDED.notes, animals.notes),
               updated_at = now()
-            RETURNING id, tag_id, alias, notes, created_at, updated_at
+            RETURNING id, tag_id, alias, created_at, updated_at
             """,
-            (org_id, tag_id, alias, notes),
+            (org_id, tag_id, alias),
         )
         fila = dict(require_row(cur.fetchone(), "guardar ficha del animal"))
+        # El upsert bloquea la ficha hasta el commit, serializando reintentos.
+        cur.execute(
+            "SELECT j.body FROM journal_entries j "
+            "JOIN journal_entry_animals ja ON ja.entry_id=j.entry_id AND ja.org_id=j.org_id "
+            "WHERE ja.animal_id=%s AND j.source='ficha' "
+            "ORDER BY j.created_at DESC, j.entry_id DESC LIMIT 1", (fila["id"],),
+        )
+        latest = cur.fetchone()
+        current_notes = latest["body"] if latest else None
+        if notes is not None and not notes.strip() and current_notes is not None:
+            raise ValueError("Las notas son históricas; escribe una nueva anotación no vacía")
+        if notes is not None and notes.strip() and notes != current_notes:
+            if len(notes) > 4000:
+                raise ValueError("La nota no puede superar 4000 caracteres")
+            if author_id is None:
+                raise ValueError("La nota requiere autor")
+            entry_id = uuid4()
+            cur.execute(
+                "INSERT INTO journal_entries "
+                "(entry_id, org_id, author_id, occurred_at, created_at, category, body, source) "
+                "VALUES (%s, %s, %s, clock_timestamp(), clock_timestamp(), 'general', %s, 'ficha')",
+                (entry_id, org_id, author_id, notes),
+            )
+            cur.execute(
+                "INSERT INTO journal_entry_animals(entry_id, animal_id, org_id) VALUES (%s,%s,%s)",
+                (entry_id, fila["id"], org_id),
+            )
+            current_notes = notes
+        fila["notes"] = current_notes
         conn.commit()
 
     fila["created_at"] = fila["created_at"].isoformat()
@@ -146,13 +176,19 @@ def list_animals(dsn: str, *, org_slug: str | None = None) -> list[dict[str, Any
               SELECT o.id, o.slug, a.tag_id
               FROM animals a JOIN alcance o ON o.id = a.org_id
             )
-            SELECT t.tag_id, t.org, a.alias, a.notes,
+            SELECT t.tag_id, t.org, a.alias, note.body AS notes,
                    (ph.animal_id IS NOT NULL) AS has_photo,
                    u.weight_kg AS last_weight_kg,
                    u.captured_at AS last_captured_at,
                    COALESCE(u.total, 0) AS readings
             FROM tags t
             LEFT JOIN animals a ON a.org_id = t.org_id AND a.tag_id = t.tag_id
+            LEFT JOIN LATERAL (
+              SELECT j.body FROM journal_entries j
+              JOIN journal_entry_animals ja ON ja.entry_id=j.entry_id AND ja.org_id=j.org_id
+              WHERE ja.animal_id=a.id AND j.org_id=a.org_id AND j.source='ficha'
+              ORDER BY j.created_at DESC, j.entry_id DESC LIMIT 1
+            ) note ON true
             LEFT JOIN animal_photos ph ON ph.animal_id = a.id
             LEFT JOIN LATERAL (
               SELECT r.weight_kg, r.captured_at, count(*) OVER () AS total

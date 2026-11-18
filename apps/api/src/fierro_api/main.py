@@ -91,7 +91,9 @@ class AnimalIn(BaseModel):
 class JournalIn(BaseModel):
     entry_id: UUID
     occurred_at: AwareDatetime
-    category: Literal["observacion", "alimentacion", "manejo", "salud"]
+    category: Literal[
+        "observacion", "alimentacion", "manejo", "salud", "clima", "insumos", "equipo", "general"
+    ]
     body: str = Field(min_length=1, max_length=4000)
 
     @field_validator("body")
@@ -101,6 +103,12 @@ class JournalIn(BaseModel):
         if not value:
             raise ValueError("Escribe una anotación")
         return value
+
+
+class RanchJournalIn(JournalIn):
+    tags: list[Annotated[str, Field(min_length=1, max_length=200, pattern=r"\S")]] = Field(
+        default_factory=list, max_length=100,
+    )
 
 
 class OrgIn(BaseModel):
@@ -423,11 +431,48 @@ def post_animal_journal(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.post("/v1/journal")
+def post_journal(
+    body: RanchJournalIn, user: CurrentUser, org: str | None = Query(default=None),
+) -> dict[str, Any]:
+    try:
+        return journal.add_entry(
+            _require_postgres(), org=_write_scope(user, org),
+            author_id=user.id, **body.model_dump(),
+        )
+    except journal.EntryConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/v1/journal")
+def get_journal(
+    user: CurrentUser, org: str | None = Query(default=None),
+    tag: str | None = Query(default=None),
+    desde: Annotated[AwareDatetime | None, Query()] = None,
+    hasta: Annotated[AwareDatetime | None, Query()] = None,
+    limit: int = Query(default=20, ge=1, le=100),
+    cursor: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Diario por organización; fechas inclusivas sobre occurred_at, con zona horaria."""
+    if desde is not None and hasta is not None and desde > hasta:
+        raise HTTPException(status_code=400, detail="desde debe ser anterior o igual a hasta")
+    return _journal_page(user, org, tag, limit, cursor, desde, hasta)
+
+
 @app.get("/v1/animals/{tag_id}/journal")
 def get_animal_journal(
     tag_id: str, user: CurrentUser, org: str | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     cursor: str | None = Query(default=None),
+) -> dict[str, Any]:
+    return _journal_page(user, org, tag_id, limit, cursor)
+
+
+def _journal_page(
+    user: AuthUser, org: str | None, tag: str | None, limit: int, cursor: str | None,
+    desde: datetime | None = None, hasta: datetime | None = None,
 ) -> dict[str, Any]:
     before = None
     if cursor:
@@ -443,8 +488,8 @@ def get_animal_journal(
         except (ValueError, TypeError) as exc:
             raise HTTPException(status_code=400, detail="Cursor inválido") from exc
     entries = journal.list_entries(
-        _require_postgres(), org=_write_scope(user, org), tag=tag_id,
-        limit=limit, before=before,
+        _require_postgres(), org=_write_scope(user, org), tag=tag,
+        limit=limit, before=before, desde=desde, hasta=hasta,
     )
     next_cursor = None
     if len(entries) == limit:
@@ -503,6 +548,7 @@ def put_animal(
             tag_id=tag_id,
             alias=body.alias,
             notes=body.notes,
+            author_id=user.id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
