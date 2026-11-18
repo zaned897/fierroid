@@ -91,7 +91,9 @@ class AnimalIn(BaseModel):
 class JournalIn(BaseModel):
     entry_id: UUID
     occurred_at: AwareDatetime
-    category: Literal["observacion", "alimentacion", "manejo", "salud"]
+    category: Literal[
+        "observacion", "alimentacion", "manejo", "salud", "clima", "insumos", "equipo", "general"
+    ]
     body: str = Field(min_length=1, max_length=4000)
 
     @field_validator("body")
@@ -101,6 +103,17 @@ class JournalIn(BaseModel):
         if not value:
             raise ValueError("Escribe una anotación")
         return value
+
+
+class RanchJournalIn(JournalIn):
+    tags: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("tags")
+    @classmethod
+    def non_blank_tags(cls, value: list[str]) -> list[str]:
+        if any(not tag.strip() for tag in value):
+            raise ValueError("El arete no puede estar vacío")
+        return sorted(set(value))
 
 
 class OrgIn(BaseModel):
@@ -423,12 +436,45 @@ def post_animal_journal(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.post("/v1/journal")
+def post_journal(
+    body: RanchJournalIn, user: CurrentUser, org: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Diario append-only de la organización; tags vacío permite notas del rancho."""
+    try:
+        return journal.add_ranch_entry(
+            _require_postgres(), org=_write_scope(user, org), author_id=user.id,
+            **body.model_dump(),
+        )
+    except journal.EntryConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.get("/v1/animals/{tag_id}/journal")
 def get_animal_journal(
     tag_id: str, user: CurrentUser, org: str | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     cursor: str | None = Query(default=None),
 ) -> dict[str, Any]:
+    return get_journal(
+        user, org=org, tag=tag_id, limit=limit, cursor=cursor, desde=None, hasta=None,
+    )
+
+
+@app.get("/v1/journal")
+def get_journal(
+    user: CurrentUser, org: str | None = Query(default=None),
+    tag: str | None = Query(default=None),
+    desde: Annotated[AwareDatetime | None, Query()] = None,
+    hasta: Annotated[AwareDatetime | None, Query()] = None,
+    limit: int = Query(default=20, ge=1, le=100),
+    cursor: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Desde inclusivo, hasta exclusivo; ambas fechas deben incluir zona horaria."""
+    if desde is not None and hasta is not None and desde >= hasta:
+        raise HTTPException(status_code=400, detail="Desde debe ser anterior a hasta")
     before = None
     if cursor:
         try:
@@ -443,8 +489,8 @@ def get_animal_journal(
         except (ValueError, TypeError) as exc:
             raise HTTPException(status_code=400, detail="Cursor inválido") from exc
     entries = journal.list_entries(
-        _require_postgres(), org=_write_scope(user, org), tag=tag_id,
-        limit=limit, before=before,
+        _require_postgres(), org=_write_scope(user, org), tag=tag,
+        limit=limit, before=before, desde=desde, hasta=hasta,
     )
     next_cursor = None
     if len(entries) == limit:
@@ -501,6 +547,7 @@ def put_animal(
             _require_postgres(),
             org_slug=_write_scope(user, org),
             tag_id=tag_id,
+            author_id=user.id,
             alias=body.alias,
             notes=body.notes,
         )

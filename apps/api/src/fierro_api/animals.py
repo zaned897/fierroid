@@ -15,6 +15,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
+from uuid import uuid4
 
 if TYPE_CHECKING:
     from psycopg import Cursor
@@ -22,6 +23,16 @@ if TYPE_CHECKING:
 from fierro_api.db import require_row
 
 logger = logging.getLogger(__name__)
+
+# Compatibilidad con la ficha anterior: el diario conserva cada cambio de Notas.
+_PROFILE_NOTE_JOIN = """
+    LEFT JOIN LATERAL (
+      SELECT j.body FROM journal_entry_animals ea
+      JOIN journal_entries j ON j.entry_id=ea.entry_id AND j.org_id=ea.org_id
+      WHERE ea.animal_id=a.id AND ea.org_id=a.org_id AND j.source='ficha'
+      ORDER BY j.created_at DESC, j.entry_id DESC LIMIT 1
+    ) profile_note ON true
+"""
 
 # 2 MB. La PWA reduce la imagen antes de subirla, asi que esto es el tope de
 # seguridad, no el tamano esperado.
@@ -86,6 +97,7 @@ def upsert_animal(
     *,
     org_slug: str,
     tag_id: str,
+    author_id: int,
     alias: str | None = None,
     notes: str | None = None,
 ) -> dict[str, Any]:
@@ -97,17 +109,36 @@ def upsert_animal(
         org_id = _org_id(cur, org_slug)
         cur.execute(
             """
-            INSERT INTO animals (org_id, tag_id, alias, notes)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO animals (org_id, tag_id, alias)
+            VALUES (%s, %s, %s)
             ON CONFLICT (org_id, tag_id) DO UPDATE SET
               alias      = COALESCE(EXCLUDED.alias, animals.alias),
-              notes      = COALESCE(EXCLUDED.notes, animals.notes),
               updated_at = now()
-            RETURNING id, tag_id, alias, notes, created_at, updated_at
+            RETURNING id, tag_id, alias, created_at, updated_at
             """,
-            (org_id, tag_id, alias, notes),
+            (org_id, tag_id, alias),
         )
         fila = dict(require_row(cur.fetchone(), "guardar ficha del animal"))
+        # El upsert mantiene el lock de la ficha hasta el commit. Dos reintentos
+        # concurrentes comparan contra la última nota ya confirmada.
+        cur.execute(
+            "SELECT profile_note.body AS notes FROM animals a " + _PROFILE_NOTE_JOIN +
+            " WHERE a.id=%s", (fila["id"],),
+        )
+        fila["notes"] = require_row(cur.fetchone(), "leer nota de la ficha")["notes"]
+        if notes is not None and notes.strip() and notes != fila["notes"]:
+            entry_id = uuid4()
+            cur.execute(
+                "INSERT INTO journal_entries(entry_id, org_id, author_id, occurred_at, "
+                "created_at, category, body, source) VALUES "
+                "(%s,%s,%s,statement_timestamp(),statement_timestamp(),'general',%s,'ficha')",
+                (entry_id, org_id, author_id, notes),
+            )
+            cur.execute(
+                "INSERT INTO journal_entry_animals(entry_id, animal_id, org_id) VALUES (%s,%s,%s)",
+                (entry_id, fila["id"], org_id),
+            )
+            fila["notes"] = notes
         conn.commit()
 
     fila["created_at"] = fila["created_at"].isoformat()
@@ -146,13 +177,14 @@ def list_animals(dsn: str, *, org_slug: str | None = None) -> list[dict[str, Any
               SELECT o.id, o.slug, a.tag_id
               FROM animals a JOIN alcance o ON o.id = a.org_id
             )
-            SELECT t.tag_id, t.org, a.alias, a.notes,
+            SELECT t.tag_id, t.org, a.alias, profile_note.body AS notes,
                    (ph.animal_id IS NOT NULL) AS has_photo,
                    u.weight_kg AS last_weight_kg,
                    u.captured_at AS last_captured_at,
                    COALESCE(u.total, 0) AS readings
             FROM tags t
             LEFT JOIN animals a ON a.org_id = t.org_id AND a.tag_id = t.tag_id
+            """ + _PROFILE_NOTE_JOIN + """
             LEFT JOIN animal_photos ph ON ph.animal_id = a.id
             LEFT JOIN LATERAL (
               SELECT r.weight_kg, r.captured_at, count(*) OVER () AS total
