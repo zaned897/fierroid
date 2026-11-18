@@ -1,5 +1,34 @@
 # Relevo del frontend del home
 
+## 2026-11-17 — Carrusel a una pantalla (#154)
+
+Implementación terminada; revisión visual pendiente por restricciones del entorno.
+La sección completa mide `100svh`, con la cabeza superpuesta existente y el
+carrusel ocupando su altura, sin el mínimo fijo de 560 px. Se eliminó la pausa
+por hover y se añadió pausa/reproducción junto a los indicadores, visible también
+en móvil, con botón nativo de 44 × 44 px y nombre accesible según la acción.
+La pausa manual persiste al cambiar de foco o visibilidad. Se conservan las
+pausas por foco, pestaña oculta y sección fuera de vista, así como movimiento
+reducido, flechas y deslizamiento. Contenido e imágenes sin cambios.
+
+Archivos: `MasQueBascula.jsx` y `mas-que-bascula.css`.
+Validación: `pnpm lint`, los 28 tests de `pnpm test`, `pnpm build`, `ruff check
+apps scripts`, espejo de skills y `mypy` (36 archivos) correctos. Pytest: 193
+aprobados y 101 omitidos sin PostgreSQL. Una prueba temporal con React y JSDOM
+reprodujo la pausa por hover en HEAD y pasó con el cambio; cubrió también foco,
+pausa manual persistente, visibilidad, fin de animación, flechas, deslizamientos
+y navegación circular. No sustituye la comprobación del render ni de animaciones
+reales en navegador.
+
+Pendiente antes de cerrar #154: capturas y comprobación visual a 1440 × 900,
+1366 × 768 y 375 × 667 (también 390 y 768 px según la guía), movimiento reducido
+y teclado en navegador; PostgreSQL y smoke de Compose en CI. Chrome no pudo
+iniciarse y Computer Use denegó Firefox; Docker no respondió. La asignación del
+issue fue rechazada por requerir aprobación no disponible y `.git` es de solo
+lectura, por lo que no se pudo crear `agente/carrusel-pantalla` desde `main`.
+Cambios sin commit en `exp/codex-astra-154`; no se abrió PR. Al poder entregarlo,
+incluir `Closes #154` y las capturas. No se inicia otra unidad del home.
+
 ## 2026-09-25 — Panel privado
 
 El estilo aprobado del panel se implementó reutilizando la marca y componentes
