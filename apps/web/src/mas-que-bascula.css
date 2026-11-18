@@ -1,7 +1,9 @@
 /* Más que una báscula (#94) como carrusel a ventana completa (propuesta K). */
+/* La sección fija el alto total; el título se superpone y no agrega altura. */
 .home-publica .mas-que-bascula {
   --mqb-lado: clamp(24px, 5vw, 64px);
   position: relative;
+  height: 100svh;
   padding: 0;
   scroll-margin-top: 0;
   color: var(--home-marfil);
@@ -46,8 +48,7 @@
   isolation: isolate;
   overflow: hidden;
   width: 100%;
-  height: 100svh;
-  min-height: 560px;
+  height: 100%;
   background: var(--home-noche);
   color: var(--home-marfil);
   touch-action: pan-y;
@@ -236,6 +237,7 @@
 .mqb-flechas { display: flex; gap: 8px; }
 
 .mqb-flecha {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
   width: 44px;
@@ -263,7 +265,6 @@
   .home-publica .mqb-texto h3 { font-size: 2.1rem; }
   .mqb-flechas, .mqb-paso-nombre { display: none; }
   .mqb-nav { bottom: 28px; }
-  .mqb-paso { min-height: 32px; }
 }
 
 /* Con movimiento reducido: solo fundido, sin acercamiento ni avance solo. */

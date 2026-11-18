@@ -1,5 +1,29 @@
 # Relevo del frontend del home
 
+## 2026-11-17 — #154: carrusel de una pantalla y control de reproducción
+
+Implementado en `MasQueBascula.jsx` y `mas-que-bascula.css`: la sección mide
+`100svh`, con el título superpuesto existente y el carrusel al 100%, sin el
+mínimo de 560 px. Hover deja de pausar; foco, pestaña oculta y sección fuera de
+vista conservan su pausa. El botón junto a los indicadores alterna entre
+“Pausar carrusel” y “Reproducir carrusel”, también en móvil, con objetivo de
+44 × 44 px. Se conservan imágenes, contenido y la regla de movimiento reducido.
+
+Validación local: `pnpm lint`, `pnpm test` (28 pruebas), `pnpm build`, Ruff,
+Mypy y espejo de skills correctos. Pytest: 193 pasan y 101 se omiten sin los
+servicios/configuración opcionales. Prueba temporal de interacción con React y
+JSDOM: el original falla al hacer hover; el cambio pasa hover, final de animación,
+pausa/reproducción y sus etiquetas, foco interno, visibilidad, flechas y deslizar.
+JSDOM no valida geometría ni reproduce animaciones CSS.
+
+Pendiente: revisión visual y capturas en 1440 × 900, 1366 × 768 y 375 × 667,
+y comprobación de movimiento reducido en navegador. Chrome no pudo iniciarse;
+Computer Use no tiene navegador conectado y denegó acceso a Firefox. Docker
+no respondió, por lo que Postgres y el smoke de Compose no se verificaron.
+GitHub bloqueó la asignación y `.git` es de solo lectura, impidiendo crear
+`agente/carrusel-pantalla`. Sin commit ni PR, según la petición de no commitear.
+Siguiente paso: completar evidencia visual y preparar el PR con `Closes #154`.
+
 ## 2026-09-25 — Panel privado
 
 El estilo aprobado del panel se implementó reutilizando la marca y componentes

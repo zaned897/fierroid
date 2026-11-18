@@ -49,6 +49,10 @@ const IDEAS = [
 const CORTINA_MS = 1100;
 /** Distancia mínima del dedo para contar como deslizar y no como toque. */
 const DESLIZAR_PX = 40;
+const PLAYBACK_LABELS = {
+  pause: "Pausar carrusel",
+  play: "Reproducir carrusel",
+};
 
 /**
  * El avance automático no usa temporizadores: lo marca la animación de la
@@ -61,9 +65,10 @@ export default function MasQueBascula() {
   const x0 = useRef(null);
   const [actual, setActual] = useState(0);
   const [previa, setPrevia] = useState(null);
-  const [encima, setEncima] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [pausedByUser, setPausedByUser] = useState(false);
   const [aLaVista, setALaVista] = useState(false);
-  const [oculta, setOculta] = useState(false);
+  const [oculta, setOculta] = useState(() => document.hidden);
 
   const ir = (n) => {
     const siguiente = (n + IDEAS.length) % IDEAS.length;
@@ -95,7 +100,7 @@ export default function MasQueBascula() {
     return () => document.removeEventListener("visibilitychange", cambio);
   }, []);
 
-  const pausa = encima || !aLaVista || oculta;
+  const pausa = pausedByUser || focused || !aLaVista || oculta;
 
   return (
     <section className="bloque mas-que-bascula" id="mas-que-bascula" aria-labelledby="mqb-titulo" data-revelar>
@@ -111,10 +116,8 @@ export default function MasQueBascula() {
         aria-roledescription="carrusel"
         aria-label="Lo que Fierro hace con tus pesajes"
         tabIndex={0}
-        onMouseEnter={() => setEncima(true)}
-        onMouseLeave={() => setEncima(false)}
-        onFocus={() => setEncima(true)}
-        onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setEncima(false); }}
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false); }}
         onKeyDown={(e) => {
           if (e.key === "ArrowRight") ir(actual + 1);
           if (e.key === "ArrowLeft") ir(actual - 1);
@@ -180,12 +183,22 @@ export default function MasQueBascula() {
                 <span
                   key={k === actual ? `activa-${actual}` : "quieta"}
                   className="mqb-barra"
-                  onAnimationEnd={k === actual ? () => ir(actual + 1) : undefined}
+                  onAnimationEnd={k === actual && !pausa ? () => ir(actual + 1) : undefined}
                 />
                 <span className="mqb-paso-nombre">{idea.titulo}</span>
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className="mqb-flecha mqb-reproduccion"
+            aria-label={pausedByUser ? PLAYBACK_LABELS.play : PLAYBACK_LABELS.pause}
+            onClick={() => setPausedByUser((paused) => !paused)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              {pausedByUser ? <path d="M8 5v14l11-7z" /> : <path d="M6 5h4v14H6zM14 5h4v14h-4z" />}
+            </svg>
+          </button>
           <div className="mqb-flechas">
             <button type="button" className="mqb-flecha" aria-label="Idea anterior" onClick={() => ir(actual - 1)}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
