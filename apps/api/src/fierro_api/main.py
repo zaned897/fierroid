@@ -123,6 +123,21 @@ class DiarioIn(JournalIn):
         return tags
 
 
+class JournalSearchEntry(BaseModel):
+    entry_id: UUID
+    occurred_at: AwareDatetime
+    created_at: AwareDatetime
+    category: JournalCategory
+    body: str
+    author: str
+    animals: list[str]
+    excerpt: str = Field(description="Fragmento de texto con coincidencias entre [[ y ]].")
+
+
+class JournalSearchOut(BaseModel):
+    entries: list[JournalSearchEntry]
+
+
 class OrgIn(BaseModel):
     slug: str = Field(min_length=2, max_length=60)
     name: str = Field(min_length=2, max_length=120)
@@ -496,6 +511,24 @@ def get_journal(
         before=_journal_cursor(cursor),
     )
     return _journal_page(entries, limit)
+
+
+@app.get("/v1/journal/search", response_model=JournalSearchOut)
+def search_journal(
+    user: CurrentUser,
+    q: Annotated[str, Query(min_length=1, max_length=300, pattern=r"\S")],
+    org: str | None = Query(default=None),
+    tag: str | None = Query(default=None),
+    desde: Annotated[datetime | None, Query()] = None,
+    hasta: Annotated[datetime | None, Query()] = None,
+    limit: int = Query(default=10, ge=1, le=100),
+) -> dict[str, Any]:
+    """Busca por texto en el Diario, dentro del alcance de la sesion."""
+    entries = journal.search(
+        _require_postgres(), org=_write_scope(user, org), query=q, tag=tag,
+        desde=_aware(desde, "desde"), hasta=_aware(hasta, "hasta"), limit=limit,
+    )
+    return {"entries": entries}
 
 
 @app.post("/v1/animals/{tag_id}/journal")

@@ -14,15 +14,16 @@ from fierro_api.animals import _org_id
 # cambio: un reintento del mismo guardado cae en el mismo id y no duplica.
 _FICHA_NS = UUID("6f1c2b1e-5d0a-4a57-9a43-1f0f6e1b9c11")
 
-_SELECT = (
-    "SELECT e.entry_id, e.occurred_at, e.created_at, e.category, e.body, e.source, "
+_ENTRY_COLUMNS = (
+    "e.entry_id, e.occurred_at, e.created_at, e.category, e.body, e.source, "
     "e.org_id, e.author_id, "
     "COALESCE(NULLIF(u.full_name,''), u.email, 'Notas de la ficha') AS author, "
     "COALESCE((SELECT array_agg(a.tag_id ORDER BY a.tag_id) "
     "  FROM journal_entry_animals ea JOIN animals a ON a.id=ea.animal_id "
     "  WHERE ea.entry_id=e.entry_id), '{}') AS animals "
-    "FROM journal_entries e LEFT JOIN users u ON u.id=e.author_id "
 )
+_ENTRY_FROM = "FROM journal_entries e LEFT JOIN users u ON u.id=e.author_id "
+_SELECT = "SELECT " + _ENTRY_COLUMNS + _ENTRY_FROM
 
 
 class EntryConflict(ValueError):
@@ -104,19 +105,10 @@ def add_entry(
     )
 
 
-def list_journal(
-    dsn: str, *, org: str, limit: int, tag: str | None = None,
-    desde: datetime | None = None, hasta: datetime | None = None,
-    before: tuple[datetime, UUID] | None = None,
-) -> list[dict[str, Any]]:
-    """Entradas de UNA organización, más recientes primero.
-
-    `desde` es inclusivo y `hasta` exclusivo. Con `tag`, solo las entradas que
-    incluyen ese animal (también las que tienen varios).
-    """
-    import psycopg
-    from psycopg.rows import dict_row
-
+def _journal_filters(
+    org: str, tag: str | None, desde: datetime | None, hasta: datetime | None,
+) -> tuple[str, list[Any]]:
+    """Alcance y periodo compartidos por listado y busqueda."""
     condition = "WHERE e.org_id=(SELECT id FROM organizations WHERE slug=%s)"
     params: list[Any] = [org]
     if tag is not None:
@@ -132,6 +124,23 @@ def list_journal(
     if hasta is not None:
         condition += " AND e.occurred_at < %s"
         params.append(hasta)
+    return condition, params
+
+
+def list_journal(
+    dsn: str, *, org: str, limit: int, tag: str | None = None,
+    desde: datetime | None = None, hasta: datetime | None = None,
+    before: tuple[datetime, UUID] | None = None,
+) -> list[dict[str, Any]]:
+    """Entradas de UNA organización, más recientes primero.
+
+    `desde` es inclusivo y `hasta` exclusivo. Con `tag`, solo las entradas que
+    incluyen ese animal (también las que tienen varios).
+    """
+    import psycopg
+    from psycopg.rows import dict_row
+
+    condition, params = _journal_filters(org, tag, desde, hasta)
     if before:
         condition += " AND (e.occurred_at, e.entry_id) < (%s, %s)"
         params.extend(before)
@@ -142,6 +151,39 @@ def list_journal(
             params,
         )
         return [_public(row) for row in cur.fetchall()]
+
+
+def search(
+    dsn: str, *, org: str, query: str, tag: str | None = None,
+    desde: datetime | None = None, hasta: datetime | None = None, limit: int = 10,
+) -> list[dict[str, Any]]:
+    """Coincidencias por relevancia, fecha y UUID, dentro de una organizacion.
+
+    El fragmento es texto con marcas [[...]]. El consumidor lo muestra como
+    texto. La obtencion de autores, animales y fragmentos se hace tras el LIMIT.
+    """
+    import psycopg
+    from psycopg.rows import dict_row
+
+    condition, params = _journal_filters(org, tag, desde, hasta)
+    sql = (
+        "WITH terms AS MATERIALIZED ("
+        "SELECT websearch_to_tsquery('pg_catalog.spanish',public.fierro_unaccent(%s)) AS query"
+        "), ranked AS MATERIALIZED ("
+        "SELECT e.entry_id,ts_rank(e.search_tsv,terms.query) AS relevance "
+        "FROM journal_entries e CROSS JOIN terms " + condition +
+        " AND e.search_tsv @@ terms.query "
+        "ORDER BY relevance DESC,e.occurred_at DESC,e.entry_id DESC LIMIT %s"
+        ") SELECT " + _ENTRY_COLUMNS +
+        ",ts_headline('pg_catalog.spanish',e.body,terms.query,"
+        "'StartSel=[[, StopSel=]], MaxWords=35, MinWords=12, MaxFragments=1') AS excerpt "
+        + _ENTRY_FROM +
+        "JOIN ranked ON ranked.entry_id=e.entry_id CROSS JOIN terms "
+        "ORDER BY ranked.relevance DESC,e.occurred_at DESC,e.entry_id DESC"
+    )
+    with psycopg.connect(dsn, row_factory=dict_row) as conn, conn.cursor() as cur:
+        cur.execute(sql, [query.strip(), *params, limit])
+        return [{**_public(row), "excerpt": row["excerpt"]} for row in cur.fetchall()]
 
 
 def list_entries(

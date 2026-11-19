@@ -1,0 +1,264 @@
+{
+  "entries": [
+    {
+      "key": "cojera-pinta",
+      "category": "salud",
+      "body": "Cojera en la pata trasera de La Pinta. Se apartó para revisión veterinaria.",
+      "animals": [
+        "pinta"
+      ],
+      "occurred_at": "2026-11-01T08:00:00Z"
+    },
+    {
+      "key": "vacuna-brucelosis",
+      "category": "salud",
+      "body": "Aplicamos vacuna contra brucelosis a las vaquillas del lote nuevo.",
+      "animals": [
+        "pinta",
+        "colorada"
+      ],
+      "occurred_at": "2026-11-02T08:00:00Z"
+    },
+    {
+      "key": "sal-mineral",
+      "category": "insumos",
+      "body": "Llegaron ocho costales de sal mineral para los comederos del corral.",
+      "animals": [],
+      "occurred_at": "2026-11-03T08:00:00Z"
+    },
+    {
+      "key": "bascula-reparacion",
+      "category": "equipo",
+      "body": "Reparación de la báscula. Se cambió el cable del indicador y se verificó el cero.",
+      "animals": [],
+      "occurred_at": "2026-11-04T08:00:00Z"
+    },
+    {
+      "key": "lluvia-potrero",
+      "category": "clima",
+      "body": "Lluvia de treinta milímetros en el potrero norte. El acceso quedó lodoso.",
+      "animals": [],
+      "occurred_at": "2026-11-05T08:00:00Z"
+    },
+    {
+      "key": "desparasitacion",
+      "category": "salud",
+      "body": "Desparasitación de La Colorada según indicación del veterinario.",
+      "animals": [
+        "colorada"
+      ],
+      "occurred_at": "2026-11-06T08:00:00Z"
+    },
+    {
+      "key": "bebedero",
+      "category": "manejo",
+      "body": "Limpieza del bebedero del corral de recepción. Quedó abastecido.",
+      "animals": [],
+      "occurred_at": "2026-11-07T08:00:00Z"
+    },
+    {
+      "key": "pasto",
+      "category": "alimentacion",
+      "body": "Se ofreció pasto de corte fresco a La Pinta después del pesaje.",
+      "animals": [
+        "pinta"
+      ],
+      "occurred_at": "2026-11-08T08:00:00Z"
+    },
+    {
+      "key": "temperatura",
+      "category": "clima",
+      "body": "La temperatura bajó a seis grados durante la madrugada.",
+      "animals": [],
+      "occurred_at": "2026-11-09T08:00:00Z"
+    },
+    {
+      "key": "puerta",
+      "category": "equipo",
+      "body": "La puerta de la manga tiene una bisagra floja. Programar ajuste.",
+      "animals": [],
+      "occurred_at": "2026-11-10T08:00:00Z"
+    },
+    {
+      "key": "cambio-corral",
+      "category": "manejo",
+      "body": "La Pinta y La Colorada pasaron juntas al corral de observación.",
+      "animals": [
+        "pinta",
+        "colorada"
+      ],
+      "occurred_at": "2026-11-11T08:00:00Z"
+    },
+    {
+      "key": "costales",
+      "category": "insumos",
+      "body": "Se recibieron diez costales de alimento de crecimiento. Se guardaron bajo techo.",
+      "animals": [],
+      "occurred_at": "2026-11-12T08:00:00Z"
+    },
+    {
+      "key": "herida",
+      "category": "salud",
+      "body": "La Colorada presenta una herida superficial en el cuello. Se avisó al veterinario.",
+      "animals": [
+        "colorada"
+      ],
+      "occurred_at": "2026-11-13T08:00:00Z"
+    },
+    {
+      "key": "agua",
+      "category": "general",
+      "body": "Se revisó el nivel del tanque de agua antes de abrir la manga.",
+      "animals": [],
+      "occurred_at": "2026-11-14T08:00:00Z"
+    },
+    {
+      "key": "viento",
+      "category": "clima",
+      "body": "Viento fuerte por la tarde. Se aseguró la cubierta de la bodega.",
+      "animals": [],
+      "occurred_at": "2026-11-15T08:00:00Z"
+    },
+    {
+      "key": "heno",
+      "category": "alimentacion",
+      "body": "Se repartieron pacas de heno en el comedero del lote de vaquillas.",
+      "animals": [],
+      "occurred_at": "2026-11-16T08:00:00Z"
+    },
+    {
+      "key": "cerca",
+      "category": "manejo",
+      "body": "Se reparó la cerca del lindero sur y se cerró el paso al camino.",
+      "animals": [],
+      "occurred_at": "2026-11-17T08:00:00Z"
+    },
+    {
+      "key": "lector",
+      "category": "equipo",
+      "body": "El lector de aretes recuperó la señal después de limpiar el conector.",
+      "animals": [],
+      "occurred_at": "2026-11-18T08:00:00Z"
+    },
+    {
+      "key": "apetito",
+      "category": "salud",
+      "body": "La Pinta terminó su ración y mantiene buen apetito durante la observación.",
+      "animals": [
+        "pinta"
+      ],
+      "occurred_at": "2026-11-19T08:00:00Z"
+    },
+    {
+      "key": "combustible",
+      "category": "insumos",
+      "body": "Se registró la compra de combustible para el tractor del rancho.",
+      "animals": [],
+      "occurred_at": "2026-11-20T08:00:00Z"
+    },
+    {
+      "key": "sombra",
+      "category": "manejo",
+      "body": "Se habilitó sombra adicional para el corral de engorda.",
+      "animals": [],
+      "occurred_at": "2026-11-21T08:00:00Z"
+    },
+    {
+      "key": "racion",
+      "category": "alimentacion",
+      "body": "Se ajustó la ración de La Colorada después de la revisión de peso.",
+      "animals": [
+        "colorada"
+      ],
+      "occurred_at": "2026-11-22T08:00:00Z"
+    },
+    {
+      "key": "cielo",
+      "category": "clima",
+      "body": "Cielo despejado durante toda la jornada de trabajo.",
+      "animals": [],
+      "occurred_at": "2026-11-23T08:00:00Z"
+    },
+    {
+      "key": "visita",
+      "category": "general",
+      "body": "Visita del comprador para revisar los animales disponibles.",
+      "animals": [],
+      "occurred_at": "2026-11-24T08:00:00Z"
+    },
+    {
+      "key": "pesaje",
+      "category": "manejo",
+      "body": "Ambas vacas pasaron tranquilas por la manga durante el pesaje de control.",
+      "animals": [
+        "pinta",
+        "colorada"
+      ],
+      "occurred_at": "2026-11-25T08:00:00Z"
+    },
+    {
+      "key": "bomba",
+      "category": "equipo",
+      "body": "La bomba del pozo quedó detenida por mantenimiento eléctrico.",
+      "animals": [],
+      "occurred_at": "2026-11-26T08:00:00Z"
+    },
+    {
+      "key": "botiquin",
+      "category": "insumos",
+      "body": "Se revisó el botiquín y se anotaron los materiales por reponer.",
+      "animals": [],
+      "occurred_at": "2026-11-27T08:00:00Z"
+    },
+    {
+      "key": "veterinario",
+      "category": "salud",
+      "body": "El veterinario revisó a La Colorada antes de devolverla al lote.",
+      "animals": [
+        "colorada"
+      ],
+      "occurred_at": "2026-11-28T08:00:00Z"
+    },
+    {
+      "key": "inventario",
+      "category": "general",
+      "body": "Se cerró el inventario mensual de herramientas de la bodega.",
+      "animals": [],
+      "occurred_at": "2026-11-29T08:00:00Z"
+    },
+    {
+      "key": "forraje",
+      "category": "alimentacion",
+      "body": "Se apartó forraje seco para la semana de trabajo en la manga.",
+      "animals": [],
+      "occurred_at": "2026-11-30T08:00:00Z"
+    }
+  ],
+  "questions": [
+    {
+      "question": "¿Qué animal tuvo cojera en una pata?",
+      "query": "cojera pata",
+      "expected": "cojera-pinta"
+    },
+    {
+      "question": "¿Cuándo se aplicó la vacuna de brucelosis?",
+      "query": "vacuna brucelosis",
+      "expected": "vacuna-brucelosis"
+    },
+    {
+      "question": "¿Llegó la sal mineral?",
+      "query": "\"sal mineral\"",
+      "expected": "sal-mineral"
+    },
+    {
+      "question": "¿Qué reparación se hizo a la báscula?",
+      "query": "báscula reparación",
+      "expected": "bascula-reparacion"
+    },
+    {
+      "question": "¿Llovió en el potrero norte?",
+      "query": "\"potrero norte\" lluvia",
+      "expected": "lluvia-potrero"
+    }
+  ]
+}
