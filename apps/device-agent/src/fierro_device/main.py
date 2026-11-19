@@ -53,10 +53,12 @@ class Agent:
         self._last_tag_at = 0.0
         # Error de hardware sin configurar: se registra una vez y se deja de capturar.
         self._hw_error: str | None = None
-        # Ultimo error de captura/driver (cualquiera), para el heartbeat.
+        # Ultimo error de captura/driver desde el heartbeat anterior. Tras un
+        # heartbeat enviado vuelve a `_hw_error` (persistente) o a None.
         self._last_error: str | None = None
-        # Ultimo push aceptado por la API (ISO UTC), para el heartbeat.
-        self._last_sync_ok_at: str | None = None
+        # Ultimo push aceptado por la API (ISO UTC), para el heartbeat. Se toma de
+        # la outbox al arrancar: un reinicio no debe borrar el dato en la nube.
+        self._last_sync_ok_at: str | None = self.store.ultimo_sync()
 
     def stop(self, *_args: object) -> None:
         logger.info("shutdown requested")
@@ -152,6 +154,7 @@ class Agent:
                     "last_sync_ok_at": self._last_sync_ok_at,
                 },
             )
+            self._last_error = self._hw_error
         except Exception:
             logger.exception("heartbeat failed")
 

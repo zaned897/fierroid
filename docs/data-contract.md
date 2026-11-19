@@ -55,7 +55,12 @@ manda se sigue aceptando y quedan `null`. `GET /v1/devices` los devuelve.
 | `clock_synced` | `timedatectl show -p NTPSynchronized` |
 | `hw_rev` | variable `FIERRO_HW_REV` |
 | `last_sync_ok_at` | último `POST /v1/readings` aceptado por la API |
-| `last_error` | último error del driver o de la captura (la API recorta a 1000 caracteres) |
+| `last_error` | último error del driver o de la captura desde el heartbeat anterior; si el hardware no está configurado, se repite en cada heartbeat |
+
+Validación en la API: `disk_used_pct` entre 0 y 100 y `throttled` entre 0 y
+`0xFFFFFFFF` (fuera de rango → 422). `NaN`/`Infinity` en números se guardan como
+`null`. `hw_rev` y `last_error` se recortan a 1000 caracteres, sin `\x00`, y un texto
+vacío queda `null`. `device_id` viaja en la URL, no en el cuerpo.
 
 ## Endpoints MVP
 

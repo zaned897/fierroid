@@ -100,5 +100,15 @@ class OutboxStore:
         ).fetchone()
         return int(row["c"])
 
+    def ultimo_sync(self) -> str | None:
+        """`synced_at` mas reciente como ISO UTC, o None si nunca hubo ACK."""
+        row = self._conn.execute(
+            "SELECT max(synced_at) AS s FROM readings WHERE status = 'synced'"
+        ).fetchone()
+        if not row["s"]:
+            return None
+        # datetime('now') de SQLite es UTC sin zona: "YYYY-MM-DD HH:MM:SS".
+        return str(row["s"]).replace(" ", "T") + "+00:00"
+
     def close(self) -> None:
         self._conn.close()

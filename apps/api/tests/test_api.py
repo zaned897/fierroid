@@ -154,3 +154,29 @@ def test_base_sqlite_vieja_recibe_las_columnas_de_salud(tmp_path):
     (d,) = store.list_devices()
     assert d["pending_count"] == 3
     assert all(d[c] is None for c in SALUD_CAMPOS)
+
+
+def test_heartbeat_con_nan_guarda_null_y_mascara_fuera_de_rango_es_422():
+    client = TestClient(app)
+    device_id = f"rpi-nan-{uuid.uuid4().hex[:8]}"
+    url = f"/v1/devices/{device_id}/heartbeat"
+    cuerpo = '{"cpu_temp_c": NaN, "disk_used_pct": Infinity}'
+    resp = client.post(url, content=cuerpo, headers={"content-type": "application/json"})
+    assert resp.status_code == 200
+    d = _estacion(client, device_id)  # GET /v1/devices sigue respondiendo
+    assert d["cpu_temp_c"] is None
+    assert d["disk_used_pct"] is None
+
+    assert client.post(url, json={"throttled": 2**32}).status_code == 422
+    assert client.post(url, json={"throttled": 0xFFFFFFFF}).status_code == 200
+
+
+def test_heartbeat_limpia_nulos_y_vacios_en_texto():
+    client = TestClient(app)
+    device_id = f"rpi-nul-{uuid.uuid4().hex[:8]}"
+    body = {"last_error": "fallo\x00 serie", "hw_rev": "   ", "clock_synced": False}
+    assert client.post(f"/v1/devices/{device_id}/heartbeat", json=body).status_code == 200
+    d = _estacion(client, device_id)
+    assert d["last_error"] == "fallo serie"
+    assert d["hw_rev"] is None
+    assert d["clock_synced"] is False

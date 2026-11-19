@@ -151,11 +151,15 @@ class ReadingStore:
         uptime_s: int | None,
         salud: dict[str, Any] | None = None,
     ) -> None:
-        salud = salud or {}
-        valores = [salud.get(c) for c in SALUD_CAMPOS]
-        valores = [v.isoformat() if isinstance(v, datetime) else v for v in valores]
-        if valores[3] is not None:  # clock_synced: SQLite no tiene booleano
-            valores[3] = 1 if valores[3] else 0
+        def a_sqlite(valor: Any) -> Any:
+            # SQLite no tiene booleano ni timestamp: bool -> 0/1, datetime -> ISO.
+            if isinstance(valor, bool):
+                return 1 if valor else 0
+            if isinstance(valor, datetime):
+                return valor.isoformat()
+            return valor
+
+        valores = [a_sqlite((salud or {}).get(c)) for c in SALUD_CAMPOS]
         columnas = ", ".join(SALUD_CAMPOS)
         marcas = ", ".join("?" for _ in SALUD_CAMPOS)
         actualizar = ",\n              ".join(f"{c} = excluded.{c}" for c in SALUD_CAMPOS)

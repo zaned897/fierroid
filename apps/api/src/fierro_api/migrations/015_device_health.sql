@@ -6,7 +6,7 @@
 ALTER TABLE devices ADD COLUMN IF NOT EXISTS disk_used_pct   DOUBLE PRECISION;
 ALTER TABLE devices ADD COLUMN IF NOT EXISTS cpu_temp_c      DOUBLE PRECISION;
 -- Mascara de `vcgencmd get_throttled` (bits de subvoltaje y limite termico).
-ALTER TABLE devices ADD COLUMN IF NOT EXISTS throttled       INTEGER;
+ALTER TABLE devices ADD COLUMN IF NOT EXISTS throttled       BIGINT;
 ALTER TABLE devices ADD COLUMN IF NOT EXISTS clock_synced    BOOLEAN;
 ALTER TABLE devices ADD COLUMN IF NOT EXISTS hw_rev          TEXT;
 ALTER TABLE devices ADD COLUMN IF NOT EXISTS last_sync_ok_at TIMESTAMPTZ;

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hmac
+import math
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -163,18 +164,33 @@ class HeartbeatIn(BaseModel):
     # `null` significa "no aplica o no se pudo leer", nunca 0.
     disk_used_pct: float | None = Field(default=None, ge=0, le=100)
     cpu_temp_c: float | None = None
-    throttled: int | None = Field(default=None, ge=0)
+    # Mascara de 32 bits de `vcgencmd get_throttled`.
+    throttled: int | None = Field(default=None, ge=0, le=0xFFFFFFFF)
     clock_synced: bool | None = None
     hw_rev: str | None = None
     last_sync_ok_at: AwareDatetime | None = None
     last_error: str | None = None
 
+    @field_validator("disk_used_pct", "cpu_temp_c", mode="before")
+    @classmethod
+    def _sin_nan(cls, valor: Any) -> Any:
+        # NaN/Infinity = lectura que no sirve: null, no 422 (el 422 ni siquiera
+        # se puede serializar con NaN adentro) ni guardarlo (GET /v1/devices
+        # no podria devolverlo).
+        if isinstance(valor, float) and not math.isfinite(valor):
+            return None
+        return valor
+
     @field_validator("hw_rev", "last_error")
     @classmethod
     def _recortar(cls, valor: str | None) -> str | None:
         # Recortar en vez de rechazar: un 422 tiraria el heartbeat entero, y el
-        # heartbeat es lo unico que dice si la estacion esta viva.
-        return valor[:1000] if valor is not None else None
+        # heartbeat es lo unico que dice si la estacion esta viva. Sin \x00:
+        # Postgres no lo acepta en TEXT. Vacio = no reportado.
+        if valor is None:
+            return None
+        valor = valor.replace("\x00", "").strip()[:1000]
+        return valor or None
 
 
 @app.get("/health")

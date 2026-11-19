@@ -142,7 +142,7 @@ def test_heartbeat_guarda_salud_y_un_heartbeat_viejo_la_vuelve_null(store):
     salud = {
         "disk_used_pct": 12.5,
         "cpu_temp_c": 61.0,
-        "throttled": 5,
+        "throttled": 0xFFFFFFFF,
         "clock_synced": False,
         "hw_rev": "proto-b",
         "last_sync_ok_at": datetime(2026, 11, 19, 4, 0, tzinfo=timezone.utc),
@@ -152,7 +152,7 @@ def test_heartbeat_guarda_salud_y_un_heartbeat_viejo_la_vuelve_null(store):
     (d,) = [d for d in store.list_devices() if d["device_id"] == device_id]
     assert d["disk_used_pct"] == 12.5
     assert d["cpu_temp_c"] == 61.0
-    assert d["throttled"] == 5
+    assert d["throttled"] == 0xFFFFFFFF
     assert d["clock_synced"] is False
     assert d["hw_rev"] == "proto-b"
     assert d["last_sync_ok_at"] == "2026-11-19T04:00:00+00:00"
