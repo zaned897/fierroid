@@ -49,7 +49,8 @@ function DiaryFeed({ org, filters, session, onExpired, onAnimal }) {
     </div>}
     {[...days].map(([day, items]) => <section className="journal-day" key={day} aria-label={dayFormat.format(new Date(items[0].occurred_at))}>
       <h3><time dateTime={day}>{dayFormat.format(new Date(items[0].occurred_at))}</time></h3>
-      <JournalEntries entries={items} onAnimal={(tag) => onAnimal({ tag_id: tag, org })} />
+      <JournalEntries entries={items} org={org} session={session} onExpired={onExpired}
+        onAnimal={(tag) => onAnimal({ tag_id: tag, org })} />
     </section>)}
     {cursor && <button className="journal-more" type="button" disabled={busy} onClick={() => load(cursor)}>Ver notas anteriores</button>}
   </section>;

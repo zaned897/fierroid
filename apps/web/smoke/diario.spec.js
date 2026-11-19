@@ -121,6 +121,7 @@ test("una nota de dos animales aparece en ambas fichas y el alias conserva el hi
   await dialog.getByLabel("Buscar por arete o nombre").fill("982000000000002");
   await dialog.getByRole("checkbox", { name: /La Colorada/ }).check();
   await dialog.getByRole("button", { name: "Guardar nota" }).click();
+  await expect(dialog).toHaveCount(0);
   expect(requests.posts[0].animals).toEqual(animals.slice(0, 2).map((animal) => animal.tag_id));
   for (const animal of animals.slice(0, 2)) {
     const note = page.getByRole("region", { name: "Notas del diario" }).getByRole("listitem").filter({ has: page.getByText(body, { exact: true }) }).first();

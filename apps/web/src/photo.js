@@ -32,11 +32,14 @@ async function normalizarTipo(file) {
   return new File([file], `foto.${extension}`, { type: tipo, lastModified: file.lastModified });
 }
 
-export async function reducirImagen(file) {
+export async function reducirImagen(file, { forceJPEG = false } = {}) {
   file = await normalizarTipo(file);
   // Si el navegador no trae createImageBitmap, se sube tal cual: mejor una
   // foto pesada que ninguna.
-  if (typeof createImageBitmap !== "function") return file;
+  if (typeof createImageBitmap !== "function") {
+    if (forceJPEG) throw new Error("Este navegador no permite preparar fotos. Prueba con un navegador actualizado.");
+    return file;
+  }
 
   let bitmap;
   try {
@@ -44,11 +47,12 @@ export async function reducirImagen(file) {
   } catch {
     // Archivo que el navegador no sabe decodificar. El servidor lo rechazará
     // con un mensaje claro; aquí no hay nada que decidir.
+    if (forceJPEG) throw new Error("No se pudo abrir esa foto. Elige una imagen JPEG, PNG o WebP válida.");
     return file;
   }
 
   const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
-  if (escala === 1 && file.size <= 500 * 1024) {
+  if (!forceJPEG && escala === 1 && file.size <= 500 * 1024) {
     bitmap.close?.();
     return file;
   }
@@ -62,7 +66,10 @@ export async function reducirImagen(file) {
   const blob = await new Promise((resolve) =>
     lienzo.toBlob(resolve, "image/jpeg", CALIDAD),
   );
-  if (!blob) return file;
+  if (!blob) {
+    if (forceJPEG) throw new Error("No se pudo preparar la foto. Intenta con otra imagen.");
+    return file;
+  }
 
   return new File([blob], "foto.jpg", { type: "image/jpeg" });
 }

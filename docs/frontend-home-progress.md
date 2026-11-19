@@ -1,5 +1,34 @@
 # Relevo del frontend del home
 
+## 2026-11-18 — Fotos y notas de voz del Diario (#145)
+
+Rama `codex/bitacora-adjuntos-web`, sobre el Diario de #150 (`560e955`).
+Primera unidad, captura y borrador. Foto desde cámara o galería, conversión a
+JPEG de hasta 1024 px, seis fotos y dos audios por nota. MediaRecorder elige
+Opus o MP4, pide 32 kbps y detiene antes de dos minutos. Cada archivo se limita
+a 2 MiB. Texto, blobs, UUID y nota confirmada se recuperan desde el borrador
+local; si el almacenamiento está bloqueado se avisa su limitación.
+
+Segunda unidad, subida y consulta. Guarda primero la nota y después cada archivo.
+Conserva los mismos UUID y bytes al reintentar después de perder una respuesta,
+incluso tras recargar. La nota confirmada queda fija hasta completar sus archivos.
+Galería ampliable con dialog nativo y reproductor de voz en Diario y ficha.
+Los object URLs se revocan al salir; cambiar de animal u organización reinicia
+el contexto. Cerrar sesión limpia los blobs del borrador.
+
+Verificación con pnpm 10, ESLint, build, 35 pruebas de lógica y 20 de navegador.
+Capturas de [375 px](design/diario/adjuntos-galeria-145-375.png),
+[1440 px](design/diario/adjuntos-galeria-145-1440.png) y
+[formulario](design/diario/adjuntos-formulario-145-1440.png).
+Las pruebas comprueban pérdida de ACK y recarga, micrófono denegado, límite de
+grabación, organización y teclado. El audio se codifica con MediaRecorder real
+desde una fuente sintética de prueba. También se probó navegador → API de #144
+→ Postgres y almacenamiento local con dos fotos y un audio reproducible.
+
+Para integrar, #150 aporta los componentes compartidos y #144 los endpoints.
+Pendiente de puesta en marcha, validación en celulares físicos y firma con la
+identidad real de GCS. Próximas unidades, derivados #146 y asistente #148.
+
 ## 2026-11-18 — Diario del rancho (#150)
 
 Pantalla local en `codex/diario-rancho-web`, desde `main` `a447512`.

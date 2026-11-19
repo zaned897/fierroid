@@ -16,13 +16,13 @@ export default function BitacoraAnimal({ animal, session, onExpired, onDiario })
       <button type="button" disabled={busy} onClick={() => load()}>Actualizar bitácora</button>
     </div>
     <p className="muted">Agrega una anotación para registrar o aclarar lo ocurrido. Tu borrador se conserva en este navegador.</p>
-    <JournalForm animal={animal} org={animal.org} session={session} onExpired={onExpired}
+    <JournalForm key={`${session.user.email}-${animal.org}-${animal.tag_id}`} animal={animal} org={animal.org} session={session} onExpired={onExpired}
       onSaved={() => { setSaved(true); load(); }} />
     {busy && <p role="status">Cargando bitácora…</p>}
     {saved && <p role="status">Anotación guardada.</p>}
     {error && <p className="error" role="alert">{error}</p>}
     {!busy && !error && entries.length === 0 && <p>Todavía no hay anotaciones.</p>}
-    <JournalEntries entries={entries} />
+    <JournalEntries entries={entries} org={animal.org} session={session} onExpired={onExpired} />
     {cursor && <button type="button" disabled={busy} onClick={() => load(cursor)}>Ver anotaciones anteriores</button>}
   </section>;
 }
