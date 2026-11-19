@@ -188,7 +188,8 @@ def test_sin_precio_las_cifras_de_valor_son_null_pero_los_costos_salen():
     for campo in ("valor_hoy", "resultado", "ganancia_dia_mxn"):
         assert r[campo]["mxn"] is None
         assert r[campo]["motivo"] == "falta_precio"
-    assert r["roi"] == {"valor": None, "motivo": "falta_precio"}
+    assert (r["roi"]["valor"], r["roi"]["motivo"]) == (None, "falta_precio")
+    assert r["roi"]["fuente"]["costo_acumulado"]["movimientos"] == ["c", "g"]
     assert r["costo_acumulado"]["mxn"] == Decimal("12100.00")
     assert r["costo_acumulado"]["por_categoria"] == {
         "alimento": Decimal("100.00"),
@@ -253,7 +254,7 @@ def test_anulados_y_propuestos_no_cuentan_pruebas_y_atipicos_tampoco():
     assert r["valor_hoy"]["fuente"]["pesaje"]["event_id"] == "a6"
     assert r["valor_hoy"]["mxn"] == Decimal("18270.00")
     assert r["ganancia_dia_mxn"]["kg_dia"] == 1.0
-    assert r["roi"] == {"valor": None, "motivo": "sin_costos"}
+    assert (r["roi"]["valor"], r["roi"]["motivo"]) == (None, "sin_costos")
 
 
 def test_vendida_tiene_resultado_realizado_y_deja_de_cargar():
@@ -307,3 +308,184 @@ def test_compra_posterior_al_dia_no_hace_activo_al_animal_antes_de_tiempo():
     ]
     r = dinero.estado_animal("A", D0, [], movimientos, hato_de("A", "B"))
     assert r["costo_acumulado"]["mxn"] == Decimal("100.00")
+
+
+# --- hallazgos de la revisión adversaria -----------------------------------
+
+
+def test_cuadre_a_centavos_del_caso_del_issue_suma_exacto():
+    vacas = [f"V{i}" for i in range(10)]
+    fin = D0 + timedelta(days=29)
+    g = gasto("g", "3000", period_start=D0, period_end=fin)
+    venta = mov("v", "venta", D0 + timedelta(days=14), animals=["V0"], amount_mxn=Decimal(1))
+    activos = dinero.activos_por_dia(hato_de(*vacas), [venta], D0, fin)
+    centavos = dinero.reparto_en_centavos(dinero.repartir(g, activos))
+    assert sum(centavos.values()) == 300000
+    assert centavos["V0"] == 14000
+    assert sorted(set(centavos[v] for v in vacas[1:])) == [31777, 31778]
+    # Y estado_animal da a cada vaca lo mismo que el cuadre.
+    movimientos = [g, venta]
+    total = sum(
+        dinero.estado_animal(v, fin, [], movimientos, hato_de(*vacas))["costo_acumulado"]["mxn"]
+        for v in vacas
+    )
+    assert total == Decimal("3000.00")
+
+
+def test_categorias_suman_el_total_al_centavo():
+    gastos = [
+        gasto(f"g{i}", "10", category=c) for i, c in enumerate(("alimento", "sanidad", "otros"))
+    ]
+    r = dinero.estado_animal("A", D0, [], gastos, hato_de("A", "B", "C"))
+    c = r["costo_acumulado"]
+    assert sum(c["por_categoria"].values()) == c["mxn"]
+    total = sum(
+        dinero.estado_animal(t, D0, [], gastos, hato_de("A", "B", "C"))["costo_acumulado"]["mxn"]
+        for t in "ABC"
+    )
+    assert total == Decimal("30.00")
+
+
+@pytest.mark.parametrize(
+    "cambio",
+    [
+        {"estado": "anulado"},
+        {"estado": "propuesto"},
+        {"amount_mxn": Decimal("-5")},
+        {"scope": "lote"},
+        {"scope": "corral", "corral": None},
+        {"period_start": D0 + timedelta(days=2), "period_end": D0},
+        {"period_end": D0},
+        {"scope": "animales", "animals": []},
+    ],
+)
+def test_repartir_rechaza_gastos_no_confirmados_o_mal_formados(cambio):
+    activos = dinero.activos_por_dia(hato_de("A"), [], D0, D0 + timedelta(days=2))
+    with pytest.raises(ValueError):
+        dinero.repartir({**gasto("g", "10"), **cambio}, activos)
+
+
+def test_horas_en_otra_zona_cuentan_en_utc_sin_dividir_entre_cero():
+    pesajes = [
+        {**pesaje("a", D0, 400), "captured_at": "2026-09-01T23:30:00-06:00"},
+        {**pesaje("b", D0, 401.25), "captured_at": "2026-09-03T00:30:00-06:00"},
+    ]
+    r = dinero.estado_animal(
+        "A", D0 + timedelta(days=5), pesajes, [precio("p", "40")], hato_de("A")
+    )
+    assert r["ganancia_dia_mxn"]["kg_dia"] == Decimal("1.200")
+    assert r["ganancia_dia_mxn"]["mxn"] == Decimal("48.00")
+
+
+def test_gasto_con_periodo_pagado_al_final_ya_carga_los_dias_corridos():
+    g = gasto(
+        "g", "300", D0 + timedelta(days=29), period_start=D0, period_end=D0 + timedelta(days=29)
+    )
+    r = dinero.estado_animal("A", D0 + timedelta(days=9), [], [g], hato_de("A"))
+    assert r["costo_acumulado"]["mxn"] == Decimal("100.00")
+
+
+def test_flete_del_dia_de_la_venta_lo_carga_la_vendida():
+    dia = D0 + timedelta(days=3)
+    movimientos = [
+        mov("v", "venta", dia, animals=["A"], amount_mxn=Decimal("1000")),
+        gasto("flete", "200", dia, scope="animales", animals=["A"], category="transporte"),
+    ]
+    r = dinero.estado_animal("A", dia, [], movimientos, hato_de("A", "B"))
+    assert r["costo_acumulado"]["por_categoria"] == {"transporte": Decimal("200.00")}
+    assert r["resultado"]["mxn"] == Decimal("800.00")
+
+
+def test_compra_manda_sobre_desde_y_venta_futura_no_activa_antes():
+    h = {"A": {"corral": None}, "B": {"corral": None, "desde": D0}}
+    movimientos = [
+        mov("c", "compra", D0 + timedelta(days=2), animals=["B"], amount_mxn=Decimal(1)),
+        gasto("g", "100"),
+    ]
+    r = dinero.estado_animal("A", D0, [], movimientos, h)
+    assert r["costo_acumulado"]["mxn"] == Decimal("100.00")
+
+
+def test_errores_de_datos_en_compras_y_ventas_son_ruidosos():
+    venta = mov("v", "venta", D0, animals=["A"], amount_mxn=Decimal(1))
+    dos = [venta, {**venta, "movement_id": "v2"}]
+    with pytest.raises(ValueError):
+        dinero.estado_animal("A", D0, [], dos, hato_de("A"))  # sin gastos, igual se valida
+    compra_tarde = mov("c", "compra", D0 + timedelta(days=1), animals=["A"], amount_mxn=Decimal(1))
+    with pytest.raises(ValueError):
+        dinero.activos_por_dia(hato_de("A"), [venta, compra_tarde], D0, D0)
+    with pytest.raises(ValueError):
+        dinero.activos_por_dia(hato_de("A"), [{**venta, "animals": ["A", "B"]}], D0, D0)
+    with pytest.raises(ValueError):
+        dinero.activos_por_dia(hato_de("A"), [], D0 + timedelta(days=1), D0)
+    with pytest.raises(ValueError):
+        dinero.estado_animal("X", D0, [], [], hato_de("A"))
+
+
+def test_compra_y_venta_anuladas_no_cuentan():
+    movimientos = [
+        mov("c", "compra", animals=["A"], amount_mxn=Decimal("9000"), estado="anulado"),
+        mov("v", "venta", animals=["A"], amount_mxn=Decimal("9500"), estado="anulado"),
+    ]
+    r = dinero.estado_animal("A", D0, [], movimientos, hato_de("A"))
+    assert r["estado"] == "activa"
+    assert r["costo_acumulado"]["mxn"] == Decimal("0.00")
+
+
+def test_pesajes_de_otro_arete_o_posteriores_al_dia_no_cuentan():
+    dia = D0 + timedelta(days=10)
+    pesajes = [
+        *engorda(1.0),
+        pesaje("B0", dia, 900, tag="B"),
+        pesaje("futuro", dia + timedelta(days=1), 700),
+    ]
+    r = dinero.estado_animal("A", dia, pesajes, [precio("p", "45")], hato_de("A", "B"))
+    assert r["valor_hoy"]["fuente"]["pesaje"]["event_id"] == "A1"
+    assert r["valor_hoy"]["mxn"] == Decimal("18450.00")
+
+
+def test_atipico_como_ultimo_pesaje_usa_el_anterior_limpio():
+    pesajes = [pesaje(f"a{i}", D0 + timedelta(days=i), 400 + i) for i in range(6)]
+    pesajes.append(pesaje("raro", D0 + timedelta(days=6), 520))
+    r = dinero.estado_animal(
+        "A", D0 + timedelta(days=6), pesajes, [precio("p", "45")], hato_de("A")
+    )
+    assert r["valor_hoy"]["fuente"]["pesaje"]["event_id"] == "a5"
+
+
+def test_peso_cero_no_valua_al_animal():
+    r = dinero.estado_animal("A", D0, [pesaje("a", D0, 0)], [precio("p", "45")], hato_de("A"))
+    assert r["valor_hoy"]["motivo"] == "faltan_pesajes"
+    assert r["precio_minimo_kg"]["motivo"] == "faltan_pesajes"
+
+
+def test_ventana_de_la_ganancia_solo_toma_gastos_entre_los_dos_pesajes():
+    dia = D0 + timedelta(days=20)
+    pesajes = [pesaje("a", D0 + timedelta(days=10), 400), pesaje("b", dia, 410)]
+    movimientos = [
+        precio("p", "45"),
+        gasto("antes", "1000", D0 + timedelta(days=5)),  # fuera de la ventana
+        gasto("dentro", "50", D0 + timedelta(days=12)),
+        gasto("ese_dia", "70", dia),  # el día del último pesaje ya no es de la ventana
+    ]
+    r = dinero.estado_animal("A", dia, pesajes, movimientos, hato_de("A"))
+    g = r["ganancia_dia_mxn"]
+    assert g["costo_dia_mxn"] == Decimal("5.00")
+    assert g["fuente"]["movimientos"] == ["dentro"]
+    assert g["mxn"] == Decimal("40.00")
+
+
+def test_desempate_de_precio_por_instante_de_registro_en_utc():
+    viejo = precio("viejo", "40", created_at="2026-09-01T10:00:00-06:00")  # 16:00 UTC
+    nuevo = precio("nuevo", "41", created_at="2026-09-01T12:00:00+00:00")
+    assert dinero.precio_vigente([nuevo, viejo], D0)["movement_id"] == "viejo"
+
+
+def test_efecto_mercado_negativo_y_sin_precio_anterior():
+    dia = D0 + timedelta(days=10)
+    baja = [precio("p1", "45"), precio("p2", "40", D0 + timedelta(days=5))]
+    r = dinero.estado_animal("A", dia, engorda(1.0), baja, hato_de("A"))
+    assert r["efecto_mercado_mxn"]["mxn"] == Decimal("-2000.00")
+    tarde = [precio("p2", "40", D0 + timedelta(days=5))]
+    r = dinero.estado_animal("A", dia, engorda(1.0), tarde, hato_de("A"))
+    assert r["efecto_mercado_mxn"]["motivo"] == "falta_precio_anterior"
