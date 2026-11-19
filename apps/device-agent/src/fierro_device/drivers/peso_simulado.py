@@ -21,6 +21,7 @@ import random
 import time
 from collections.abc import Callable
 
+from fierro_device.drivers.estabilidad import FiltroEstable
 from fierro_device.hardware import HardwareSample
 
 MODO_POTENCIOMETRO = "potenciometro"
@@ -83,11 +84,14 @@ class PesoSimulado:
         self._adc = adc
         self._peso_fijo_kg = peso_fijo_kg
         self._rango_kg = rango_kg
-        self._ventana_s = ventana_s
         self._permanencia_s = permanencia_s
         self._clock = clock
-        self._ancla_kg: float | None = None
-        self._estable_desde = float("-inf")
+        self._filtro = FiltroEstable(
+            banda_kg=PASO_KG,
+            ventana_s=ventana_s,
+            clock=clock,
+            estable_inicial=True,
+        )
         self._valor_aleatorio: float | None = None
         self._aleatorio_hasta = 0.0
 
@@ -137,10 +141,4 @@ class PesoSimulado:
         return self._valor_aleatorio
 
     def _evaluar_estabilidad(self, kg: float) -> bool:
-        ancla = self._ancla_kg
-        if ancla is None:
-            self._ancla_kg = kg
-        elif abs(kg - ancla) > PASO_KG:
-            self._ancla_kg = kg
-            self._estable_desde = self._clock()
-        return (self._clock() - self._estable_desde) >= self._ventana_s
+        return self._filtro.evaluar(kg)
