@@ -8,11 +8,23 @@ import httpx
 logger = logging.getLogger(__name__)
 
 
+class SyncError(RuntimeError):
+    """La API respondio sin ACK reconocible: las lecturas quedan `pending`."""
+
+
 class CloudSync:
-    def __init__(self, api_url: str, device_id: str, timeout_s: float = 10.0) -> None:
+    def __init__(
+        self,
+        api_url: str,
+        device_id: str,
+        transport: httpx.BaseTransport | None = None,
+    ) -> None:
         self.api_url = api_url.rstrip("/")
         self.device_id = device_id
-        self._client = httpx.Client(timeout=timeout_s)
+        # Conexion corta para detectar red caida rapido; lectura mas holgada para 4G.
+        self._client = httpx.Client(
+            timeout=httpx.Timeout(15.0, connect=5.0), transport=transport
+        )
 
     def push_readings(self, readings: list[dict[str, Any]]) -> list[str]:
         if not readings:
@@ -23,8 +35,16 @@ class CloudSync:
         )
         resp.raise_for_status()
         data = resp.json()
-        accepted = data.get("accepted_ids") or [r["event_id"] for r in readings]
-        return list(accepted)
+        if not isinstance(data, dict) or (
+            "accepted_ids" not in data and "duplicate_ids" not in data
+        ):
+            raise SyncError("respuesta sin accepted_ids ni duplicate_ids")
+        # ACK estricto: solo lo que el servidor confirma tener, y solo lo que enviamos.
+        enviados = {r["event_id"] for r in readings}
+        confirmados = list(data.get("accepted_ids") or []) + list(
+            data.get("duplicate_ids") or []
+        )
+        return list(dict.fromkeys(e for e in confirmados if e in enviados))
 
     def heartbeat(
         self,

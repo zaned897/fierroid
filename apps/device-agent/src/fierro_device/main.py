@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import argparse
 import logging
+import random
 import signal
 import sys
 import time
+from collections.abc import Callable
 
 from fierro_device import __version__
+from fierro_device.backoff import Backoff, guardar_estado
 from fierro_device.config import ConfigError, load_config
 from fierro_device.hardware import build_hardware
 from fierro_device.models import WeightReading
@@ -23,8 +26,14 @@ logger = logging.getLogger("fierro_device")
 
 
 class Agent:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        reloj: Callable[[], float] = time.monotonic,
+        aleatorio: Callable[[], float] = random.random,
+    ) -> None:
         self.settings = settings
+        self._reloj = reloj
         self.store = OutboxStore(settings.db_path)
         self.hw = build_hardware(
             mock=settings.mock_hw,
@@ -35,7 +44,8 @@ class Agent:
         self.sync = CloudSync(settings.api_url, settings.device_id)
         self._running = True
         self._started = time.monotonic()
-        self._last_sync = 0.0
+        self._next_sync = 0.0
+        self.backoff = Backoff(settings.sync_interval_s, settings.sync_max_s, aleatorio)
         self._last_heartbeat = 0.0
         self._last_tag: str | None = None
         self._last_tag_at = 0.0
@@ -84,14 +94,33 @@ class Agent:
         pending = self.store.pending(limit=50)
         if not pending:
             return 0
+        antes = self.backoff.intervalo_s
         try:
             accepted = self.sync.push_readings(pending)
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
+            self.backoff.exito()
             return len(accepted)
         except Exception:
             logger.exception("sync failed; readings remain pending")
+            self.backoff.fallo()
             return 0
+        finally:
+            if self.backoff.intervalo_s != antes:
+                self._guardar_estado_sync()
+
+    def _guardar_estado_sync(self) -> None:
+        try:
+            guardar_estado(self.settings.db_path, {"intervalo_s": self.backoff.intervalo_s})
+        except OSError:
+            logger.exception("no se pudo guardar el estado del sync")
+
+    def maybe_sync(self) -> None:
+        now = self._reloj()
+        if now < self._next_sync:
+            return
+        self.flush_outbox()
+        self._next_sync = self._reloj() + self.backoff.espera()
 
     def maybe_heartbeat(self) -> None:
         now = time.monotonic()
@@ -130,10 +159,7 @@ class Agent:
                     logger.error("hardware not configured; capture disabled: %s", exc)
                 except Exception:
                     logger.exception("capture loop error")
-            now = time.monotonic()
-            if now - self._last_sync >= self.settings.sync_interval_s:
-                self.flush_outbox()
-                self._last_sync = now
+            self.maybe_sync()
             self.maybe_heartbeat()
             # Solo si la vuelta termino: una lectura colgada deja de latir y systemd reinicia.
             sd_notify("WATCHDOG=1")

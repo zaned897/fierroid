@@ -14,6 +14,7 @@ class Settings:
     mock_hw: bool
     poll_interval_s: float
     sync_interval_s: float
+    sync_max_s: float
     mock_interval_s: float
     scale_port: str
     rfid_port: str
@@ -28,6 +29,7 @@ class Settings:
             mock_hw=os.getenv("FIERRO_MOCK_HW", "0") == "1",
             poll_interval_s=float(os.getenv("FIERRO_POLL_INTERVAL_S", "0.5")),
             sync_interval_s=float(os.getenv("FIERRO_SYNC_INTERVAL_S", "2.0")),
+            sync_max_s=float(os.getenv("FIERRO_SYNC_MAX_S", "300")),
             mock_interval_s=float(os.getenv("FIERRO_MOCK_INTERVAL_S", "3.0")),
             scale_port=os.getenv("FIERRO_SCALE_PORT", "/dev/ttyUSB0"),
             rfid_port=os.getenv("FIERRO_RFID_PORT", "/dev/ttyUSB1"),

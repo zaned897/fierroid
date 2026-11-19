@@ -3,7 +3,7 @@
 Archivos:
 
 - `fierro-device.service`: unidad systemd con `Type=notify`, watchdog de aplicación
-  (`WatchdogSec=30`), `Restart=always` sin límite de reintentos y `MemoryMax=256M`.
+  (`WatchdogSec=60`), `Restart=always` sin límite de reintentos y `MemoryMax=256M`.
 - `99-fierro-serial.rules`: enlaces estables `/dev/fierro-bascula` y `/dev/fierro-lector`.
 
 La imagen del sistema, overlayfs, RTC, router 4G y VPN van aparte (#188).

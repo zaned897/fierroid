@@ -18,7 +18,8 @@ ExecStart=/opt/fierro/venv/bin/fierro-device run
 Restart=always
 RestartSec=5
 # El agente manda WATCHDOG=1 en cada vuelta del bucle; si una lectura se cuelga, systemd lo reinicia.
-WatchdogSec=30
+# 60 s cubre el peor caso de una vuelta con red lenta: sync (5 s conexion + 15 s lectura) + heartbeat igual.
+WatchdogSec=60
 NotifyAccess=main
 MemoryMax=256M
 TimeoutStopSec=20

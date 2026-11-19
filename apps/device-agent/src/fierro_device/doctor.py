@@ -8,6 +8,7 @@ from pathlib import Path
 
 import httpx
 
+from fierro_device.backoff import leer_estado
 from fierro_device.settings import Settings
 
 
@@ -23,6 +24,21 @@ def _pendientes(db_path: str) -> str:
     finally:
         conn.close()
     return ", ".join(f"{estado}={n}" for estado, n in filas) or "vacia"
+
+
+def _ultimo_sync(db_path: str) -> str:
+    ruta = Path(db_path)
+    ultimo = None
+    if ruta.exists():
+        conn = sqlite3.connect(f"{ruta.as_uri()}?mode=ro", uri=True)
+        try:
+            ultimo = conn.execute("SELECT max(synced_at) FROM readings").fetchone()[0]
+        finally:
+            conn.close()
+    estado = leer_estado(db_path) or {}
+    intervalo = estado.get("intervalo_s")
+    texto_intervalo = f"{intervalo:g} s" if isinstance(intervalo, int | float) else "minimo"
+    return f"ultimo sync OK={ultimo or 'nunca'} (UTC), intervalo actual={texto_intervalo}"
 
 
 def _puerto_presente(puerto: str) -> bool:
@@ -65,6 +81,10 @@ def run_doctor(settings: Settings, config_path: Path | None) -> int:
         ok(f"outbox {settings.db_path}: {_pendientes(settings.db_path)}")
     except sqlite3.Error as exc:
         falla(f"outbox {settings.db_path}: {exc}")
+    try:
+        print(f"[INFO] {_ultimo_sync(settings.db_path)}")
+    except sqlite3.Error as exc:
+        falla(f"sync {settings.db_path}: {exc}")
 
     if not settings.mock_hw:
         for nombre, puerto in (("bascula", settings.scale_port), ("lector", settings.rfid_port)):
