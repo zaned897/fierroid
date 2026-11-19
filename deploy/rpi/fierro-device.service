@@ -1,0 +1,30 @@
+# Unidad systemd del agente de la estacion (RPi). Instalacion: deploy/rpi/README.md
+[Unit]
+Description=Fierro estacion de pesaje (captura + outbox + sync)
+Wants=network-online.target
+After=network-online.target
+# Nunca dejar de reintentar: el corral no espera a que alguien entre por SSH.
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+User=fierro
+Group=fierro
+SupplementaryGroups=dialout
+EnvironmentFile=/etc/fierro/device.env
+# La outbox vive en la particion de datos, no en la raiz (ver edge-reliability.md).
+Environment=FIERRO_DB_PATH=/data/fierro/device.db
+ExecStart=/opt/fierro/venv/bin/fierro-device run
+Restart=always
+RestartSec=5
+# El agente manda WATCHDOG=1 en cada vuelta del bucle; si una lectura se cuelga, systemd lo reinicia.
+WatchdogSec=30
+NotifyAccess=main
+MemoryMax=256M
+TimeoutStopSec=20
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/data/fierro
+
+[Install]
+WantedBy=multi-user.target

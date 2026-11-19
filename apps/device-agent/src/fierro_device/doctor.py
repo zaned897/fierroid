@@ -31,6 +31,12 @@ def _puerto_presente(puerto: str) -> bool:
     return any(p.device == puerto for p in list_ports.comports())
 
 
+def _destino_puerto(puerto: str) -> str:
+    """A que dispositivo real apunta un puerto (los enlaces de udev cambian de destino)."""
+    real = os.path.realpath(puerto)
+    return f"{puerto} -> {real}" if real != puerto else puerto
+
+
 def run_doctor(settings: Settings, config_path: Path | None) -> int:
     """Imprime un renglon por chequeo. Devuelve 0 si todo esta bien."""
     fallas = 0
@@ -61,6 +67,8 @@ def run_doctor(settings: Settings, config_path: Path | None) -> int:
         falla(f"outbox {settings.db_path}: {exc}")
 
     if not settings.mock_hw:
+        for nombre, puerto in (("bascula", settings.scale_port), ("lector", settings.rfid_port)):
+            print(f"[INFO] puerto {nombre}: {_destino_puerto(puerto)}")
         if _puerto_presente(settings.rfid_port):
             ok(f"puerto {settings.rfid_port} conectado")
         else:
