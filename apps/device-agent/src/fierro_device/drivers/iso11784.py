@@ -62,20 +62,32 @@ def desde_bits_64(valor: int) -> str:
                                      (900-998: manufacturers)
         bits 27-64 (int bits 37-0)   national identification code
 
-    The value is the code in that MSB-first order. FDX-B sends it LSB first
-    on the air (ISO 11785); reversing the bit order is the reader parser's
-    job, not this function's.
+    `valor` must already be the code in that MSB-first order. FDX-B
+    (ISO 11785) sends bit 64 first and bit 1 last, so how the reader parser
+    builds the int depends on how it collected those bits:
 
-    Raises ValueError for values outside 64 bits, a non-animal flag, or a
-    country field above 999 (10 bits hold up to 1023, the norm does not).
-    The reserved and data block bits are not interpreted and do not change
-    the result.
+    - bits shifted in as they arrive (`v = (v << 1) | b`): the result is the
+      code bit-reversed; reverse all 64 bits before calling.
+    - bits packed into 8 bytes LSB first, in arrival order: that is already
+      little-endian, use `int.from_bytes(payload, "little")`, no reversal.
+      E.g. code 0x8000F780005A7916 arrives as bytes 16 79 5A 00 80 F7 00 80.
+    - the reader hands over the code as MSB-first hex text: `int(texto, 16)`.
+
+    This function cannot tell a wrong orientation from a real tag: a
+    reversed word often still decodes to a valid-looking tag_id of another
+    animal. The parser must check the ISO 11785 CRC over the frame before
+    calling, and its tests must pin the orientation with a real capture.
+
+    Raises ValueError for values outside 64 bits or a country field above
+    999 (10 bits hold up to 1023, the norm does not). The animal flag,
+    reserved bits (2-15, partly redefined by later amendments) and data
+    block flag are not interpreted: a transponder with the animal flag at 0
+    (e.g. a reprogrammable EM4305/T5577 written by hand) still carries an
+    exact ID, and dropping it would lose the weighing.
     """
     valor = _entero("valor", valor)
     if not 0 <= valor < 1 << 64:
         raise ValueError(f"el código ISO 11784 es de 64 bits sin signo: {valor:#x}")
-    if not valor >> 63:
-        raise ValueError(f"bandera de animal en 0 (transpondedor no animal): {valor:#018x}")
     pais = (valor >> NACIONAL_BITS) & ((1 << PAIS_BITS) - 1)
     nacional = valor & NACIONAL_MAX
     return desde_partes(pais, nacional)
@@ -86,13 +98,13 @@ def desde_texto(texto: str) -> str:
 
     Accepts "982 000123456789", "982000123456789" and "982-000123456789":
     three digits of country, at most one space or hyphen, twelve digits of
-    national ID. Only surrounding whitespace (a reader's CR/LF) is dropped;
+    national ID. Only surrounding ASCII space, tab, CR and LF are dropped;
     anything else, including a short national part, is rejected rather than
     padded or trimmed.
     """
     if not isinstance(texto, str):
         raise ValueError(f"texto debe ser str, llegó {type(texto).__name__}")
-    m = _TEXTO.fullmatch(texto.strip())
+    m = _TEXTO.fullmatch(texto.strip(" \t\r\n"))
     if m is None:
         raise ValueError(f"arete ISO 11784 ilegible, se esperan 3+12 dígitos: {texto!r}")
     return desde_partes(int(m.group(1)), int(m.group(2)))
