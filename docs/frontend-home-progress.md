@@ -1,5 +1,22 @@
 # Relevo del frontend del home
 
+## 2026-11-18 — Diario del rancho (#150)
+
+Pantalla local en `codex/diario-rancho-web`, desde `main` `a447512`.
+Incluye notas por día local, filtros por periodo, animal y categoría, y una
+ventana para notas generales o compartidas. Reutiliza los borradores de
+bitácora y conserva el UUID al reintentar. La ficha muestra las notas
+históricas y enlaza al Diario. El acceso al asistente prepara una pregunta con
+el animal y periodo seleccionados para que el usuario la envíe.
+
+Evidencia con API simulada y cuentas ficticias a
+[375 px](design/diario/diario-150-375.png) y
+[1440 px](design/diario/diario-150-1440.png), y ventana de
+[nueva nota móvil](design/diario/nueva-nota-150-375.png).
+Validación con pnpm 10, como CI. Lint, 32 pruebas de lógica, 14 pruebas de
+navegador y build correctos. Siguientes unidades del Diario, búsqueda #147 y
+adjuntos #144–#146.
+
 ## 2026-09-25 — Panel privado
 
 El estilo aprobado del panel se implementó reutilizando la marca y componentes

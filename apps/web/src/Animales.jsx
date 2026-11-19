@@ -46,10 +46,9 @@ function Retrato({ animal, session, size = 56, recarga }) {
   return <CowForTag tagId={animal.tag_id} size={size} className="cow" />;
 }
 
-function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
+function Ficha({ animal, session, onCerrar, onCambio, onExpired, onDiario }) {
   const archivo = useRef(null);
   const [alias, setAlias] = useState(animal.alias || "");
-  const [notes, setNotes] = useState(animal.notes || "");
   const [error, setError] = useState(null);
   const [ocupado, setOcupado] = useState(null);
   const [recarga, setRecarga] = useState(0);
@@ -78,15 +77,16 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
         session,
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alias: alias || null, notes: notes || null }),
+        body: JSON.stringify({ alias: alias || null }),
       });
       onCambio();
     } catch (err) {
-      setError(err.message);
+      if (err.unauthorized) onExpired();
+      else setError(err.message);
     } finally {
       setOcupado(null);
     }
-  }, [alias, notes, animal.tag_id, session, onCambio, conOrg]);
+  }, [alias, animal.tag_id, session, onCambio, onExpired, conOrg]);
 
   const subirFoto = useCallback(
     async (evento) => {
@@ -153,11 +153,6 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
         <input value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="La Pinta" />
       </label>
 
-      <label className="campo">
-        Notas
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
-      </label>
-
       <div className="acciones">
         <button type="button" onClick={guardar} disabled={ocupado !== null}>
           {ocupado === "datos" ? "Guardando…" : "Guardar"}
@@ -177,15 +172,15 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
       </div>
 
       {error && <p className="error">{error}</p>}
-      <BitacoraAnimal animal={animal} session={session} onExpired={onExpired} />
+      <BitacoraAnimal animal={animal} session={session} onExpired={onExpired} onDiario={onDiario} />
     </section>
   );
 }
 
-export default function Animales({ session, onExpired, arete = null }) {
+export default function Animales({ session, onExpired, arete = null, org = null, onDiario }) {
   const [animales, setAnimales] = useState([]);
   // Desde el asistente llega solo el arete: la API ya acotó el hato a tu organización.
-  const [abierto, setAbierto] = useState(arete ? { tag_id: arete } : null);
+  const [abierto, setAbierto] = useState(arete ? { tag_id: arete, ...(org ? { org } : {}) } : null);
   const [error, setError] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
@@ -222,6 +217,7 @@ export default function Animales({ session, onExpired, arete = null }) {
         onCerrar={() => setAbierto(null)}
         onCambio={recargar}
         onExpired={onExpired}
+        onDiario={onDiario}
       />
     );
   }

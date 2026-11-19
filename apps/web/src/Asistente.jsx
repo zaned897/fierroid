@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiFetch } from "./auth.js";
 import "./asistente.css";
+import { journalQuestion } from "./journal.js";
 
 const SUGERIDAS = [
   "¿Qué vaca tiene problemas?",
@@ -105,9 +106,9 @@ function CuerpoRespuesta({ texto, aretes, onAbrir }) {
   );
 }
 
-export default function Asistente({ session, onExpired, onAbrir }) {
+export default function Asistente({ session, onExpired, onAbrir, context }) {
   const [turnos, setTurnos] = useState([]);
-  const [pregunta, setPregunta] = useState("");
+  const [pregunta, setPregunta] = useState(() => context ? journalQuestion(context) : "");
   const [esperando, setEsperando] = useState(false);
   const [error, setError] = useState(null);
 
@@ -123,7 +124,8 @@ export default function Asistente({ session, onExpired, onAbrir }) {
     setEsperando(true);
 
     try {
-      const data = await apiFetch("/v1/asistente", {
+      const path = context?.org ? `/v1/asistente?org=${encodeURIComponent(context.org)}` : "/v1/asistente";
+      const data = await apiFetch(path, {
         session,
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,6 +164,11 @@ export default function Asistente({ session, onExpired, onAbrir }) {
           Respuestas calculadas sobre los pesajes y las fichas de tu rancho.
         </p>
       </div>
+
+      {context && <p className="asistente-contexto">
+        Desde el Diario · {context.org}{context.tag && ` · Arete ${context.tag}`}
+        {context.from && ` · Desde ${context.from}`}{context.to && ` · Hasta ${context.to}`}
+      </p>}
 
       <div className="asistente-sugeridas" role="group" aria-label="Preguntas sugeridas">
         {SUGERIDAS.map((sugerida) => (
