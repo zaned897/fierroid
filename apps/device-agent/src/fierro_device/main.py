@@ -46,7 +46,7 @@ class Agent:
         self._started = time.monotonic()
         self._next_sync = 0.0
         self.backoff = Backoff(settings.sync_interval_s, settings.sync_max_s, aleatorio)
-        self._last_heartbeat = 0.0
+        self._last_heartbeat = float("-inf")  # primer heartbeat al arrancar
         self._last_tag: str | None = None
         self._last_tag_at = 0.0
         # Error de hardware sin configurar: se registra una vez y se deja de capturar.
@@ -126,6 +126,9 @@ class Agent:
         now = time.monotonic()
         if now - self._last_heartbeat < 30:
             return
+        # Por intento, no por exito: sin red, reintentar en cada vuelta sumaria un
+        # timeout por vuelta y systemd mataria al agente por watchdog.
+        self._last_heartbeat = now
         try:
             self.sync.heartbeat(
                 pending_count=self.store.pending_count(),
@@ -133,7 +136,6 @@ class Agent:
                 uptime_s=now - self._started,
                 last_error=self._hw_error,
             )
-            self._last_heartbeat = now
         except Exception:
             logger.exception("heartbeat failed")
 
@@ -155,7 +157,7 @@ class Agent:
                 except NotImplementedError as exc:
                     # Salir con Restart=always seria un bucle de reinicios: seguimos
                     # vaciando la outbox y avisando por heartbeat, sin capturar.
-                    self._hw_error = str(exc)
+                    self._hw_error = str(exc) or type(exc).__name__
                     logger.error("hardware not configured; capture disabled: %s", exc)
                 except Exception:
                     logger.exception("capture loop error")

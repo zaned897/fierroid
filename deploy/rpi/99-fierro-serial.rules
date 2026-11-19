@@ -1,13 +1,21 @@
 # Nombres estables para los adaptadores USB-serie de la estacion.
 # /dev/ttyUSB0 y /dev/ttyUSB1 pueden intercambiarse al reiniciar; estos enlaces no.
 #
-# Sacar el numero de serie de cada adaptador (conectar uno a la vez):
-#   udevadm info -a -n /dev/ttyUSB0 | grep -m1 '{serial}'
-# y, si hace falta, idVendor / idProduct:
-#   udevadm info -a -n /dev/ttyUSB0 | grep -m1 -E '{idVendor}|{idProduct}'
+# Ver las propiedades de cada adaptador (conectar uno a la vez):
+#   udevadm info -q property -n /dev/ttyUSB0 | grep -E 'ID_SERIAL_SHORT|ID_VENDOR_ID|ID_MODEL_ID|ID_PATH='
 #
-# Reemplazar CAMBIAR-SERIE-* y copiar a /etc/udev/rules.d/ (ver README.md).
-# Si dos adaptadores no traen numero de serie, usar KERNELS== con el puerto USB fisico.
+# Opcion A (preferida): numero de serie propio del adaptador (FTDI, CP210x).
+# Opcion B: adaptadores sin serie propio (CH340, PL2303 baratos) reportan el
+#   del controlador USB o ninguno, y dos iguales chocarian. Usar el puerto USB
+#   fisico (ID_PATH) y etiquetar el puerto en el gabinete.
+#
+# Dejar una sola opcion por enlace, reemplazar los CAMBIAR-* y copiar a
+# /etc/udev/rules.d/ (ver README.md).
 
-SUBSYSTEM=="tty", ATTRS{serial}=="CAMBIAR-SERIE-BASCULA", SYMLINK+="fierro-bascula", GROUP="dialout", MODE="0660"
-SUBSYSTEM=="tty", ATTRS{serial}=="CAMBIAR-SERIE-LECTOR", SYMLINK+="fierro-lector", GROUP="dialout", MODE="0660"
+# Opcion A
+SUBSYSTEM=="tty", ENV{ID_SERIAL_SHORT}=="CAMBIAR-SERIE-BASCULA", SYMLINK+="fierro-bascula", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ENV{ID_SERIAL_SHORT}=="CAMBIAR-SERIE-LECTOR", SYMLINK+="fierro-lector", GROUP="dialout", MODE="0660"
+
+# Opcion B
+#SUBSYSTEM=="tty", ENV{ID_PATH}=="CAMBIAR-ID-PATH-BASCULA", SYMLINK+="fierro-bascula", GROUP="dialout", MODE="0660"
+#SUBSYSTEM=="tty", ENV{ID_PATH}=="CAMBIAR-ID-PATH-LECTOR", SYMLINK+="fierro-lector", GROUP="dialout", MODE="0660"
