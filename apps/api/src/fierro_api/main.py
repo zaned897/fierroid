@@ -27,7 +27,7 @@ from fierro_api.auth import (
     user_for_api_key,
 )
 from fierro_api.settings import Settings
-from fierro_api.store import build_store
+from fierro_api.store import SALUD_CAMPOS, build_store
 
 settings = Settings.from_env()
 # Antes de tocar la base: en stage o production, una config incompleta aborta
@@ -159,6 +159,22 @@ class HeartbeatIn(BaseModel):
     pending_count: int = 0
     agent_version: str | None = None
     uptime_s: int | None = None
+    # Salud de la estacion (#184). Opcionales: un agente viejo no los manda, y
+    # `null` significa "no aplica o no se pudo leer", nunca 0.
+    disk_used_pct: float | None = Field(default=None, ge=0, le=100)
+    cpu_temp_c: float | None = None
+    throttled: int | None = Field(default=None, ge=0)
+    clock_synced: bool | None = None
+    hw_rev: str | None = None
+    last_sync_ok_at: AwareDatetime | None = None
+    last_error: str | None = None
+
+    @field_validator("hw_rev", "last_error")
+    @classmethod
+    def _recortar(cls, valor: str | None) -> str | None:
+        # Recortar en vez de rechazar: un 422 tiraria el heartbeat entero, y el
+        # heartbeat es lo unico que dice si la estacion esta viva.
+        return valor[:1000] if valor is not None else None
 
 
 @app.get("/health")
@@ -689,6 +705,7 @@ def post_heartbeat(device_id: str, body: HeartbeatIn) -> dict[str, Any]:
         pending_count=body.pending_count,
         agent_version=body.agent_version,
         uptime_s=body.uptime_s,
+        salud=body.model_dump(include=set(SALUD_CAMPOS)),
     )
     return {"ok": True, "device_id": device_id}
 

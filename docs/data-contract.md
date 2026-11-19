@@ -32,9 +32,30 @@
   "sent_at": "2026-08-24T00:16:00+00:00",
   "pending_count": 3,
   "agent_version": "0.1.0",
-  "uptime_s": 3600
+  "uptime_s": 3600,
+  "disk_used_pct": 41.5,
+  "cpu_temp_c": 52.3,
+  "throttled": 0,
+  "clock_synced": true,
+  "hw_rev": "proto-b",
+  "last_sync_ok_at": "2026-08-24T00:15:40+00:00",
+  "last_error": null
 }
 ```
+
+Campos de salud (#184), todos opcionales y nullable. `null` = no aplica en esa
+plataforma o no se pudo leer; nunca 0 por defecto. Un agente viejo que no los
+manda se sigue aceptando y quedan `null`. `GET /v1/devices` los devuelve.
+
+| Campo | Fuente en la estación |
+|-------|-----------------------|
+| `disk_used_pct` | `% usado` de la partición de `FIERRO_DB_PATH` |
+| `cpu_temp_c` | `/sys/class/thermal/thermal_zone0/temp` |
+| `throttled` | máscara de `vcgencmd get_throttled` (bits de subvoltaje y límite térmico) |
+| `clock_synced` | `timedatectl show -p NTPSynchronized` |
+| `hw_rev` | variable `FIERRO_HW_REV` |
+| `last_sync_ok_at` | último `POST /v1/readings` aceptado por la API |
+| `last_error` | último error del driver o de la captura (la API recorta a 1000 caracteres) |
 
 ## Endpoints MVP
 

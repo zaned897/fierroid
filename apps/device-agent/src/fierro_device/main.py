@@ -7,6 +7,7 @@ import signal
 import sys
 import time
 from collections.abc import Callable
+from datetime import UTC, datetime
 
 from fierro_device import __version__
 from fierro_device.backoff import Backoff, guardar_estado
@@ -14,6 +15,7 @@ from fierro_device.config import ConfigError, load_config
 from fierro_device.hardware import build_hardware
 from fierro_device.models import WeightReading
 from fierro_device.notify import sd_notify
+from fierro_device.salud import leer_salud
 from fierro_device.settings import Settings
 from fierro_device.store import OutboxStore
 from fierro_device.sync import CloudSync
@@ -51,6 +53,10 @@ class Agent:
         self._last_tag_at = 0.0
         # Error de hardware sin configurar: se registra una vez y se deja de capturar.
         self._hw_error: str | None = None
+        # Ultimo error de captura/driver (cualquiera), para el heartbeat.
+        self._last_error: str | None = None
+        # Ultimo push aceptado por la API (ISO UTC), para el heartbeat.
+        self._last_sync_ok_at: str | None = None
 
     def stop(self, *_args: object) -> None:
         logger.info("shutdown requested")
@@ -100,6 +106,7 @@ class Agent:
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
             self.backoff.exito()
+            self._last_sync_ok_at = datetime.now(UTC).isoformat()
             return len(accepted)
         except Exception:
             logger.exception("sync failed; readings remain pending")
@@ -131,7 +138,11 @@ class Agent:
                 pending_count=self.store.pending_count(),
                 agent_version=__version__,
                 uptime_s=now - self._started,
-                last_error=self._hw_error,
+                last_error=self._last_error,
+                salud={
+                    **leer_salud(self.settings.db_path),
+                    "last_sync_ok_at": self._last_sync_ok_at,
+                },
             )
             self._last_heartbeat = now
         except Exception:
@@ -155,9 +166,10 @@ class Agent:
                 except NotImplementedError as exc:
                     # Salir con Restart=always seria un bucle de reinicios: seguimos
                     # vaciando la outbox y avisando por heartbeat, sin capturar.
-                    self._hw_error = str(exc)
+                    self._hw_error = self._last_error = str(exc)
                     logger.error("hardware not configured; capture disabled: %s", exc)
-                except Exception:
+                except Exception as exc:
+                    self._last_error = f"{type(exc).__name__}: {exc}"
                     logger.exception("capture loop error")
             self.maybe_sync()
             self.maybe_heartbeat()

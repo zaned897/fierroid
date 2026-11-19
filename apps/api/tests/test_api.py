@@ -84,3 +84,73 @@ def test_el_usuario_de_laboratorio_esta_etiquetado():
     body = client.get("/v1/auth/me").json()
     assert body["email"] == "laboratorio@local"
     assert body["org"] is None
+
+
+SALUD = {
+    "disk_used_pct": 41.5,
+    "cpu_temp_c": 52.3,
+    "throttled": 0x50005,
+    "clock_synced": True,
+    "hw_rev": "proto-b",
+    "last_sync_ok_at": "2026-11-19T04:00:00+00:00",
+    "last_error": "SerialTimeout: bascula",
+}
+
+
+def _estacion(client, device_id):
+    devices = client.get("/v1/devices").json()["devices"]
+    return next(d for d in devices if d["device_id"] == device_id)
+
+
+def test_heartbeat_guarda_la_salud_de_la_estacion():
+    client = TestClient(app)
+    device_id = f"rpi-salud-{uuid.uuid4().hex[:8]}"
+    body = {"pending_count": 2, "agent_version": "0.1.0", "uptime_s": 10, **SALUD}
+    assert client.post(f"/v1/devices/{device_id}/heartbeat", json=body).status_code == 200
+
+    d = _estacion(client, device_id)
+    for campo, valor in SALUD.items():
+        if campo == "last_sync_ok_at":
+            assert d[campo].startswith("2026-11-19T04:00:00")
+        else:
+            assert d[campo] == valor, campo
+
+
+def test_heartbeat_viejo_sin_campos_nuevos_se_acepta_y_quedan_null():
+    client = TestClient(app)
+    device_id = f"rpi-viejo-{uuid.uuid4().hex[:8]}"
+    viejo = {"pending_count": 0, "agent_version": "0.0.9", "uptime_s": 5}
+    assert client.post(f"/v1/devices/{device_id}/heartbeat", json=viejo).status_code == 200
+
+    d = _estacion(client, device_id)
+    for campo in SALUD:
+        assert d[campo] is None, campo
+
+
+def test_heartbeat_recorta_error_largo_en_vez_de_rechazar():
+    client = TestClient(app)
+    device_id = f"rpi-largo-{uuid.uuid4().hex[:8]}"
+    body = {"pending_count": 0, "last_error": "x" * 5000}
+    assert client.post(f"/v1/devices/{device_id}/heartbeat", json=body).status_code == 200
+    assert len(_estacion(client, device_id)["last_error"]) == 1000
+
+
+def test_base_sqlite_vieja_recibe_las_columnas_de_salud(tmp_path):
+    import sqlite3
+
+    from fierro_api.store import SALUD_CAMPOS, ReadingStore
+
+    ruta = tmp_path / "vieja.db"
+    conn = sqlite3.connect(ruta)
+    conn.execute(
+        "CREATE TABLE devices (device_id TEXT PRIMARY KEY, pending_count INTEGER NOT NULL "
+        "DEFAULT 0, agent_version TEXT, uptime_s INTEGER, last_seen TEXT NOT NULL)"
+    )
+    conn.execute("INSERT INTO devices VALUES ('rpi-1', 3, '0.1.0', 9, datetime('now'))")
+    conn.commit()
+    conn.close()
+
+    store = ReadingStore(str(ruta))
+    (d,) = store.list_devices()
+    assert d["pending_count"] == 3
+    assert all(d[c] is None for c in SALUD_CAMPOS)
