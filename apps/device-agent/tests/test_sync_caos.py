@@ -107,8 +107,11 @@ def test_red_caida_10_ciclos_y_vuelta_sin_perdidas_ni_duplicados(agente, api):
         assert agente.flush_outbox() == 0
     assert agente.store.pending_count() == 70
     api.caida = False
-    while agente.store.pending_count():
+    for _ in range(5):  # 70 lecturas en lotes de 50
+        if not agente.store.pending_count():
+            break
         assert agente.flush_outbox() > 0
+    assert agente.store.pending_count() == 0
     assert sorted(api.guardados) == sorted(capturados)
     assert len(api.guardados) == len(set(api.guardados))
 
@@ -120,9 +123,27 @@ def test_200_sin_accepted_ids_no_marca_nada(agente, api):
     assert agente.store.pending_count() == 3
 
 
-def test_200_con_lista_vacia_no_marca_nada(agente, api):
+def test_200_con_lista_vacia_no_marca_nada_y_cuenta_como_fallo(agente, api):
     _capturar(agente, 3)
     api.respuesta = lambda _a, _d: {"accepted_ids": [], "duplicate_ids": []}
+    assert agente.flush_outbox() == 0
+    assert agente.store.pending_count() == 3
+    assert agente.backoff.intervalo_s == 4.0  # no vuelve al minimo
+
+
+@pytest.mark.parametrize(
+    "respuesta",
+    [
+        lambda ids: {"accepted_ids": {i: "rejected" for i in ids}},
+        lambda ids: {"accepted_ids": ids[0]},
+        lambda ids: {"accepted_ids": [[i] for i in ids]},
+        lambda ids: {"accepted_ids": None, "duplicate_ids": None},
+        lambda ids: ids,
+    ],
+)
+def test_ack_con_tipos_raros_no_marca_nada(agente, api, respuesta):
+    ids = _capturar(agente, 3)
+    api.respuesta = lambda _a, _d: respuesta(ids)
     assert agente.flush_outbox() == 0
     assert agente.store.pending_count() == 3
 
@@ -149,8 +170,11 @@ def test_500_intermitente(agente, api):
     for _ in range(6):
         capturados += _capturar(agente, 5)
         agente.flush_outbox()
-    while agente.store.pending_count():
+    for _ in range(20):
+        if not agente.store.pending_count():
+            break
         agente.flush_outbox()
+    assert agente.store.pending_count() == 0
     assert sorted(api.guardados) == sorted(capturados)
     assert len(api.guardados) == len(set(api.guardados))
 
@@ -201,3 +225,43 @@ def test_jitter_reparte_entre_la_mitad_y_el_intervalo():
         b.fallo()
     assert b.intervalo_s == 300
     assert b.espera() == 225.0
+
+
+def test_timeouts_separados(agente):
+    t = agente.sync._client.timeout
+    assert (t.connect, t.read, t.write, t.pool) == (5.0, 15.0, 5.0, 5.0)
+
+
+def test_heartbeat_sigue_su_ritmo_con_el_sync_en_backoff(agente, api, monkeypatch):
+    _capturar(agente, 1)
+    api.caida = True
+    for _ in range(10):
+        agente.flush_outbox()
+    assert agente.backoff.intervalo_s == 300.0
+    latidos = []
+    monkeypatch.setattr(agente.sync, "heartbeat", lambda **kw: latidos.append(kw))
+    agente.maybe_heartbeat()
+    assert len(latidos) == 1
+
+
+def test_al_arrancar_el_estado_vuelve_al_minimo(agente, api, tmp_path, monkeypatch):
+    from fierro_device import doctor
+    from fierro_device import main as agente_mod
+
+    monkeypatch.setattr(agente_mod.signal, "signal", lambda *_a: None)
+
+    _capturar(agente, 1)
+    api.caida = True
+    for _ in range(10):
+        agente.flush_outbox()
+    db = agente.settings.db_path
+    assert "300 s" in doctor._ultimo_sync(db, 2.0)
+    assert "nunca" in doctor._ultimo_sync(db, 2.0)
+
+    nuevo = Agent(agente.settings)  # reinicio del servicio
+    nuevo._running = False
+    nuevo.run()  # arranca y sale: reescribe el estado
+    assert leer_estado(db) == {"intervalo_s": 2.0}
+    assert doctor._ultimo_sync(str(tmp_path / "no-existe.db"), 2.0) == (
+        "ultimo sync OK: nunca; intervalo actual: 2 s"
+    )

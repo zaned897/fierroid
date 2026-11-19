@@ -99,7 +99,12 @@ class Agent:
             accepted = self.sync.push_readings(pending)
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
-            self.backoff.exito()
+            if accepted:
+                self.backoff.exito()
+            else:
+                # 200 sin confirmar nada: la API esta degradada, no reintentar a 2 s.
+                logger.warning("sync sin ACK de %d lecturas; quedan pending", len(pending))
+                self.backoff.fallo()
             return len(accepted)
         except Exception:
             logger.exception("sync failed; readings remain pending")
@@ -149,6 +154,8 @@ class Agent:
             self.settings.api_url,
             self.settings.db_path,
         )
+        # Al arrancar el intervalo vuelve al minimo: que doctor no vea el de la corrida anterior.
+        self._guardar_estado_sync()
         sd_notify("READY=1")
         while self._running:
             if self._hw_error is None:

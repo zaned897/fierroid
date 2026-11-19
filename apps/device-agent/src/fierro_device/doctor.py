@@ -16,7 +16,7 @@ def _pendientes(db_path: str) -> str:
     ruta = Path(db_path)
     if not ruta.exists():
         return "todavia no existe; se crea al arrancar"
-    conn = sqlite3.connect(f"{ruta.as_uri()}?mode=ro", uri=True)
+    conn = sqlite3.connect(f"{ruta.resolve().as_uri()}?mode=ro", uri=True)
     try:
         filas = conn.execute(
             "SELECT status, count(*) FROM readings GROUP BY status"
@@ -26,19 +26,21 @@ def _pendientes(db_path: str) -> str:
     return ", ".join(f"{estado}={n}" for estado, n in filas) or "vacia"
 
 
-def _ultimo_sync(db_path: str) -> str:
+def _ultimo_sync(db_path: str, minimo_s: float) -> str:
     ruta = Path(db_path)
     ultimo = None
     if ruta.exists():
-        conn = sqlite3.connect(f"{ruta.as_uri()}?mode=ro", uri=True)
+        conn = sqlite3.connect(f"{ruta.resolve().as_uri()}?mode=ro", uri=True)
         try:
             ultimo = conn.execute("SELECT max(synced_at) FROM readings").fetchone()[0]
         finally:
             conn.close()
     estado = leer_estado(db_path) or {}
     intervalo = estado.get("intervalo_s")
-    texto_intervalo = f"{intervalo:g} s" if isinstance(intervalo, int | float) else "minimo"
-    return f"ultimo sync OK={ultimo or 'nunca'} (UTC), intervalo actual={texto_intervalo}"
+    if not isinstance(intervalo, int | float) or isinstance(intervalo, bool):
+        intervalo = minimo_s
+    cuando = f"{ultimo} UTC" if ultimo else "nunca"
+    return f"ultimo sync OK: {cuando}; intervalo actual: {intervalo:g} s"
 
 
 def _puerto_presente(puerto: str) -> bool:
@@ -90,7 +92,7 @@ def run_doctor(settings: Settings, config_path: Path | None) -> int:
     except sqlite3.Error as exc:
         falla(f"outbox {settings.db_path}: {exc}")
     try:
-        print(f"[INFO] {_ultimo_sync(settings.db_path)}")
+        print(f"[INFO] {_ultimo_sync(settings.db_path, settings.sync_interval_s)}")
     except sqlite3.Error as exc:
         falla(f"sync {settings.db_path}: {exc}")
 

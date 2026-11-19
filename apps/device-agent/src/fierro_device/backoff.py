@@ -22,9 +22,9 @@ class Backoff:
         maximo_s: float,
         aleatorio: Callable[[], float] = random.random,
     ) -> None:
-        self.minimo_s = minimo_s
-        self.maximo_s = max(maximo_s, minimo_s)
-        self.intervalo_s = minimo_s
+        self.minimo_s = max(minimo_s, 0.0)
+        self.maximo_s = max(maximo_s, self.minimo_s)
+        self.intervalo_s = self.minimo_s
         self._aleatorio = aleatorio
 
     def exito(self) -> None:
@@ -48,7 +48,10 @@ def guardar_estado(db_path: str, estado: dict[str, Any]) -> None:
     """Escritura atomica; se llama solo cuando el estado cambia (desgaste de la SD)."""
     ruta = ruta_estado(db_path)
     tmp = ruta.with_suffix(".tmp")
-    tmp.write_text(json.dumps(estado))
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(json.dumps(estado))
+        f.flush()
+        os.fsync(f.fileno())
     os.replace(tmp, ruta)
 
 
