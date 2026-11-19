@@ -85,6 +85,7 @@ locals {
     FIERRO_API_CORS_ORIGINS = var.cors_origins
     FIERRO_GOOGLE_CLIENT_ID = var.google_client_id
     FIERRO_API_KEY_TTL_DAYS = tostring(var.api_key_ttl_days)
+    FIERRO_MEDIA_BUCKET     = google_storage_bucket.journal_media.name
   }
 }
 
@@ -171,6 +172,10 @@ resource "google_cloud_run_v2_service" "api" {
     google_secret_manager_secret_version.dsn,
     google_secret_manager_secret_iam_member.api_dsn,
     google_secret_manager_secret_iam_member.api_anthropic,
+    google_storage_bucket_iam_member.media_creator,
+    google_storage_bucket_iam_member.media_reader,
+    google_service_account_iam_member.media_signer,
+    google_project_service.iam_credentials,
   ]
 }
 

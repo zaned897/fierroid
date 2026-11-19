@@ -19,6 +19,10 @@ dependencies = [
   "python-multipart>=0.0.9",
   # Asistente "Pregúntale a tu hato" (#110). La clave vive solo en el servidor.
   "anthropic>=2.0",
+  # Validacion y almacenamiento de fotos y notas de voz del Diario.
+  "Pillow>=11",
+  "av>=16",
+  "google-cloud-storage>=3",
 ]
 
 [project.optional-dependencies]
