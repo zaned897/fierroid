@@ -1,8 +1,10 @@
 # Unidad systemd del agente de la estacion (RPi). Instalacion: deploy/rpi/README.md
 [Unit]
 Description=Fierro estacion de pesaje (captura + outbox + sync)
-Wants=network-online.target
-After=network-online.target
+# Sin network-online.target a proposito: capturar no espera a la red (4G puede
+# tardar minutos tras un corte de luz); el sync reintenta solo.
+# Sin /data montado no arrancar: la outbox caeria en la raiz o en un overlay volatil.
+RequiresMountsFor=/data/fierro
 # Nunca dejar de reintentar: el corral no espera a que alguien entre por SSH.
 StartLimitIntervalSec=0
 
@@ -17,14 +19,15 @@ Environment=FIERRO_DB_PATH=/data/fierro/device.db
 ExecStart=/opt/fierro/venv/bin/fierro-device run
 Restart=always
 RestartSec=5
-# El agente manda WATCHDOG=1 en cada vuelta del bucle; si una lectura se cuelga, systemd lo reinicia.
-# 60 s cubre el peor caso de una vuelta con red lenta: sync (5 s conexion + 15 s lectura) + heartbeat igual.
-WatchdogSec=60
+# El agente manda WATCHDOG=1 al terminar cada vuelta del bucle; si una lectura se
+# cuelga, systemd lo reinicia. 90 s cubren una vuelta lenta pero viva con red mala
+# (sync + heartbeat, cada uno con sus timeouts HTTP y DNS).
+WatchdogSec=90
 NotifyAccess=main
 MemoryMax=256M
 TimeoutStopSec=20
 NoNewPrivileges=true
-ProtectSystem=full
+ProtectSystem=strict
 ReadWritePaths=/data/fierro
 
 [Install]

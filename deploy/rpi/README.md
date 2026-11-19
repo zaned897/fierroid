@@ -3,7 +3,7 @@
 Archivos:
 
 - `fierro-device.service`: unidad systemd con `Type=notify`, watchdog de aplicación
-  (`WatchdogSec=60`), `Restart=always` sin límite de reintentos y `MemoryMax=256M`.
+  (`WatchdogSec=90`), `Restart=always` sin límite de reintentos y `MemoryMax=256M`.
 - `99-fierro-serial.rules`: enlaces estables `/dev/fierro-bascula` y `/dev/fierro-lector`.
 
 La imagen del sistema, overlayfs, RTC, router 4G y VPN van aparte (#188).
@@ -17,6 +17,9 @@ sudo chown fierro:fierro /data/fierro
 ```
 
 `/data` es la partición de datos; la outbox (`/data/fierro/device.db`) no vive en la raíz.
+La unidad no arranca si `/data` no está montado (`RequiresMountsFor`), ni si
+`/data/fierro` no existe (`ReadWritePaths` con `ProtectSystem=strict`): falla ruidosa
+en vez de escribir la outbox donde se pierde.
 
 ## 2. Agente
 
@@ -37,14 +40,24 @@ FIERRO_RFID_PORT=/dev/fierro-lector
 ## 3. Puertos estables
 
 ```bash
-udevadm info -a -n /dev/ttyUSB0 | grep -m1 '{serial}'   # uno por adaptador
+# uno por adaptador
+udevadm info -q property -n /dev/ttyUSB0 | grep -E 'ID_SERIAL_SHORT|ID_VENDOR_ID|ID_MODEL_ID|ID_PATH='
 sudo cp deploy/rpi/99-fierro-serial.rules /etc/udev/rules.d/
-sudo nano /etc/udev/rules.d/99-fierro-serial.rules       # poner los números de serie
+sudo nano /etc/udev/rules.d/99-fierro-serial.rules       # número de serie o puerto USB físico
 sudo udevadm control --reload && sudo udevadm trigger
 ls -l /dev/fierro-*
 ```
 
-`fierro-device doctor` muestra a qué `/dev/ttyUSB*` apunta cada puerto.
+Adaptadores CH340/PL2303 sin número de serie propio: usar la opción B de las reglas
+(puerto USB físico, `ID_PATH`) y etiquetar el puerto en el gabinete.
+
+`fierro-device doctor` muestra a qué `/dev/ttyUSB*` apunta cada puerto. A mano, con
+la misma configuración que el servicio:
+
+```bash
+sudo -u fierro FIERRO_ENV_FILE=/etc/fierro/device.env FIERRO_DB_PATH=/data/fierro/device.db \
+  /opt/fierro/venv/bin/fierro-device doctor
+```
 
 ## 4. Unidad
 

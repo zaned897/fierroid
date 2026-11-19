@@ -23,7 +23,8 @@ class CloudSync:
         self.device_id = device_id
         # Conexion corta para detectar red caida rapido; lectura mas holgada para 4G.
         self._client = httpx.Client(
-            timeout=httpx.Timeout(15.0, connect=5.0), transport=transport
+            timeout=httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0),
+            transport=transport,
         )
 
     def push_readings(self, readings: list[dict[str, Any]]) -> list[str]:
@@ -35,15 +36,21 @@ class CloudSync:
         )
         resp.raise_for_status()
         data = resp.json()
-        if not isinstance(data, dict) or (
-            "accepted_ids" not in data and "duplicate_ids" not in data
-        ):
+        if not isinstance(data, dict):
+            raise SyncError("respuesta que no es un objeto JSON")
+        listas = [data.get(campo) for campo in ("accepted_ids", "duplicate_ids")]
+        if all(lista is None for lista in listas):
             raise SyncError("respuesta sin accepted_ids ni duplicate_ids")
+        confirmados: list[str] = []
+        for lista in listas:
+            if lista is None:
+                continue
+            # Solo una lista de strings cuenta como ACK: un dict o un str no.
+            if not isinstance(lista, list) or not all(isinstance(e, str) for e in lista):
+                raise SyncError("accepted_ids/duplicate_ids no son listas de ids")
+            confirmados.extend(lista)
         # ACK estricto: solo lo que el servidor confirma tener, y solo lo que enviamos.
         enviados = {r["event_id"] for r in readings}
-        confirmados = list(data.get("accepted_ids") or []) + list(
-            data.get("duplicate_ids") or []
-        )
         return list(dict.fromkeys(e for e in confirmados if e in enviados))
 
     def heartbeat(

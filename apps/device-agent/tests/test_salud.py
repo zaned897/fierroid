@@ -112,7 +112,7 @@ def test_heartbeat_lleva_la_salud_y_el_ultimo_sync(
 
     assert a.capture_once() is not None
     assert a.flush_outbox() == 1
-    a._last_heartbeat = 0.0
+    a._last_heartbeat = float("-inf")
     a.maybe_heartbeat()
     assert latidos[1]["last_sync_ok_at"] is not None
     a.sync.close()

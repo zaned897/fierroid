@@ -48,7 +48,7 @@ class Agent:
         self._started = time.monotonic()
         self._next_sync = 0.0
         self.backoff = Backoff(settings.sync_interval_s, settings.sync_max_s, aleatorio)
-        self._last_heartbeat = 0.0
+        self._last_heartbeat = float("-inf")  # primer heartbeat al arrancar
         self._last_tag: str | None = None
         self._last_tag_at = 0.0
         # Error de hardware sin configurar: se registra una vez y se deja de capturar.
@@ -105,8 +105,13 @@ class Agent:
             accepted = self.sync.push_readings(pending)
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
-            self.backoff.exito()
-            self._last_sync_ok_at = datetime.now(UTC).isoformat()
+            if accepted:
+                self.backoff.exito()
+                self._last_sync_ok_at = datetime.now(UTC).isoformat()
+            else:
+                # 200 sin confirmar nada: la API esta degradada, no reintentar a 2 s.
+                logger.warning("sync sin ACK de %d lecturas; quedan pending", len(pending))
+                self.backoff.fallo()
             return len(accepted)
         except Exception:
             logger.exception("sync failed; readings remain pending")
@@ -133,6 +138,9 @@ class Agent:
         now = time.monotonic()
         if now - self._last_heartbeat < 30:
             return
+        # Por intento, no por exito: sin red, reintentar en cada vuelta sumaria un
+        # timeout por vuelta y systemd mataria al agente por watchdog.
+        self._last_heartbeat = now
         try:
             self.sync.heartbeat(
                 pending_count=self.store.pending_count(),
@@ -144,7 +152,6 @@ class Agent:
                     "last_sync_ok_at": self._last_sync_ok_at,
                 },
             )
-            self._last_heartbeat = now
         except Exception:
             logger.exception("heartbeat failed")
 
@@ -158,6 +165,8 @@ class Agent:
             self.settings.api_url,
             self.settings.db_path,
         )
+        # Al arrancar el intervalo vuelve al minimo: que doctor no vea el de la corrida anterior.
+        self._guardar_estado_sync()
         sd_notify("READY=1")
         while self._running:
             if self._hw_error is None:
@@ -166,7 +175,7 @@ class Agent:
                 except NotImplementedError as exc:
                     # Salir con Restart=always seria un bucle de reinicios: seguimos
                     # vaciando la outbox y avisando por heartbeat, sin capturar.
-                    self._hw_error = self._last_error = str(exc)
+                    self._hw_error = self._last_error = str(exc) or type(exc).__name__
                     logger.error("hardware not configured; capture disabled: %s", exc)
                 except Exception as exc:
                     self._last_error = f"{type(exc).__name__}: {exc}"
