@@ -28,6 +28,11 @@ export function draftKey(user, animal) {
   return `${PREFIJO}${encodeURIComponent(user.email)}:${encodeURIComponent(animal.org ?? "")}:${encodeURIComponent(animal.tag_id)}`;
 }
 
+export function diaryDraftKey(user, org) {
+  if (!user?.email || !org) return null;
+  return `${PREFIJO}diario:${encodeURIComponent(user.email)}:${encodeURIComponent(org)}`;
+}
+
 /** Devuelve `{ draft, disponible }`. Un borrador vencido o corrupto se descarta. */
 export function loadDraft(key, { storage, now = Date.now() } = {}) {
   const s = almacen(storage);

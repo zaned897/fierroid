@@ -1,125 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { apiFetch } from "./auth.js";
-import { clearDraft, draftKey, loadDraft, saveDraft } from "./bitacoraDraft.js";
-import { capturedLabel } from "./readings.js";
+import { useState } from "react";
+import JournalEntries from "./JournalEntries.jsx";
+import JournalForm from "./JournalForm.jsx";
+import useJournal from "./useJournal.js";
+import "./diario.css";
 
-const categories = { observacion: "Observación", alimentacion: "Alimentación", manejo: "Manejo", salud: "Salud" };
-function localNow() {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-}
-
-export default function BitacoraAnimal({ animal, session, onExpired }) {
-  // Borrador local por usuario+org+arete: sobrevive a recargar o cerrar la ficha
-  // y conserva el UUID del envío para que un reintento no duplique la nota.
-  const draftId = draftKey(session?.user, animal);
-  const [inicial] = useState(() => loadDraft(draftId));
-  const [sinBorrador, setSinBorrador] = useState(!inicial.disponible);
-  const [entries, setEntries] = useState([]);
-  const [cursor, setCursor] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
+export default function BitacoraAnimal({ animal, session, onExpired, onDiario }) {
+  const path = `/v1/animals/${encodeURIComponent(animal.tag_id)}/journal?org=${encodeURIComponent(animal.org)}&limit=20`;
+  const { entries, cursor, busy, error, load } = useJournal(path, "", session, onExpired);
   const [saved, setSaved] = useState(false);
-  const [body, setBody] = useState(inicial.draft?.body ?? "");
-  const [category, setCategory] = useState(inicial.draft?.category ?? "observacion");
-  const [occurred, setOccurred] = useState(inicial.draft?.occurred ?? localNow);
-  const request = useRef(null);
-  const pending = useRef(inicial.draft?.entry_id
-    ? { fingerprint: inicial.draft.fingerprint, entry_id: inicial.draft.entry_id }
-    : null);
-
-  useEffect(() => {
-    if (!body.trim() && !pending.current) { clearDraft(draftId); return; }
-    const ok = saveDraft(draftId, { body, category, occurred, ...(pending.current || {}) });
-    if (!ok) setSinBorrador(true);
-  }, [draftId, body, category, occurred]);
-  const path = `/v1/animals/${encodeURIComponent(animal.tag_id)}/journal?org=${encodeURIComponent(animal.org)}`;
-
-  const load = useCallback(async (next = null) => {
-    if (request.current) return;
-    const controller = new AbortController();
-    request.current = controller;
-    const timer = setTimeout(() => controller.abort(), 15000);
-    setBusy(true);
-    setError(null);
-    try {
-      const data = await apiFetch(`${path}&limit=20${next ? `&cursor=${encodeURIComponent(next)}` : ""}`, { session, signal: controller.signal });
-      if (request.current !== controller) return;
-      setEntries((prev) => [...new Map((next ? [...prev, ...data.entries] : data.entries).map((entry) => [entry.entry_id, entry])).values()]);
-      setCursor(data.next_cursor);
-    } catch (err) {
-      if (request.current !== controller) return;
-      if (err.unauthorized) onExpired();
-      else {
-        if (err.status === 403) { setEntries([]); setCursor(null); }
-        setError(err.status === 404 ? "La bitácora aún no está disponible en esta API." : "No se pudo cargar la bitácora. Vuelve a intentar.");
-      }
-    } finally {
-      clearTimeout(timer);
-      if (request.current === controller) { request.current = null; setBusy(false); }
-    }
-  }, [path, session, onExpired]);
-
-  useEffect(() => {
-    load();
-    return () => { const controller = request.current; request.current = null; controller?.abort(); };
-  }, [load]);
-
-  async function save(event) {
-    event.preventDefault();
-    if (request.current || !body.trim() || !Number.isFinite(Date.parse(occurred))) return;
-    const content = { body: body.trim(), category, occurred_at: new Date(occurred).toISOString() };
-    const fingerprint = JSON.stringify(content);
-    if (pending.current?.fingerprint !== fingerprint) {
-      pending.current = { fingerprint, entry_id: crypto.randomUUID() };
-    }
-    // El UUID queda guardado antes de enviar: si se pierde el ACK y se recarga,
-    // el reintento usa el mismo.
-    if (!saveDraft(draftId, { body, category, occurred, ...pending.current })) setSinBorrador(true);
-    const controller = new AbortController();
-    request.current = controller;
-    const timer = setTimeout(() => controller.abort(), 15000);
-    setBusy(true); setError(null); setSaved(false);
-    try {
-      await apiFetch(path, { session, method: "POST", signal: controller.signal,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...content, entry_id: pending.current.entry_id }),
-      });
-      if (request.current !== controller) return;
-      pending.current = null;
-      clearDraft(draftId);
-      setBody(""); setOccurred(localNow()); setSaved(true);
-      request.current = null;
-      await load();
-    } catch (err) {
-      if (request.current !== controller) return;
-      if (err.unauthorized) onExpired();
-      else setError("No se confirmó el guardado. Conservamos el texto: reintenta sin modificarlo para evitar duplicados.");
-    } finally {
-      clearTimeout(timer);
-      if (request.current === controller) { request.current = null; setBusy(false); }
-    }
-  }
 
   return <section className="animal-journal" aria-label="Bitácora del animal">
-    <div className="row"><h3>Bitácora</h3><button type="button" disabled={busy} onClick={() => load()}>Actualizar bitácora</button></div>
-    <p className="muted">Registra eventos del animal. Las anotaciones se conservan; agrega otra para aclarar o corregir. Si cierras la ficha sin guardar, el texto te espera aquí en este navegador.</p>
-    <form onSubmit={save}>
-      <label className="campo">Fecha del evento (hora local)<input type="datetime-local" value={occurred} required disabled={busy} onChange={(e) => { setOccurred(e.target.value); setSaved(false); }} /></label>
-      <label className="campo">Categoría<select value={category} disabled={busy} onChange={(e) => { setCategory(e.target.value); setSaved(false); }}>{Object.entries(categories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      <label className="campo">Anotación<textarea rows="3" maxLength={4000} required value={body} disabled={busy} onChange={(e) => { setBody(e.target.value); setSaved(false); }} /></label>
-      <button type="submit" disabled={busy || !body.trim()}>Guardar anotación</button>
-    </form>
-    {sinBorrador && <p className="muted">Este navegador no permite guardar borradores: la anotación solo se conserva mientras la ficha esté abierta.</p>}
-    {busy && <p role="status">Procesando bitácora…</p>}
+    <div className="row">
+      <h3>Bitácora</h3>
+      {onDiario && <button type="button" onClick={() => onDiario({ org: animal.org, tag: animal.tag_id })}>Ver en el diario</button>}
+      <button type="button" disabled={busy} onClick={() => load()}>Actualizar bitácora</button>
+    </div>
+    <p className="muted">Agrega una anotación para registrar o aclarar lo ocurrido. Tu borrador se conserva en este navegador.</p>
+    <JournalForm animal={animal} org={animal.org} session={session} onExpired={onExpired}
+      onSaved={() => { setSaved(true); load(); }} />
+    {busy && <p role="status">Cargando bitácora…</p>}
     {saved && <p role="status">Anotación guardada.</p>}
     {error && <p className="error" role="alert">{error}</p>}
     {!busy && !error && entries.length === 0 && <p>Todavía no hay anotaciones.</p>}
-    <ol className="animal-history-list">{entries.map((entry) => <li key={entry.entry_id}>
-      <strong>{categories[entry.category] || entry.category} · {capturedLabel(entry.occurred_at)}</strong>
-      <p className="animal-journal-body">{entry.body}</p>
-      <p className="muted">{entry.author} · Registrado: {capturedLabel(entry.created_at)}</p>
-    </li>)}</ol>
+    <JournalEntries entries={entries} />
     {cursor && <button type="button" disabled={busy} onClick={() => load(cursor)}>Ver anotaciones anteriores</button>}
   </section>;
 }

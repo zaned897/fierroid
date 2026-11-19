@@ -1,0 +1,300 @@
+.diario {
+  min-width: 0;
+}
+
+.journal-toolbar,
+.journal-feed-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.journal-toolbar p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.dashboard button.journal-primary {
+  background: #176575;
+  color: #fff;
+  border-color: #176575;
+}
+
+.dashboard button.journal-primary:hover {
+  background: #124e5a;
+}
+
+.journal-filters form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.journal-filters .campo,
+.journal-form .campo {
+  margin: 0;
+  min-width: 0;
+}
+
+.journal-filters .campo,
+.journal-form .campo,
+.journal-org {
+  font-size: .9rem;
+}
+
+.journal-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.journal-assistant {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.journal-feed-heading h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.journal-day {
+  margin-block: 1.5rem 2rem;
+}
+
+.journal-day > h3 {
+  margin: 0 0 .75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.journal-day > h3::first-letter {
+  text-transform: uppercase;
+}
+
+.journal-entries {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.journal-entries > li {
+  padding: 1.25rem;
+  margin-bottom: .75rem;
+  border: 1px solid var(--line);
+  border-radius: .625rem;
+  background: #fff;
+}
+
+.journal-entry-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .5rem;
+}
+
+.journal-entry-heading strong {
+  color: #176575;
+}
+
+.journal-entry-heading time,
+.journal-entry-author {
+  color: var(--muted);
+  font-size: .875rem;
+}
+
+.journal-entry-author {
+  margin: 1rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.journal-entries .animal-journal-body {
+  margin-block: .75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.journal-entry-animals,
+.journal-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  list-style: none;
+  margin: .75rem 0 0;
+  padding: 0;
+}
+
+.journal-entry-animals li,
+.journal-selected li {
+  max-width: 100%;
+}
+
+.journal-entry-animals button,
+.journal-selected button {
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  font-size: .875rem;
+}
+
+.journal-more {
+  width: 100%;
+}
+
+.journal-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  border-block: 1px solid var(--line);
+}
+
+.journal-empty h3 {
+  margin-top: 0;
+  font-size: 1.125rem;
+}
+
+.journal-empty p {
+  color: var(--muted);
+}
+
+.journal-saved {
+  padding: .875rem 1rem;
+  border-left: 3px solid #176575;
+  background: #eaf2f1;
+}
+
+.journal-org {
+  max-width: 30rem;
+  margin-bottom: 1.5rem;
+}
+
+.journal-dialog {
+  box-sizing: border-box;
+  width: min(38rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  background: #fff;
+  color: var(--ink);
+  overflow-y: auto;
+}
+
+.journal-dialog::backdrop {
+  background: #102b2399;
+}
+
+.journal-dialog h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.journal-form {
+  display: grid;
+  gap: 1.25rem;
+  margin-block: 1.5rem;
+}
+
+.journal-form :is(input, textarea, select),
+.journal-filters :is(input, select),
+.journal-org select {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 2.75rem;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.journal-form textarea {
+  resize: vertical;
+}
+
+.journal-form-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.journal-animal-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+}
+
+.journal-animal-picker legend {
+  padding-inline: .25rem;
+  font-weight: 600;
+}
+
+.journal-animal-picker > p {
+  margin: 0 0 .75rem;
+  font-size: .875rem;
+}
+
+.journal-animal-picker .campo {
+  margin-block: 1rem;
+}
+
+.journal-animal-options {
+  max-height: 13rem;
+  overflow-y: auto;
+}
+
+.journal-animal-option {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem .25rem;
+  border-top: 1px solid var(--line);
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.journal-form .journal-animal-option input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  min-height: 0;
+  accent-color: #176575;
+}
+
+.journal-animal-option span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.journal-animal-option small {
+  display: block;
+  color: var(--muted);
+  font-size: .875rem;
+}
+
+.asistente-contexto {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .journal-toolbar .journal-primary {
+    width: 100%;
+  }
+
+  .journal-filters form,
+  .journal-form-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .journal-dialog {
+    padding: 1rem;
+  }
+
+  .journal-entries > li {
+    padding: 1rem;
+  }
+}

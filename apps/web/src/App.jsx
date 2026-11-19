@@ -6,6 +6,7 @@ import Asistente from "./Asistente.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import Dashboard from "./Dashboard.jsx";
+import Diario from "./Diario.jsx";
 import {
   clearSession,
   exchangeGoogleToken,
@@ -50,6 +51,9 @@ function Contenido() {
   const [vista, setVista] = useState("pesajes");
   // Arete que el asistente pidió abrir; se olvida al cambiar de vista desde el menú.
   const [arete, setArete] = useState(null);
+  const [animalOrg, setAnimalOrg] = useState(null);
+  const [diaryFilters, setDiaryFilters] = useState(null);
+  const [assistantContext, setAssistantContext] = useState(null);
   const [ruta, ir] = useRuta();
 
   const entrar = useCallback(
@@ -88,12 +92,19 @@ function Contenido() {
   const usuario = session.user || {};
 
   return (
-    <Dashboard user={usuario} vista={vista} onVista={(v) => { setArete(null); setVista(v); }} onSalir={salir}>
+    <Dashboard user={usuario} vista={vista} onVista={(v) => {
+      setArete(null); setAnimalOrg(null); setDiaryFilters(null); setAssistantContext(null); setVista(v);
+    }} onSalir={salir}>
       {vista === "pesajes" && <Pesajes key="pesajes" session={session} onExpired={expirada} onHistorial={() => setVista("historial")} onEstaciones={() => setVista("estaciones")} />}
       {vista === "historial" && <Pesajes key="historial" session={session} onExpired={expirada} historial onRecientes={() => setVista("pesajes")} />}
       {vista === "estaciones" && <Estaciones session={session} onExpired={expirada} />}
-      {vista === "animales" && <Animales key={arete || "hato"} session={session} onExpired={expirada} arete={arete} />}
-      {vista === "asistente" && <Asistente session={session} onExpired={expirada} onAbrir={(tag) => { setArete(tag); setVista("animales"); }} />}
+      {vista === "animales" && <Animales key={`${animalOrg || ""}-${arete || "hato"}`} session={session} onExpired={expirada}
+        arete={arete} org={animalOrg} onDiario={(filters) => { setDiaryFilters(filters); setVista("diario"); }} />}
+      {vista === "diario" && <Diario session={session} onExpired={expirada} initialFilters={diaryFilters}
+        onAnimal={(animal) => { setArete(animal.tag_id); setAnimalOrg(animal.org); setVista("animales"); }}
+        onAsistente={(context) => { setAssistantContext(context); setVista("asistente"); }} />}
+      {vista === "asistente" && <Asistente session={session} onExpired={expirada} context={assistantContext}
+        onAbrir={(tag) => { setArete(tag); setAnimalOrg(assistantContext?.org || null); setVista("animales"); }} />}
       {vista === "admin" && usuario.is_superuser && (
         <Admin session={session} onExpired={expirada} />
       )}
