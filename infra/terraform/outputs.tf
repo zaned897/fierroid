@@ -3,6 +3,11 @@ output "api_url" {
   value       = google_cloud_run_v2_service.api.uri
 }
 
+output "journal_media_bucket" {
+  description = "Bucket privado de adjuntos del Diario."
+  value       = google_storage_bucket.journal_media.name
+}
+
 output "registro_docker" {
   description = "Destino de las imagenes. Cloud Run no despliega desde GHCR."
   value       = "${var.region}-docker.pkg.dev/${var.project_id}/${local.registro_id}"

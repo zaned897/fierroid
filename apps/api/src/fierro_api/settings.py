@@ -33,6 +33,8 @@ class Settings:
     # Secreto compartido con el middleware de Vercel (#74). Con el, la API
     # confia en la IP que Vercel firma; sin el, usa la IP que ve Cloud Run.
     edge_secret: str = field(default="", repr=False)
+    media_bucket: str = ""
+    media_dir: str = "/tmp/fierro-media"
 
     @property
     def is_deployed(self) -> bool:
@@ -58,6 +60,8 @@ class Settings:
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", "").strip(),
             asistente_limite_diario=int(os.getenv("FIERRO_ASISTENTE_LIMITE_DIARIO", "200")),
             edge_secret=os.getenv("FIERRO_EDGE_SECRET", "").strip(),
+            media_bucket=os.getenv("FIERRO_MEDIA_BUCKET", "").strip(),
+            media_dir=os.getenv("FIERRO_MEDIA_DIR", "/tmp/fierro-media").strip(),
         )
 
     def validate(self) -> None:

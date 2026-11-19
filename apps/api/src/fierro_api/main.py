@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import base64
 import hmac
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile, status
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from google.api_core.exceptions import GoogleAPIError
+from google.auth.exceptions import GoogleAuthError
 from pydantic import AwareDatetime, BaseModel, Field, field_validator
+from starlette.concurrency import run_in_threadpool
 
 from fierro_api import __version__, asistente, google_auth, journal, waitlist
 from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
+from fierro_api import journal_attachments as media
 from fierro_api.auth import (
     AuthError,
     AuthUser,
@@ -26,6 +30,8 @@ from fierro_api.auth import (
     revoke_api_key,
     user_for_api_key,
 )
+from fierro_api.media_storage import MediaStorage, StorageError, build_storage
+from fierro_api.media_validation import MAX_MEDIA_BYTES, MediaError
 from fierro_api.settings import Settings
 from fierro_api.store import build_store
 
@@ -525,6 +531,102 @@ def get_animal_journal(
         limit=limit, before=_journal_cursor(cursor),
     )
     return _journal_page(entries, limit)
+
+
+def media_storage() -> MediaStorage:
+    return build_storage(settings.media_bucket, settings.media_dir, settings.is_deployed)
+
+
+MediaStore = Annotated[MediaStorage, Depends(media_storage)]
+
+
+@app.exception_handler(media.AttachmentMissing)
+@app.exception_handler(media.AttachmentConflict)
+@app.exception_handler(MediaError)
+@app.exception_handler(StorageError)
+@app.exception_handler(GoogleAPIError)
+@app.exception_handler(GoogleAuthError)
+async def media_failure(_request: Request, exc: Exception) -> JSONResponse:
+    codes: dict[type[Exception], int] = {
+        media.AttachmentMissing: 404, media.AttachmentConflict: 409, MediaError: 400,
+    }
+    code = codes.get(type(exc), 503)
+    detail = str(exc) if code != 503 else "El archivo no esta disponible. Reintenta el mismo envio."
+    return JSONResponse(status_code=code, content={"detail": detail},
+                        headers={"Cache-Control": "private, no-store"})
+
+
+@app.post("/v1/journal/{entry_id}/attachments", response_model=media.AttachmentOut)
+@app.post("/v1/animals/{tag_id}/journal/{entry_id}/attachments",
+          response_model=media.AttachmentOut)
+async def post_journal_attachment(
+    entry_id: UUID, user: CurrentUser, storage: MediaStore,
+    attachment_id: Annotated[UUID, Form()], kind: Annotated[Literal["photo", "audio"], Form()],
+    file: Annotated[UploadFile, File()], org: str | None = Query(default=None),
+    tag_id: str | None = None,
+) -> dict[str, Any]:
+    scope = _write_scope(user, org)
+    raw = await file.read(MAX_MEDIA_BYTES + 1)
+    result: dict[str, Any] = await run_in_threadpool(media.upload,
+        _require_postgres(), org=scope, entry_id=entry_id, attachment_id=attachment_id,
+        kind=kind, raw=raw, content_type=file.content_type or "", storage=storage, tag=tag_id,
+    )
+    return result
+
+
+@app.get("/v1/journal/{entry_id}/attachments", response_model=media.AttachmentList)
+@app.get("/v1/animals/{tag_id}/journal/{entry_id}/attachments",
+         response_model=media.AttachmentList)
+def get_journal_attachments(
+    entry_id: UUID, user: CurrentUser, response: Response, org: str | None = Query(default=None),
+    tag_id: str | None = None,
+) -> dict[str, Any]:
+    response.headers["Cache-Control"] = "private, no-store"
+    return {"attachments": media.list_for_entry(
+        _require_postgres(), org=_write_scope(user, org), entry_id=entry_id, tag=tag_id,
+    )}
+
+
+@app.get("/v1/journal/{entry_id}/attachments/{attachment_id}",
+         response_model=media.AttachmentLocation)
+@app.get("/v1/animals/{tag_id}/journal/{entry_id}/attachments/{attachment_id}",
+         response_model=media.AttachmentLocation)
+def get_journal_attachment(
+    entry_id: UUID, attachment_id: UUID, user: CurrentUser, storage: MediaStore, response: Response,
+    org: str | None = Query(default=None), tag_id: str | None = None,
+) -> dict[str, Any]:
+    from urllib.parse import urlencode
+
+    scope = _write_scope(user, org)
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    row = media.locate(
+        _require_postgres(), org=scope, entry_id=entry_id, attachment_id=attachment_id, tag=tag_id,
+    )
+    signed = storage.signed_url(row["storage_key"], row["storage_generation"])
+    local = (f"/v1/journal/{entry_id}/attachments/{attachment_id}/content"
+             f"?{urlencode({'org': scope})}")
+    return {"url": signed or local, "expires_at": datetime.now(UTC) + timedelta(minutes=5),
+            "content_type": row["content_type"]}
+
+
+@app.get("/v1/journal/{entry_id}/attachments/{attachment_id}/content")
+@app.get("/v1/animals/{tag_id}/journal/{entry_id}/attachments/{attachment_id}/content")
+def get_journal_attachment_content(
+    entry_id: UUID, attachment_id: UUID, user: CurrentUser, storage: MediaStore,
+    org: str | None = Query(default=None), tag_id: str | None = None,
+) -> Response:
+    row = media.locate(
+        _require_postgres(), org=_write_scope(user, org), entry_id=entry_id,
+        attachment_id=attachment_id, tag=tag_id,
+    )
+    return Response(
+        content=storage.read(row["storage_key"], row["storage_generation"]),
+        media_type=row["content_type"], headers={
+            "X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=300",
+            "Content-Disposition": "inline",
+        },
+    )
 
 
 @app.get("/v1/animals/{tag_id}/readings")

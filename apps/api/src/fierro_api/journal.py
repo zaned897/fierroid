@@ -20,7 +20,13 @@ _SELECT = (
     "COALESCE(NULLIF(u.full_name,''), u.email, 'Notas de la ficha') AS author, "
     "COALESCE((SELECT array_agg(a.tag_id ORDER BY a.tag_id) "
     "  FROM journal_entry_animals ea JOIN animals a ON a.id=ea.animal_id "
-    "  WHERE ea.entry_id=e.entry_id), '{}') AS animals "
+    "  WHERE ea.entry_id=e.entry_id), '{}') AS animals, "
+    "COALESCE((SELECT json_agg(json_build_object("
+    "'attachment_id',ja.attachment_id,'entry_id',ja.entry_id,'kind',ja.kind,"
+    "'content_type',ja.content_type,'byte_size',ja.byte_size,'duration_ms',ja.duration_ms,"
+    "'created_at',ja.created_at) ORDER BY ja.created_at,ja.attachment_id) "
+    "FROM journal_attachments ja WHERE ja.entry_id=e.entry_id AND ja.org_id=e.org_id),"
+    "'[]'::json) AS attachments "
     "FROM journal_entries e LEFT JOIN users u ON u.id=e.author_id "
 )
 
@@ -36,6 +42,7 @@ def _public(row: dict[str, Any]) -> dict[str, Any]:
         "created_at": row["created_at"].isoformat(),
         "category": row["category"], "body": row["body"],
         "author": row["author"], "animals": list(row["animals"]),
+        "attachments": row["attachments"],
     }
 
 
