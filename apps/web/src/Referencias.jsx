@@ -15,6 +15,7 @@ const DATOS = [
   {
     icono: "alimento",
     titulo: "Alimento",
+    resumen: "El gasto más alto",
     texto:
       "Extensión de Penn State recuerda que el alimento suele ser el gasto más alto de un productor de carne. Saber cuánto pesa cada animal ayuda a no dar de más ni de menos.",
     fuente: "penn-state",
@@ -22,6 +23,7 @@ const DATOS = [
   {
     icono: "dosis",
     titulo: "Dosis",
+    resumen: "Según peso real",
     texto:
       "La misma guía señala que, cuando un animal enferma, la dosis correcta del medicamento depende de conocer su peso real.",
     fuente: "penn-state",
@@ -29,6 +31,7 @@ const DATOS = [
   {
     icono: "camara",
     titulo: "Visión: investigación",
+    resumen: "± 7.7–11.4 kg con cámara",
     texto:
       "En un estudio con ganado de carne en Brasil, un sistema de visión estimó el peso con un error típico de 7.7 a 11.4 kg según la etapa. La báscula sigue siendo la referencia.",
     fuente: "cominotte-2020",
@@ -117,6 +120,7 @@ export default function Referencias() {
             <li className="home-dato" key={dato.titulo}>
               <span className="home-dato-icono"><IconoDato tipo={dato.icono} /></span>
               <h3>{dato.titulo}</h3>
+              <p className="home-dato-resumen">{dato.resumen}</p>
               <details className="home-faq-item">
                 <summary>Leer hallazgo<span className="home-faq-signo" aria-hidden="true" /></summary>
                 <p>{dato.texto}{" "}

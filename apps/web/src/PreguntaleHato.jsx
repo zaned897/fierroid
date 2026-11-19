@@ -9,7 +9,7 @@ const INTERCAMBIOS = [
     id: "problemas",
     pregunta: "¿Qué vaca tiene problemas?",
     chips: ["Revisé 42 animales", "184 pesajes"],
-    introduccion: "Hay 2 animales para revisar:",
+    introduccion: "Hay 2 animales para revisar.",
     puntos: [
       "BEDE50D3 lleva 2 pesajes seguidos sin ganar peso (−0.2 kg/día).",
       "A41C0977 tiene la ganancia diaria más baja del lote (+0.1 kg/día).",
@@ -58,21 +58,23 @@ export default function PreguntaleHato() {
                   <p className="preguntale-hato-intro">{item.introduccion}</p>
                   <details className="home-faq-item">
                     <summary>Ver cálculo<span className="home-faq-signo" aria-hidden="true" /></summary>
-                    <div className="preguntale-hato-chips">
-                      {item.chips.map((chip) => (
-                        <span key={chip} className="preguntale-hato-chip">
-                          {chip}
-                        </span>
-                      ))}
-                    </div>
-                    {item.puntos.length > 0 && (
-                      <ul className="preguntale-hato-lista">
-                        {item.puntos.map((punto) => (
-                          <li key={punto}>{punto}</li>
+                    <div className="preguntale-hato-detalle">
+                      <div className="preguntale-hato-chips">
+                        {item.chips.map((chip) => (
+                          <span key={chip} className="preguntale-hato-chip">
+                            {chip}
+                          </span>
                         ))}
-                      </ul>
-                    )}
-                    <p className="preguntale-hato-nota">{item.nota}</p>
+                      </div>
+                      {item.puntos.length > 0 && (
+                        <ul className="preguntale-hato-lista">
+                          {item.puntos.map((punto) => (
+                            <li key={punto}>{punto}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="preguntale-hato-nota">{item.nota}</p>
+                    </div>
                   </details>
                 </div>
               </li>

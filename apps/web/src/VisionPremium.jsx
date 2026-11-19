@@ -67,147 +67,155 @@ export default function VisionPremium() {
             <rect width="1200" height="874" fill="#041b16" opacity=".18" />
               <g strokeLinejoin="round">
                 {/* DETECCIÓN 1: PERSONA / VAQUERO (conf 0.85) */}
-                <polygon
-                  points={yoloPersonMask}
-                  fill="#f59e0b"
-                  fillOpacity=".32"
-                  stroke="#fbbf24"
-                  strokeWidth="2"
-                />
-                <rect
-                  x="374"
-                  y="201"
-                  width="191"
-                  height="301"
-                  fill="none"
-                  stroke="#fbbf24"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 3"
-                  opacity="0.8"
-                />
-                <g transform="translate(374, 175)">
-                  <rect width="118" height="26" rx="4" fill="#f59e0b" />
-                  <text
-                    x="8"
-                    y="18"
-                    fill="#0f172a"
-                    fontSize="13"
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                  >
-                    persona · 0.85
-                  </text>
+                <g className="vision-deteccion">
+                  <polygon
+                    points={yoloPersonMask}
+                    fill="#f59e0b"
+                    fillOpacity=".32"
+                    stroke="#fbbf24"
+                    strokeWidth="2"
+                  />
+                  <rect
+                    x="374"
+                    y="201"
+                    width="191"
+                    height="301"
+                    fill="none"
+                    stroke="#fbbf24"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 3"
+                    opacity="0.8"
+                  />
+                  <g transform="translate(374, 175)">
+                    <rect width="118" height="26" rx="4" fill="#f59e0b" />
+                    <text
+                      x="8"
+                      y="18"
+                      fill="#0f172a"
+                      fontSize="13"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
+                      persona · 0.85
+                    </text>
+                  </g>
                 </g>
 
                 {/* DETECCIÓN 2: EQUINO (conf 0.82) */}
-                <polygon
-                  points={yoloHorseMask}
-                  fill="#8b5cf6"
-                  fillOpacity=".35"
-                  stroke="#c4b5fd"
-                  strokeWidth="2.5"
-                />
-                <rect
-                  x="241"
-                  y="344"
-                  width="460"
-                  height="374"
-                  fill="none"
-                  stroke="#c4b5fd"
-                  strokeWidth="1.5"
-                  strokeDasharray="6 4"
-                  opacity="0.8"
-                />
-                <g transform="translate(241, 318)">
-                  <rect width="118" height="26" rx="4" fill="#7c3aed" />
-                  <text
-                    x="8"
-                    y="18"
-                    fill="#ffffff"
-                    fontSize="13"
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                  >
-                    equino · 0.82
-                  </text>
+                <g className="vision-deteccion">
+                  <polygon
+                    points={yoloHorseMask}
+                    fill="#8b5cf6"
+                    fillOpacity=".35"
+                    stroke="#c4b5fd"
+                    strokeWidth="2.5"
+                  />
+                  <rect
+                    x="241"
+                    y="344"
+                    width="460"
+                    height="374"
+                    fill="none"
+                    stroke="#c4b5fd"
+                    strokeWidth="1.5"
+                    strokeDasharray="6 4"
+                    opacity="0.8"
+                  />
+                  <g transform="translate(241, 318)">
+                    <rect width="118" height="26" rx="4" fill="#7c3aed" />
+                    <text
+                      x="8"
+                      y="18"
+                      fill="#ffffff"
+                      fontSize="13"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
+                      equino · 0.82
+                    </text>
+                  </g>
                 </g>
 
                 {/* DETECCIÓN 4: BOVINO GRIS (conf 0.75 - Oclusión resuelta) */}
-                <polygon
-                  points={yoloGreyCowMask}
-                  fill="#0ea5e9"
-                  fillOpacity=".38"
-                  stroke="#38bdf8"
-                  strokeWidth="3"
-                />
-                <rect
-                  x="638"
-                  y="552"
-                  width="336"
-                  height="319"
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="1.5"
-                  strokeDasharray="6 4"
-                  opacity="0.8"
-                />
-                <path
-                  d="M638 582V552H668 M974 582V552H944 M638 841V871H668 M974 841V871H944"
-                  fill="none"
-                  stroke="#0284c7"
-                  strokeWidth="3.5"
-                />
-                <g transform="translate(638, 524)">
-                  <rect width="215" height="28" rx="4" fill="#0284c7" />
-                  <text
-                    x="8"
-                    y="19"
-                    fill="#ffffff"
-                    fontSize="13"
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                  >
-                    bovino [gris] · 0.75
-                  </text>
+                <g className="vision-deteccion">
+                  <polygon
+                    points={yoloGreyCowMask}
+                    fill="#0ea5e9"
+                    fillOpacity=".38"
+                    stroke="#38bdf8"
+                    strokeWidth="3"
+                  />
+                  <rect
+                    x="638"
+                    y="552"
+                    width="336"
+                    height="319"
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth="1.5"
+                    strokeDasharray="6 4"
+                    opacity="0.8"
+                  />
+                  <path
+                    d="M638 582V552H668 M974 582V552H944 M638 841V871H668 M974 841V871H944"
+                    fill="none"
+                    stroke="#0284c7"
+                    strokeWidth="3.5"
+                  />
+                  <g transform="translate(638, 524)">
+                    <rect width="215" height="28" rx="4" fill="#0284c7" />
+                    <text
+                      x="8"
+                      y="19"
+                      fill="#ffffff"
+                      fontSize="13"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
+                      bovino [gris] · 0.75
+                    </text>
+                  </g>
                 </g>
 
                 {/* DETECCIÓN 0: BOVINO BLANCO EN PRIMER PLANO (conf 0.94) */}
-                <polygon
-                  points={yoloWhiteCowMask}
-                  fill="#10b981"
-                  fillOpacity=".40"
-                  stroke="#6ee7b7"
-                  strokeWidth="3.5"
-                />
-                <rect
-                  x="400"
-                  y="552"
-                  width="265"
-                  height="318"
-                  fill="none"
-                  stroke="#34d399"
-                  strokeWidth="1.5"
-                  strokeDasharray="6 4"
-                  opacity="0.8"
-                />
-                <path
-                  d="M400 582V552H430 M665 582V552H635 M400 840V870H430 M665 840V870H635"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="3.5"
-                />
-                <g transform="translate(400, 524)">
-                  <rect width="220" height="28" rx="4" fill="#10b981" />
-                  <text
-                    x="10"
-                    y="19"
-                    fill="#042f2e"
-                    fontSize="13"
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                  >
-                    bovino [blanco] · 0.94
-                  </text>
+                <g className="vision-deteccion">
+                  <polygon
+                    points={yoloWhiteCowMask}
+                    fill="#10b981"
+                    fillOpacity=".40"
+                    stroke="#6ee7b7"
+                    strokeWidth="3.5"
+                  />
+                  <rect
+                    x="400"
+                    y="552"
+                    width="265"
+                    height="318"
+                    fill="none"
+                    stroke="#34d399"
+                    strokeWidth="1.5"
+                    strokeDasharray="6 4"
+                    opacity="0.8"
+                  />
+                  <path
+                    d="M400 582V552H430 M665 582V552H635 M400 840V870H430 M665 840V870H635"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="3.5"
+                  />
+                  <g transform="translate(400, 524)">
+                    <rect width="220" height="28" rx="4" fill="#10b981" />
+                    <text
+                      x="10"
+                      y="19"
+                      fill="#042f2e"
+                      fontSize="13"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
+                      bovino [blanco] · 0.94
+                    </text>
+                  </g>
                 </g>
               </g>
           </svg>

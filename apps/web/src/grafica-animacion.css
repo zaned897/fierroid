@@ -17,24 +17,65 @@
   opacity: 0;
 }
 
-/* El trazado usa CSS y el revelado compartido; sin JS queda completo. */
+/* El trazado usa CSS (scroll-driven con respaldo en useRevelar); sin JS o con
+   movimiento reducido queda completo. */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes grafica-trazar {
     from { stroke-dashoffset: 1; }
     to { stroke-dashoffset: 0; }
   }
 
-  .secciones.con-revelado .dato.visible .grafica-linea {
-    stroke-dasharray: 1;
-    animation: grafica-trazar 1500ms linear both;
+  @keyframes grafica-area-entrar {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
-  @supports (animation-timeline: view()) {
+  @keyframes grafica-destello-pulso {
+    0% { opacity: 0; transform: scale(0.5); }
+    45% { opacity: 0.75; }
+    100% { opacity: 0; transform: scale(1.9); }
+  }
+
+  @supports not ((animation-timeline: view()) and (view-timeline-name: --vista)) {
     .secciones.con-revelado .dato.visible .grafica-linea {
       stroke-dasharray: 1;
+      animation: grafica-trazar 1500ms ease-out both;
+    }
+
+    .secciones.con-revelado .dato.visible .grafica-area {
+      animation: grafica-area-entrar 900ms ease-out 500ms both;
+    }
+
+    .secciones.con-revelado .dato.visible .grafica-destello {
+      animation: grafica-destello-pulso 900ms ease-out 1350ms both;
+    }
+  }
+
+  /* Timeline nombrado en el contenedor HTML: los descendientes SVG lo heredan
+     sin depender del cuadro de layout del <path>. */
+  @supports (animation-timeline: view()) and (view-timeline-name: --vista) {
+    .grafica {
+      view-timeline-name: --grafica-vista;
+      view-timeline-axis: block;
+    }
+
+    .grafica .grafica-linea {
+      stroke-dasharray: 1;
       animation: grafica-trazar 1s linear both;
-      animation-timeline: view();
+      animation-timeline: --grafica-vista;
       animation-range: entry 10% cover 40%;
+    }
+
+    .grafica .grafica-area {
+      animation: grafica-area-entrar 1s linear both;
+      animation-timeline: --grafica-vista;
+      animation-range: entry 22% cover 42%;
+    }
+
+    .grafica .grafica-destello {
+      animation: grafica-destello-pulso 1s linear both;
+      animation-timeline: --grafica-vista;
+      animation-range: cover 32% cover 46%;
     }
   }
 }

@@ -16,17 +16,27 @@
       opacity: 0;
       transform: translateY(0.9rem);
     }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   @keyframes home-trazar-x {
     from {
       clip-path: inset(0 100% 0 0);
     }
+    to {
+      clip-path: inset(0);
+    }
   }
 
   @keyframes home-trazar-y {
     from {
       clip-path: inset(0 0 100% 0);
+    }
+    to {
+      clip-path: inset(0);
     }
   }
 
@@ -56,40 +66,148 @@
     }
   }
 
-  /* --- Cómo funciona: los pasos se encienden en orden ------------------ */
-
-  /* Pasos y conectores solo se animan cuando la sección se revela; antes la
-     sección entera está a opacidad 0, así que no hay salto visible. */
-  .secciones.con-revelado .como-funciona.visible .paso {
-    animation: home-subir 520ms ease-out both;
-  }
-
-  .secciones.con-revelado .como-funciona.visible .paso::after {
-    animation: home-trazar-x 520ms ease-out both;
-  }
-
-  .secciones.con-revelado .como-funciona.visible .paso-num {
-    animation: home-latido 900ms ease-out both;
-  }
-
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(1) { animation-delay: 150ms; }
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(2) { animation-delay: 650ms; }
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) { animation-delay: 1150ms; }
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(1)::after { animation-delay: 500ms; }
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(2)::after { animation-delay: 1000ms; }
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(1) .paso-num { animation-delay: 300ms; }
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(2) .paso-num { animation-delay: 800ms; }
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) .paso-num { animation-delay: 1300ms; }
-
-  /* La nube "recibe" el dato: dos subidas cortas y se queda quieta. */
-  .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) .paso-icono {
-    animation: home-subida-nube 700ms ease-in-out 1600ms 2 both;
-  }
-
-  @media (max-width: 760px) {
-    .secciones.con-revelado .como-funciona.visible .paso::after {
-      animation-name: home-trazar-y;
+  @keyframes home-separar {
+    from {
+      opacity: 0;
     }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* --- Respaldo vía useRevelar para navegadores sin view-timeline ------ */
+
+  @supports not ((animation-timeline: view()) and (view-timeline-name: --vista)) {
+    /* Cómo funciona: los pasos se encienden en orden. */
+    .secciones.con-revelado .como-funciona.visible .paso {
+      animation: home-subir 520ms ease-out both;
+    }
+
+    .secciones.con-revelado .como-funciona.visible .paso::after {
+      animation: home-trazar-x 520ms ease-out both;
+    }
+
+    .secciones.con-revelado .como-funciona.visible .paso-num {
+      animation: home-latido 900ms ease-out both;
+    }
+
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(1) { animation-delay: 150ms; }
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(2) { animation-delay: 650ms; }
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) { animation-delay: 1150ms; }
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(1)::after { animation-delay: 500ms; }
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(2)::after { animation-delay: 1000ms; }
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(1) .paso-num { animation-delay: 300ms; }
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(2) .paso-num { animation-delay: 800ms; }
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) .paso-num { animation-delay: 1300ms; }
+
+    /* La nube "recibe" el dato: dos subidas cortas y se queda quieta. */
+    .secciones.con-revelado .como-funciona.visible .paso:nth-child(3) .paso-icono {
+      animation: home-subida-nube 700ms ease-in-out 1600ms 2 both;
+    }
+
+    @media (max-width: 760px) {
+      .secciones.con-revelado .como-funciona.visible .paso::after {
+        animation-name: home-trazar-y;
+      }
+    }
+
+    /* Pregúntale a tu hato: la conversación entra en turnos. */
+    .secciones.con-revelado .preguntale-hato.visible .preguntale-hato-usuario,
+    .secciones.con-revelado .preguntale-hato.visible .preguntale-hato-respuesta {
+      animation: home-subir 460ms ease-out both;
+    }
+
+    .secciones.con-revelado .preguntale-hato.visible .preguntale-hato-par:nth-child(1) .preguntale-hato-usuario { animation-delay: 100ms; }
+    .secciones.con-revelado .preguntale-hato.visible .preguntale-hato-par:nth-child(1) .preguntale-hato-respuesta { animation-delay: 280ms; }
+    .secciones.con-revelado .preguntale-hato.visible .preguntale-hato-par:nth-child(2) .preguntale-hato-usuario { animation-delay: 480ms; }
+    .secciones.con-revelado .preguntale-hato.visible .preguntale-hato-par:nth-child(2) .preguntale-hato-respuesta { animation-delay: 660ms; }
+
+    /* Fierro Vision: cada detección se marca por separado. */
+    .secciones.con-revelado .vision-premium.visible .vision-deteccion {
+      animation: home-separar 600ms ease-out both;
+    }
+
+    .secciones.con-revelado .vision-premium.visible .vision-deteccion:nth-child(1) { animation-delay: 120ms; }
+    .secciones.con-revelado .vision-premium.visible .vision-deteccion:nth-child(2) { animation-delay: 280ms; }
+    .secciones.con-revelado .vision-premium.visible .vision-deteccion:nth-child(3) { animation-delay: 440ms; }
+    .secciones.con-revelado .vision-premium.visible .vision-deteccion:nth-child(4) { animation-delay: 600ms; }
+  }
+
+  /* --- Mejora progresiva: animaciones ligadas al scroll (view-timeline) - */
+
+  @supports (animation-timeline: view()) and (view-timeline-name: --vista) {
+    /* `overflow: hidden` crea un contenedor de scroll y detiene view-timeline;
+       `clip` conserva el recorte sin atrapar el timeline del viewport. */
+    .como-funciona,
+    .preguntale-hato-marco,
+    .vision-canvas-grid {
+      overflow: clip;
+    }
+
+    .como-funciona .diagrama-home {
+      view-timeline-name: --como-funciona-vista;
+      view-timeline-axis: block;
+    }
+
+    .como-funciona .paso {
+      animation: home-subir 1s linear both;
+      animation-timeline: --como-funciona-vista;
+    }
+
+    .como-funciona .paso:nth-child(1) { animation-range: entry 5% cover 20%; }
+    .como-funciona .paso:nth-child(2) { animation-range: entry 16% cover 30%; }
+    .como-funciona .paso:nth-child(3) { animation-range: entry 26% cover 40%; }
+
+    .como-funciona .paso::after {
+      animation: home-trazar-x 1s linear both;
+      animation-timeline: --como-funciona-vista;
+    }
+
+    .como-funciona .paso:nth-child(1)::after { animation-range: entry 12% cover 26%; }
+    .como-funciona .paso:nth-child(2)::after { animation-range: entry 22% cover 36%; }
+
+    .como-funciona .paso:nth-child(3) .paso-icono {
+      animation: home-subida-nube 1s linear both;
+      animation-timeline: --como-funciona-vista;
+      animation-range: cover 32% cover 46%;
+    }
+
+    @media (max-width: 760px) {
+      .como-funciona .paso::after {
+        animation-name: home-trazar-y;
+      }
+    }
+
+    .preguntale-hato-hilo {
+      view-timeline-name: --hato-vista;
+      view-timeline-axis: block;
+    }
+
+    .preguntale-hato-usuario,
+    .preguntale-hato-respuesta {
+      animation: home-subir 1s linear both;
+      animation-timeline: --hato-vista;
+    }
+
+    .preguntale-hato-par:nth-child(1) .preguntale-hato-usuario { animation-range: entry 5% cover 18%; }
+    .preguntale-hato-par:nth-child(1) .preguntale-hato-respuesta { animation-range: entry 12% cover 25%; }
+    .preguntale-hato-par:nth-child(2) .preguntale-hato-usuario { animation-range: entry 20% cover 33%; }
+    .preguntale-hato-par:nth-child(2) .preguntale-hato-respuesta { animation-range: entry 26% cover 40%; }
+
+    .vision-canvas {
+      view-timeline-name: --vision-vista;
+      view-timeline-axis: block;
+    }
+
+    .vision-canvas .vision-deteccion {
+      animation: home-separar 1s linear both;
+      animation-timeline: --vision-vista;
+    }
+
+    .vision-canvas .vision-deteccion:nth-child(1) { animation-range: entry 6% cover 22%; }
+    .vision-canvas .vision-deteccion:nth-child(2) { animation-range: entry 12% cover 28%; }
+    .vision-canvas .vision-deteccion:nth-child(3) { animation-range: entry 18% cover 34%; }
+    .vision-canvas .vision-deteccion:nth-child(4) { animation-range: entry 24% cover 40%; }
   }
 
   /* --- Beneficios y lecturas: tarjetas escalonadas -------------------- */
@@ -115,9 +233,9 @@
   /* El paisaje de la portada no se anima: a medio píxel por segundo el
      desplazamiento se redondea a saltos sueltos y se lee como un error. */
 
-  /* --- Preguntas frecuentes: la respuesta entra, no aparece de golpe --- */
+  /* --- Detalles y preguntas frecuentes: el contenido entra suave ------- */
 
-  .home-faq-item[open] > p {
+  .home-faq-item[open] > :not(summary) {
     animation: home-subir 260ms ease-out both;
   }
 }
@@ -135,50 +253,9 @@
   border: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes home-separar {
-    from { fill-opacity: 0; stroke-opacity: 0; }
-  }
-
-  .secciones.con-revelado .vision-premium.visible .vision-canvas polygon {
-    animation: home-separar 900ms ease-out both;
-  }
-
-  /* Mejora progresiva: el observador existente cubre navegadores sin view(). */
-  @supports (animation-timeline: view()) {
-    .secciones.con-revelado .como-funciona.visible .paso:nth-child(n),
-    .secciones.con-revelado .como-funciona.visible .paso:nth-child(n)::after,
-    .secciones.con-revelado .como-funciona.visible .paso:nth-child(n) .paso-num,
-    .secciones.con-revelado .como-funciona.visible .paso:nth-child(n) .paso-icono {
-      animation: none;
-    }
-
-    .secciones .como-funciona .diagrama-home {
-      animation: home-trazar-x 1s linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 35%;
-    }
-
-    .secciones.con-revelado .vision-premium.visible .vision-canvas polygon {
-      animation: home-separar 1s linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 40%;
-    }
-
-    @media (max-width: 760px) {
-      .secciones .como-funciona .diagrama-home { animation-name: home-trazar-y; }
-    }
-  }
-}
-
 /* Los detalles reutilizan el acordeón también sobre las bandas oscuras. */
 .home-publica .secciones .home-faq-item,
-.home-publica .secciones .home-faq-item p,
-.home-publica .secciones .home-faq-item .preguntale-hato-reglas strong,
-.home-publica .secciones .home-faq-item .preguntale-hato-reglas span {
+.home-publica .secciones .home-faq-item > p {
   color: var(--home-bosque);
-}
-.home-publica .secciones .home-faq-item .preguntale-hato-reglas {
-  padding: 1rem;
 }
 

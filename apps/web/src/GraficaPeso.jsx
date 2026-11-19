@@ -58,7 +58,7 @@ const mes = (fecha) =>
 
 export default function GraficaPeso() {
   const [activo, setActivo] = useState(null);
-  const idTabla = useId();
+  const idResumen = useId();
   const idDegradado = useId();
   const punto = activo === null ? null : SERIE[activo];
 
@@ -74,7 +74,7 @@ export default function GraficaPeso() {
         viewBox={`0 0 ${ANCHO} ${ALTO}`}
         className="grafica-svg"
         role="img"
-        aria-describedby={idTabla}
+        aria-describedby={idResumen}
         aria-label="Curva de peso: de 43 a 106.5 kilogramos en 17 pesajes; uno marcado inestable"
       >
         <defs>
@@ -174,10 +174,16 @@ export default function GraficaPeso() {
         )}
       </svg>
 
+      <p id={idResumen} className="home-solo-lectores">
+        Ejemplo de curva de peso del arete 484381933670979: sube de 43 a 106.5 kg
+        en 17 pesajes entre mayo y septiembre de 2026; el pesaje del 27 de agosto
+        está marcado como inestable. La tabla completa está en Ver pesajes.
+      </p>
+
       {/* La tabla no es un extra: es como se lee esto sin ver la gráfica. */}
       <details className="grafica-tabla">
         <summary>Ver pesajes</summary>
-        <table id={idTabla}>
+        <table>
           <caption>Arete 484381933670979: peso registrado por fecha</caption>
           <thead>
             <tr>
