@@ -245,6 +245,18 @@ def test_database_rejects_bad_cardinality(world):
             cur.execute("SET CONSTRAINTS ALL IMMEDIATE")
 
 
+def test_database_rejects_nonfinite_money(world):
+    import psycopg
+
+    _, users, _ = world
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
+            cur.execute("INSERT INTO money_movements(movement_id,org_id,author_id,kind,"
+                        "category,amount_mxn,occurred_on,scope) VALUES "
+                        "(%s,%s,%s,'gasto','otros','NaN','2026-11-01','hato')",
+                        (uuid4(), users[0].org_id, users[0].id))
+
+
 def test_migration_idempotent_and_composite_foreign_keys(world):
     import psycopg
     from fierro_api.migrate import MIGRATIONS_DIR

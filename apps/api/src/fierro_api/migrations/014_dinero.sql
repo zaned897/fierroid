@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS money_movements (
   category TEXT CHECK (category IN (
     'alimento','sanidad','mano_obra','instalaciones','transporte','otros'
   )),
-  amount_mxn NUMERIC(12,2) CHECK (amount_mxn > 0),
-  precio_kg_mxn NUMERIC(10,2) CHECK (precio_kg_mxn > 0),
-  weight_kg NUMERIC(8,2) CHECK (weight_kg > 0),
+  amount_mxn NUMERIC(12,2) CHECK (amount_mxn > 0 AND amount_mxn <> 'NaN'::numeric),
+  precio_kg_mxn NUMERIC(10,2) CHECK (precio_kg_mxn > 0 AND precio_kg_mxn <> 'NaN'::numeric),
+  weight_kg NUMERIC(8,2) CHECK (weight_kg > 0 AND weight_kg <> 'NaN'::numeric),
   occurred_on DATE NOT NULL,
   period_start DATE,
   period_end DATE,
