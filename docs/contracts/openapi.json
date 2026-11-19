@@ -213,6 +213,87 @@
         "title": "JournalIn",
         "type": "object"
       },
+      "JournalSearchEntry": {
+        "properties": {
+          "animals": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Animals",
+            "type": "array"
+          },
+          "author": {
+            "title": "Author",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "observacion",
+              "alimentacion",
+              "manejo",
+              "salud",
+              "clima",
+              "insumos",
+              "equipo",
+              "general"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "entry_id": {
+            "format": "uuid",
+            "title": "Entry Id",
+            "type": "string"
+          },
+          "excerpt": {
+            "description": "Fragmento de texto con coincidencias entre [[ y ]].",
+            "title": "Excerpt",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entry_id",
+          "occurred_at",
+          "created_at",
+          "category",
+          "body",
+          "author",
+          "animals",
+          "excerpt"
+        ],
+        "title": "JournalSearchEntry",
+        "type": "object"
+      },
+      "JournalSearchOut": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/JournalSearchEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "title": "JournalSearchOut",
+        "type": "object"
+      },
       "LoginIn": {
         "properties": {
           "email": {
@@ -1811,6 +1892,132 @@
           }
         ],
         "summary": "Post Journal"
+      }
+    },
+    "/v1/journal/search": {
+      "get": {
+        "description": "Busca por texto en el Diario, dentro del alcance de la sesion.",
+        "operationId": "search_journal_v1_journal_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 300,
+              "minLength": 1,
+              "pattern": "\\S",
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalSearchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Search Journal"
       }
     },
     "/v1/orgs": {
