@@ -10,6 +10,7 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
+from fierro_device import doctor, notify
 from fierro_device import main as agente
 from fierro_device.hardware import HardwareSample, SerialHardware
 from fierro_device.models import WeightReading
@@ -65,6 +66,11 @@ class HardwareColgado:
         return HardwareSample(None, None, False, "test")
 
 
+requiere_unix = pytest.mark.skipif(
+    not hasattr(socket, "AF_UNIX"), reason="sd_notify es solo Linux (socket AF_UNIX)"
+)
+
+
 @pytest.fixture
 def notify_socket(monkeypatch: pytest.MonkeyPatch) -> Iterator[socket.socket]:
     # Ruta corta: AF_UNIX limita a ~108 bytes y tmp_path puede pasarse.
@@ -117,6 +123,7 @@ def test_sin_notify_socket_no_hace_nada(monkeypatch: pytest.MonkeyPatch):
     assert agente.sd_notify("READY=1") is False
 
 
+@requiere_unix
 def test_avisa_ready_y_luego_watchdog(notify_socket, agente_en_hilo):
     class Quieto:
         def read(self) -> HardwareSample:
@@ -128,6 +135,7 @@ def test_avisa_ready_y_luego_watchdog(notify_socket, agente_en_hilo):
     assert notify_socket.recv(256) == b"WATCHDOG=1"
 
 
+@requiere_unix
 def test_lectura_colgada_no_manda_watchdog(notify_socket, agente_en_hilo):
     hw = HardwareColgado()
     _a, hilo = agente_en_hilo(hw, SyncFalso())
@@ -153,6 +161,74 @@ def test_hardware_sin_configurar_no_sale_y_sigue_sincronizando(agente_en_hilo, m
     assert sync.latio.wait(timeout=5)
     assert hilo.is_alive()
     assert sync.enviados == [lectura.event_id]
-    assert sync.heartbeats and "Serial drivers not configured" in (
-        sync.heartbeats[0]["last_error"] or ""
-    )
+    assert "Serial drivers not configured" in (sync.heartbeats[0]["last_error"] or "")
+    a.stop()
+    hilo.join(timeout=5)
+    assert not hilo.is_alive()
+    assert OutboxStore(a.settings.db_path).pending_count() == 0
+
+
+class HardwareSinMensaje:
+    def __init__(self) -> None:
+        self.lecturas = 0
+
+    def read(self) -> HardwareSample:
+        self.lecturas += 1
+        raise NotImplementedError
+
+
+def test_hardware_sin_configurar_se_lee_una_sola_vez(agente_en_hilo, monkeypatch):
+    monkeypatch.delenv("NOTIFY_SOCKET", raising=False)
+    sync = SyncFalso()
+    hw = HardwareSinMensaje()
+    a, hilo = agente_en_hilo(hw, sync)
+    hilo.start()
+    assert sync.latio.wait(timeout=5)
+    a.stop()
+    hilo.join(timeout=5)
+    assert hw.lecturas == 1
+    assert sync.heartbeats[0]["last_error"] == "NotImplementedError"
+
+
+def test_sd_notify_con_socket_roto_no_revienta(monkeypatch, caplog):
+    monkeypatch.setenv("NOTIFY_SOCKET", "/no/existe/notify")
+    monkeypatch.setattr(notify, "_avisado", False)
+    assert notify.sd_notify("WATCHDOG=1") is False
+    assert notify.sd_notify("WATCHDOG=1") is False
+    assert sum("sd_notify fallo" in r.message for r in caplog.records) == 1
+
+
+def test_heartbeat_fallido_no_reintenta_en_cada_vuelta(tmp_path, monkeypatch):
+    monkeypatch.delenv("FIERRO_HW_BACKEND", raising=False)
+    a = agente.Agent(_settings(str(tmp_path / "device.db")))
+    a.sync.close()
+    intentos = []
+
+    class SinRed(SyncFalso):
+        def heartbeat(self, **kwargs: Any) -> None:
+            intentos.append(kwargs)
+            raise OSError("sin red")
+
+    a.sync = SinRed()
+    for _ in range(5):
+        a.maybe_heartbeat()
+    assert len(intentos) == 1
+    a.store.close()
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requiere enlaces simbolicos")
+def test_doctor_reconoce_enlaces_de_udev(tmp_path, monkeypatch):
+    real = tmp_path / "ttyUSB0"
+    real.write_text("")
+    enlace = tmp_path / "fierro-lector"
+    enlace.symlink_to(real)
+
+    class Puerto:
+        device = str(real)
+
+    from serial.tools import list_ports
+
+    monkeypatch.setattr(list_ports, "comports", lambda: [Puerto()])
+    assert doctor._puerto_presente(str(enlace))
+    assert doctor._destino_puerto(str(enlace)) == f"{enlace} -> {real}"
+    assert doctor._destino_puerto("COM3") == "COM3"
