@@ -15,6 +15,11 @@ actual. Los cálculos y la pantalla corresponden a #174 y #175.
 - Compra y venta requieren un animal ya registrado. Gasto requiere categoría
   y alcance animales (uno o varios), corral (etiqueta libre) o hato. Un periodo
   de gasto requiere ambas fechas y fin igual o posterior al inicio.
+- Registrar otra compra de un animal con compra vigente devuelve 409. Una venta
+  con fecha anterior a la compra vigente también devuelve 409; la misma fecha
+  es válida. Se excluyen originales anulados y filas de anulación. Sin compra
+  vigente, la venta sigue permitida. Los reintentos con el mismo UUID y contenido
+  conservan su comportamiento idempotente.
 - Precio de mercado se registra a nivel hato, sin animales, monto ni categoría.
   El precio vigente es el más reciente por fecha de evento hasta hoy UTC; los
   empates se resuelven por registro y UUID. Sin uno vigente devuelve `null`.

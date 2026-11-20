@@ -48,8 +48,10 @@ def _animals(cur: Any, org_id: int, tags: list[str]) -> list[int]:
     cur.execute("SELECT id,tag_id FROM animals WHERE org_id=%s AND tag_id=ANY(%s) "
                 "ORDER BY tag_id", (org_id, tags))
     rows = cur.fetchall()
-    if [row["tag_id"] for row in rows] != tags:
-        raise ValueError("Algún animal no está registrado en esta organización")
+    missing = set(tags) - {row["tag_id"] for row in rows}
+    if missing:
+        raise ValueError("Algún animal no está registrado en esta organización: "
+                         + ", ".join(sorted(missing)))
     return [row["id"] for row in rows]
 
 
@@ -77,10 +79,26 @@ def add(dsn: str, *, org: str, author_id: int, movement: MovementIn) -> dict[str
         if existing is not None:
             if existing["org_id"] != org_id or existing["author_id"] != author_id \
                     or existing["voids_movement_id"] is not None \
-                    or any(existing[key] != value for key, value in data.items()):
+                    or any(existing[key] != data[key] for key in _FIELDS) \
+                    or set(existing["animals"]) != set(movement.animals):
                 raise MovementConflict("La clave ya corresponde a otro movimiento")
             return _public(existing)
         animal_ids = _animals(cur, org_id, movement.animals)
+        if movement.kind in ("compra", "venta"):
+            # Serializa la comprobación y la inserción para el mismo animal,
+            # incluso cuando aún no tiene movimientos que se puedan bloquear.
+            cur.execute("SELECT id FROM animals WHERE org_id=%s AND id=%s FOR UPDATE",
+                        (org_id, animal_ids[0]))
+            cur.execute("SELECT m.occurred_on FROM money_movements_ledger m "
+                        "JOIN money_movement_animals ma ON ma.movement_id=m.movement_id "
+                        "AND ma.org_id=m.org_id WHERE m.org_id=%s AND ma.animal_id=%s "
+                        "AND m.kind='compra' AND m.estado='confirmado'",
+                        (org_id, animal_ids[0]))
+            for purchase in cur.fetchall():
+                if movement.kind == "compra":
+                    raise MovementConflict("El animal ya tiene una compra vigente")
+                if movement.occurred_on < purchase["occurred_on"]:
+                    raise MovementConflict("La venta no puede tener fecha anterior a la compra")
         if movement.source_entry_id is not None:
             cur.execute("SELECT 1 FROM journal_entries WHERE entry_id=%s AND org_id=%s",
                         (movement.source_entry_id, org_id))

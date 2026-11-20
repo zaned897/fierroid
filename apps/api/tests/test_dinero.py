@@ -176,13 +176,75 @@ def test_concurrent_double_void_has_single_reversal(world):
     assert sum(row is not None for row in results) == 1
 
 
+def test_duplicate_purchase_rejected_without_changing_ledger(world):
+    client, _, prefix = world
+    original = movement(prefix + "a")
+    assert post(client, original).status_code == 200
+    response = post(client, movement(prefix + "a", occurred_on="2026-11-02"))
+    assert response.status_code == 409, response.text
+    assert "ya tiene una compra vigente" in response.json()["detail"]
+    rows = client.get("/v1/dinero/movimientos?estado=todos").json()["movements"]
+    assert [row["movement_id"] for row in rows] == [original["movement_id"]]
+    assert post(client, original).status_code == 200
+
+
+def test_sale_before_purchase_rejected(world):
+    client, _, prefix = world
+    original = movement(prefix + "a", occurred_on="2026-11-02")
+    assert post(client, original).status_code == 200
+    response = post(client, movement(prefix + "a", kind="venta", occurred_on="2026-11-01"))
+    assert response.status_code == 409, response.text
+    assert "anterior a la compra" in response.json()["detail"]
+    rows = client.get("/v1/dinero/movimientos?estado=todos").json()["movements"]
+    assert [row["movement_id"] for row in rows] == [original["movement_id"]]
+    for day in ("2026-11-02", "2026-11-03"):
+        assert post(client, movement(prefix + "a", kind="venta", occurred_on=day)) \
+            .status_code == 200
+
+
+@pytest.mark.parametrize("kind", ["compra", "venta"])
+def test_voided_purchase_does_not_block_registration(world, kind):
+    client, _, prefix = world
+    original = movement(prefix + "a", occurred_on="2026-11-02")
+    assert post(client, original).status_code == 200
+    assert client.post(f"/v1/dinero/movimientos/{original['movement_id']}/anular", json={
+        "movement_id": str(uuid4()), "occurred_on": "2026-11-03",
+    }).status_code == 200
+    replacement = movement(prefix + "a", kind=kind, occurred_on="2026-11-01")
+    response = post(client, replacement)
+    assert response.status_code == 200, response.text
+    rows = client.get("/v1/dinero/movimientos?estado=todos").json()["movements"]
+    assert len(rows) == 3
+    assert {row["estado"] for row in rows} == {"confirmado", "anulado", "anulacion"}
+    assert post(client, replacement).json() == response.json()
+
+
+def test_concurrent_purchases_have_single_winner(world):
+    from fierro_api.dinero_store import MovementConflict, add
+
+    client, users, prefix = world
+
+    def attempt(_):
+        try:
+            return add(DSN, org=users[0].org_slug, author_id=users[0].id,
+                       movement=MovementIn(**movement(prefix + "a")))
+        except MovementConflict:
+            return None
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(attempt, range(2)))
+    assert sum(row is not None for row in results) == 1
+    assert len(client.get("/v1/dinero/movimientos").json()["movements"]) == 1
+
+
 def test_filters_and_price_current_history(world):
     client, _, prefix = world
     for day in (1, 2, 3):
-        assert post(client, movement(prefix + "a", occurred_on=f"2026-11-0{day}")) \
+        assert post(client, movement(prefix + "a", kind="gasto", category="alimento",
+                                     occurred_on=f"2026-11-0{day}")) \
             .status_code == 200
     filtered = client.get("/v1/dinero/movimientos", params={"animal": prefix + "a",
-                          "desde": "2026-11-02", "hasta": "2026-11-02", "kind": "compra"})
+                          "desde": "2026-11-02", "hasta": "2026-11-02", "kind": "gasto"})
     assert [row["occurred_on"] for row in filtered.json()["movements"]] == ["2026-11-02"]
     assert client.get("/v1/dinero/movimientos?desde=2026-11-03&hasta=2026-11-01") \
         .status_code == 422
