@@ -48,14 +48,18 @@ def registration(monkeypatch):
     main.app.dependency_overrides.pop(main.current_user, None)
 
 
-@pytest.mark.parametrize(("kind", "day", "message"), [
-    ("compra", "2026-11-02", "ya tiene una compra vigente"),
-    ("venta", "2026-10-31", "anterior a la compra"),
+@pytest.mark.parametrize(("previo", "kind", "day", "message"), [
+    ("compra", "compra", "2026-11-02", "ya tiene una compra vigente"),
+    ("compra", "venta", "2026-10-31", "anterior a la compra"),
+    ("venta", "venta", "2026-11-02", "ya tiene una venta vigente"),
+    ("venta", "compra", "2026-11-02", "posterior a la venta"),
 ])
-def test_existing_purchase_conflicts_return_409_without_insert(registration, kind, day, message):
+def test_existing_purchase_conflicts_return_409_without_insert(
+    registration, previo, kind, day, message,
+):
     client, cursor, inserted = registration
     cursor.fetchall.side_effect = [
-        [{"id": 7, "tag_id": "MX-1"}], [{"occurred_on": date(2026, 11, 1)}],
+        [{"id": 7, "tag_id": "MX-1"}], [{"kind": previo, "occurred_on": date(2026, 11, 1)}],
     ]
     response = client.post("/v1/dinero/movimientos", json={
         "movement_id": str(uuid4()), "kind": kind, "amount_mxn": "100",
@@ -71,7 +75,7 @@ def test_existing_purchase_conflicts_return_409_without_insert(registration, kin
 def test_sale_on_or_after_purchase_is_allowed(registration, day):
     client, cursor, inserted = registration
     cursor.fetchall.side_effect = [
-        [{"id": 7, "tag_id": "MX-1"}], [{"occurred_on": date(2026, 11, 1)}],
+        [{"id": 7, "tag_id": "MX-1"}], [{"kind": "compra", "occurred_on": date(2026, 11, 1)}],
     ]
     response = client.post("/v1/dinero/movimientos", json={
         "movement_id": str(uuid4()), "kind": "venta", "amount_mxn": "100",

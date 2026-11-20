@@ -89,16 +89,20 @@ def add(dsn: str, *, org: str, author_id: int, movement: MovementIn) -> dict[str
             # incluso cuando aún no tiene movimientos que se puedan bloquear.
             cur.execute("SELECT id FROM animals WHERE org_id=%s AND id=%s FOR UPDATE",
                         (org_id, animal_ids[0]))
-            cur.execute("SELECT m.occurred_on FROM money_movements_ledger m "
+            # Mismas reglas que dinero.py (#199): una compra y una venta vigentes
+            # como máximo, y la venta no antes de la compra.
+            cur.execute("SELECT m.kind, m.occurred_on FROM money_movements_ledger m "
                         "JOIN money_movement_animals ma ON ma.movement_id=m.movement_id "
                         "AND ma.org_id=m.org_id WHERE m.org_id=%s AND ma.animal_id=%s "
-                        "AND m.kind='compra' AND m.estado='confirmado'",
+                        "AND m.kind IN ('compra','venta') AND m.estado='confirmado'",
                         (org_id, animal_ids[0]))
-            for purchase in cur.fetchall():
-                if movement.kind == "compra":
-                    raise MovementConflict("El animal ya tiene una compra vigente")
-                if movement.occurred_on < purchase["occurred_on"]:
+            for previo in cur.fetchall():
+                if previo["kind"] == movement.kind:
+                    raise MovementConflict(f"El animal ya tiene una {movement.kind} vigente")
+                if movement.kind == "venta" and movement.occurred_on < previo["occurred_on"]:
                     raise MovementConflict("La venta no puede tener fecha anterior a la compra")
+                if movement.kind == "compra" and movement.occurred_on > previo["occurred_on"]:
+                    raise MovementConflict("La compra no puede tener fecha posterior a la venta")
         if movement.source_entry_id is not None:
             cur.execute("SELECT 1 FROM journal_entries WHERE entry_id=%s AND org_id=%s",
                         (movement.source_entry_id, org_id))

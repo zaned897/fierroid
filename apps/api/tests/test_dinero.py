@@ -197,9 +197,11 @@ def test_sale_before_purchase_rejected(world):
     assert "anterior a la compra" in response.json()["detail"]
     rows = client.get("/v1/dinero/movimientos?estado=todos").json()["movements"]
     assert [row["movement_id"] for row in rows] == [original["movement_id"]]
-    for day in ("2026-11-02", "2026-11-03"):
-        assert post(client, movement(prefix + "a", kind="venta", occurred_on=day)) \
-            .status_code == 200
+    assert post(client, movement(prefix + "a", kind="venta", occurred_on="2026-11-02")) \
+        .status_code == 200
+    segunda = post(client, movement(prefix + "a", kind="venta", occurred_on="2026-11-03"))
+    assert segunda.status_code == 409, segunda.text
+    assert "ya tiene una venta vigente" in segunda.json()["detail"]
 
 
 @pytest.mark.parametrize("kind", ["compra", "venta"])
