@@ -386,3 +386,28 @@ def test_al_arrancar_el_estado_vuelve_al_minimo(agente, api, tmp_path, monkeypat
     assert doctor._ultimo_sync(str(tmp_path / "no-existe.db"), 2.0) == (
         "ultimo sync OK: nunca; intervalo actual: 2 s"
     )
+
+
+def test_rechazo_de_todo_no_vacia_la_cola_en_cuarentena(agente, api, caplog):
+    """Si el servidor rechaza todo (esquema nuevo, proxy), no se aparta la cola entera."""
+    from fierro_device.main import CUARENTENAS_SEGUIDAS_MAX
+
+    ids = _capturar(agente, 20)
+    api.rechazo = lambda _ids: httpx.Response(422, json={"detail": "esquema nuevo"})
+    for _ in range(30):
+        agente.flush_outbox()
+    estados = dict(
+        agente.store._conn.execute("SELECT event_id, status FROM readings").fetchall()
+    )
+    en_cuarentena = [e for e in ids if estados[e] == "quarantined"]
+    assert len(en_cuarentena) == CUARENTENAS_SEGUIDAS_MAX
+    assert agente.store.pending_count() == 20 - CUARENTENAS_SEGUIDAS_MAX
+    assert "sin ningun ACK" in caplog.text
+    # En cuanto el servidor acepta de nuevo, la cola sigue y el contador se reinicia.
+    api.rechazo = None
+    for _ in range(30):
+        if not agente.store.pending_count():
+            break
+        agente.flush_outbox()
+    assert agente.store.pending_count() == 0
+    assert agente._cuarentenas_seguidas == 0

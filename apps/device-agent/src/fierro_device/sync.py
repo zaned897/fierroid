@@ -62,7 +62,7 @@ class CloudSync:
             # Sin identificacion explicita solo un envio individual permite atribuir el rechazo.
             if event_id is None and len(readings) == 1:
                 event_id = readings[0]["event_id"]
-            raise ReadingRejected(event_id, f"HTTP {resp.status_code}: {resp.text}")
+            raise ReadingRejected(event_id, f"HTTP {resp.status_code}: {resp.text[:500]}")
         resp.raise_for_status()
         data = resp.json()
         if not isinstance(data, dict):

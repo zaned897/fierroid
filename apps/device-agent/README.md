@@ -80,6 +80,11 @@ ponerla en cuarentena. Se vuelve a lotes de 50 al aislar una lectura rechazada o
 vaciar la cola. Cada ciclo hace una sola petición, dejando avanzar captura,
 heartbeat y watchdog. Un reinicio puede repetir el aislamiento de forma segura.
 
+Freno: si 5 lecturas seguidas pasan a cuarentena sin que el servidor acepte
+ninguna, se asume una falla del servidor (esquema nuevo, proxy) y se deja de
+apartar lecturas. Quedan `pending` con error en el log hasta que el servidor
+acepte alguna. Así un rechazo general no vacía la cola en cuarentena.
+
 5xx, timeout, red y otros 4xx (incluidos autenticación y límites) dejan las
 lecturas `pending` y mantienen el backoff con jitter. La cuarentena queda fuera
 del envío automático y requiere revisión; nunca se borra ni se convierte en

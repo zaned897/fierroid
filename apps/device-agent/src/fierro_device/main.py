@@ -18,6 +18,10 @@ from fierro_device.settings import Settings
 from fierro_device.store import OutboxStore
 from fierro_device.sync import CloudSync, ReadingRejected
 
+# Rechazos consecutivos que se aceptan como lecturas venenosas antes de suponer
+# que el problema es del servidor y dejar de poner lecturas en cuarentena.
+CUARENTENAS_SEGUIDAS_MAX = 5
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
@@ -46,6 +50,7 @@ class Agent:
         self._started = time.monotonic()
         self._next_sync = 0.0
         self._isolate_readings = False
+        self._cuarentenas_seguidas = 0
         self.backoff = Backoff(settings.sync_interval_s, settings.sync_max_s, aleatorio)
         self._last_heartbeat = float("-inf")  # primer heartbeat al arrancar
         self._last_tag: str | None = None
@@ -106,8 +111,20 @@ class Agent:
                     self._isolate_readings = True
                     logger.warning("rechazo sin event_id; se aislaran las lecturas: %s", exc)
                     self.backoff.fallo()
+                elif self._cuarentenas_seguidas >= CUARENTENAS_SEGUIDAS_MAX:
+                    # Tantos rechazos sin un solo ACK huelen a falla del servidor
+                    # (esquema nuevo, proxy): mejor atascar ruidoso que vaciar la cola.
+                    logger.error(
+                        "%d lecturas seguidas en cuarentena sin ningun ACK; event_id=%s "
+                        "queda pending hasta que el servidor acepte alguna: %s",
+                        self._cuarentenas_seguidas,
+                        exc.event_id,
+                        exc.reason,
+                    )
+                    self.backoff.fallo()
                 else:
                     self.store.mark_quarantined(exc.event_id, exc.reason)
+                    self._cuarentenas_seguidas += 1
                     logger.error("quarantined event_id=%s: %s", exc.event_id, exc.reason)
                     self._isolate_readings = False
                     self.backoff.exito()  # progreso local; no es un ACK ni cuenta como synced
@@ -115,6 +132,7 @@ class Agent:
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
             if accepted:
+                self._cuarentenas_seguidas = 0
                 self.backoff.exito()
             else:
                 # 200 sin confirmar nada: la API esta degradada, no reintentar a 2 s.
