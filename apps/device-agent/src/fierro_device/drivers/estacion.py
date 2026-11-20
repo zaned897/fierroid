@@ -9,7 +9,7 @@ animal:
   same window annuls it and logs "dos aretes en ventana".
 - Filters continuous weight samples through FiltroEstable and requires
   weight_kg >= peso_min_kg before emitting.
-- After emitting, disarms until the platform drops below cero_kg, so an animal
+- At startup and after emitting, disarms until the platform drops below cero_kg, so an animal
   standing on the scale for 60 s produces only one weighing.
 - Logs the explicit reason for every discard (ventana vencida, dos aretes,
   bajo minimo, sin regreso a cero).
@@ -23,6 +23,7 @@ SerialHardware.
 from __future__ import annotations
 
 import logging
+import math
 import random
 import time
 from collections.abc import Callable
@@ -82,7 +83,7 @@ class EstacionHardware:
             clock=clock,
         )
         self._ventana = VentanaCaptura(ventana_s=ventana_tag_s, clock=clock)
-        self._armada = True
+        self._armada = False
         self._aviso_sin_cero_tag: str | None = None
         self._aviso_bajo_minimo = False
 
@@ -97,7 +98,7 @@ class EstacionHardware:
         tag_entrante = m_rfid.tag_id or None
 
         if not self._armada:
-            if kg is not None and kg < self._cero_kg:
+            if kg is not None and math.isfinite(kg) and kg < self._cero_kg:
                 self._armada = True
                 self._aviso_sin_cero_tag = None
                 logger.info(

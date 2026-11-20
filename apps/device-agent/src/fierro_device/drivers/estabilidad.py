@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import logging
+import math
 import time
 from collections.abc import Callable
+
+logger = logging.getLogger("fierro_device")
 
 
 class FiltroEstable:
@@ -30,10 +34,16 @@ class FiltroEstable:
 
     def evaluar(self, kg: float) -> bool:
         ahora = self._clock()
+        if not math.isfinite(kg):
+            self._ancla_kg = None
+            self._estable_desde = ahora
+            logger.warning("peso no finito descartado: %s kg; racha reiniciada", kg)
+            return False
         ancla = self._ancla_kg
         if ancla is None:
             self._ancla_kg = kg
-            if not self._estable_inicial:
+            # Tras un dato invalido tambien se exige una ventana completa.
+            if self._estable_desde != float("-inf"):
                 self._estable_desde = ahora
         elif abs(kg - ancla) > self._banda_kg:
             self._ancla_kg = kg
