@@ -3,7 +3,7 @@ import { apiFetch } from "./auth.js";
 import { clearDraft, diaryDraftKey, draftKey, loadDraft, saveDraft } from "./bitacoraDraft.js";
 import { JOURNAL_CATEGORIES, localDateTime } from "./journal.js";
 import JournalMediaPicker from "./JournalMediaPicker.jsx";
-import { uploadAttachments } from "./journalMedia.js";
+import { MEDIA_TEXT, uploadAttachments } from "./journalMedia.js";
 import { clearMediaDraft, loadMediaDraft, saveMediaDraft } from "./journalMediaDraft.js";
 
 export default function JournalForm({ animal, animals = [], org, session, onExpired, onSaved }) {
@@ -30,6 +30,8 @@ export default function JournalForm({ animal, animals = [], org, session, onExpi
   const term = search.trim().toLocaleLowerCase("es");
   const visible = animals.filter((item) => [item.tag_id, item.alias]
     .some((value) => (value || "").toLocaleLowerCase("es").includes(term)));
+  const rejected = files.some((item) => item.status === "rejected");
+  const retryable = files.some((item) => item.status === "error");
 
   useEffect(() => {
     let active = true;
@@ -71,7 +73,7 @@ export default function JournalForm({ animal, animals = [], org, session, onExpi
 
   async function save(event) {
     event.preventDefault();
-    if (request.current || !ready || mediaWorking || !body.trim() || !Number.isFinite(Date.parse(occurred))) return;
+    if (request.current || !ready || mediaWorking || rejected || !body.trim() || !Number.isFinite(Date.parse(occurred))) return;
     const content = { body: body.trim(), category, occurred_at: new Date(occurred).toISOString() };
     if (!animal) content.animals = [...new Set(tags)].sort();
     const fingerprint = JSON.stringify(content);
@@ -85,6 +87,8 @@ export default function JournalForm({ animal, animals = [], org, session, onExpi
     const controller = new AbortController();
     request.current = controller;
     let timeout;
+    let uploading = false;
+    let currentFiles = files;
     setBusy(true);
     setError(null);
     const path = animal ? `/v1/animals/${encodeURIComponent(animal.tag_id)}/journal` : "/v1/journal";
@@ -105,7 +109,16 @@ export default function JournalForm({ animal, animals = [], org, session, onExpi
       setConfirmed(entry);
       await saveMediaDraft(draftId, { body, category, occurred, animals: tags, files, pending: pending.current, confirmed: entry })
         .catch(() => setMediaUnavailable(true));
-      const attachments = await uploadAttachments(entry.entry_id, files, (url, data) => call(url, { method: "POST", body: data }));
+      uploading = true;
+      const attachments = await uploadAttachments(entry.entry_id, files,
+        (url, data) => call(url, { method: "POST", body: data }), async (next) => {
+          if (request.current !== controller) return;
+          currentFiles = next;
+          setFiles(next);
+          // Persistir también el rechazo y cada ACK antes de continuar la cola.
+          await saveMediaDraft(draftId, { body, category, occurred, animals: tags, files: next, pending: pending.current, confirmed: entry })
+            .catch(() => setMediaUnavailable(true));
+        });
       if (request.current !== controller) return;
       pending.current = null;
       clearDraft(draftId);
@@ -118,7 +131,8 @@ export default function JournalForm({ animal, animals = [], org, session, onExpi
     } catch (err) {
       if (request.current !== controller) return;
       if (err.unauthorized) onExpired();
-      else setError(err.status === 409
+      else if (uploading && currentFiles.some((item) => item.status === "rejected")) setError(null);
+      else setError(!uploading && err.status === 409
         ? "Ese envío ya corresponde a otra nota. Revisa el texto antes de volver a guardar."
         : "No se confirmó el guardado completo. Conservamos el texto y los adjuntos. Reintenta sin modificarlos.");
     } finally {
@@ -173,14 +187,15 @@ export default function JournalForm({ animal, animals = [], org, session, onExpi
       </div>
       {tags.length >= 100 && <p role="status">Puedes seleccionar hasta 100 animales por nota.</p>}
     </fieldset>}
-    <JournalMediaPicker files={files} onChange={setFiles} disabled={locked} onWorking={setMediaWorking} />
+    <JournalMediaPicker files={files} onChange={(next) => { setFiles(next); setError(null); }}
+      disabled={locked} removeDisabled={busy || !ready} onWorking={setMediaWorking} />
     {!ready && <p role="status">Recuperando borrador…</p>}
-    {confirmed && <p role="status">La nota ya está guardada. Falta confirmar sus adjuntos; reintenta para completar el envío.</p>}
+    {confirmed && <p role="status">{rejected ? MEDIA_TEXT.removeRejected : MEDIA_TEXT.incomplete}</p>}
     {unavailable && <p className="muted">Este navegador no permite guardar el texto del borrador al cerrar la ventana.</p>}
     {mediaUnavailable && <p className="muted">Este navegador no permite conservar los archivos al cerrar o recargar. Mantén esta ventana abierta hasta terminar el envío.</p>}
     {error && <p className="error" role="alert">{error}</p>}
-    <button className="journal-primary" type="submit" disabled={busy || !ready || mediaWorking || !body.trim()}>
-      {busy ? "Guardando…" : confirmed ? "Reintentar adjuntos" : animal ? "Guardar anotación" : "Guardar nota"}
+    <button className="journal-primary" type="submit" disabled={busy || !ready || mediaWorking || rejected || !body.trim()}>
+      {busy ? "Guardando…" : confirmed ? (retryable && !rejected ? "Reintentar adjuntos" : MEDIA_TEXT.complete) : animal ? "Guardar anotación" : "Guardar nota"}
     </button>
   </form>;
 }

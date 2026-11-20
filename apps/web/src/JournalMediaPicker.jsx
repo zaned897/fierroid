@@ -1,24 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { reducirImagen } from "./photo.js";
-import { attachment, audioFormat, LIMITS, MAX_AUDIO_SECONDS, MAX_BYTES } from "./journalMedia.js";
+import { attachment, audioAttachment, audioFormat, LIMITS, MAX_AUDIO_SECONDS, MAX_BYTES, MEDIA_TEXT } from "./journalMedia.js";
 
 function Preview({ item, index, disabled, onRemove }) {
   const [url, setUrl] = useState(null);
   useEffect(() => {
+    if (!(item.file instanceof Blob)) return;
     const next = URL.createObjectURL(item.file);
     setUrl(next);
     return () => URL.revokeObjectURL(next);
   }, [item.file]);
   return <li>
-    {item.kind === "photo"
+    {item.file instanceof Blob && (item.kind === "photo"
       ? <img src={url || undefined} alt={`Foto adjunta ${index + 1}`} />
-      : <audio controls preload="metadata" src={url || undefined} aria-label={`Nota de voz adjunta ${index + 1}`} />}
-    <button type="button" disabled={disabled} onClick={onRemove}
+      : <audio controls preload="metadata" src={url || undefined} aria-label={`Nota de voz adjunta ${index + 1}`} />)}
+    {MEDIA_TEXT[item.status] && <p className={["rejected", "error"].includes(item.status) ? "error" : "muted"}
+      role={item.status === "rejected" ? "alert" : "status"}>{MEDIA_TEXT[item.status]}</p>}
+    <button type="button" disabled={disabled || item.status === "uploaded"} onClick={onRemove}
       aria-label={`Quitar ${item.kind === "photo" ? "foto" : "nota de voz"} ${index + 1}`}>Quitar</button>
   </li>;
 }
 
-export default function JournalMediaPicker({ files, onChange, disabled, onWorking }) {
+export default function JournalMediaPicker({ files, onChange, disabled, removeDisabled, onWorking }) {
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -85,16 +88,21 @@ export default function JournalMediaPicker({ files, onChange, disabled, onWorkin
       }
       const recorder = new MediaRecorder(stream, { mimeType: format, audioBitsPerSecond: 32000 });
       current.recorder = recorder;
+      current.stop = () => {
+        if (recorder.state !== "recording") return;
+        current.durationMs = performance.now() - current.started;
+        recorder.stop();
+      };
       const chunks = [];
       let bytes = 0;
       recorder.ondataavailable = (event) => {
         if (event.data.size) { chunks.push(event.data); bytes += event.data.size; }
-        if (bytes > MAX_BYTES && recorder.state === "recording") recorder.stop();
+        if (bytes > MAX_BYTES) current.stop();
       };
       recorder.onerror = () => {
         current.failed = true;
         if (mounted.current) setError("La grabación falló. Puedes volver a grabar o guardar texto y fotos.");
-        if (recorder.state === "recording") recorder.stop();
+        current.stop();
       };
       recorder.onstop = () => {
         clearInterval(current.clock); clearTimeout(current.limit);
@@ -105,15 +113,17 @@ export default function JournalMediaPicker({ files, onChange, disabled, onWorkin
         if (current.failed) return;
         try {
           const file = new Blob(chunks, { type: recorder.mimeType || format });
-          values.current.onChange([...values.current.files, attachment(file, "audio", values.current.files)]);
+          const durationMs = current.durationMs ?? performance.now() - current.started;
+          values.current.onChange([...values.current.files, audioAttachment(file, durationMs, values.current.files)]);
         } catch (err) { setError(err.message); }
       };
       recorder.start(1000);
       setRecording(true); setProcessing(false); setSeconds(0);
       const started = performance.now();
+      current.started = started;
       current.clock = setInterval(() => setSeconds(Math.min(MAX_AUDIO_SECONDS, Math.floor((performance.now() - started) / 1000))), 250);
       // Reservar 250 ms para el último bloque del codificador (sobre todo AAC).
-      current.limit = setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, MAX_AUDIO_SECONDS * 1000 - 250);
+      current.limit = setTimeout(current.stop, MAX_AUDIO_SECONDS * 1000 - 250);
     } catch (err) {
       current.stream?.getTracks().forEach((track) => track.stop());
       if (!mounted.current) return;
@@ -139,13 +149,13 @@ export default function JournalMediaPicker({ files, onChange, disabled, onWorkin
     {processing && <p role="status">Preparando adjunto…</p>}
     {recording && <div className="journal-recording">
       <p role="timer" aria-label="Tiempo de grabación">Grabando · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")} / 2:00</p>
-      <button type="button" onClick={() => active.current?.recorder?.stop()}>Detener grabación</button>
+      <button type="button" onClick={() => active.current?.stop()}>Detener grabación</button>
     </div>}
     {error && <p className="error" role="alert">{error}</p>}
     {files.length > 0 && <ul className="journal-media-previews" aria-label="Adjuntos por guardar">
       {files.map((item, index) => <Preview key={item.attachment_id} item={item}
         index={files.slice(0, index).filter((other) => other.kind === item.kind).length}
-        disabled={disabled || processing || recording} onRemove={() => onChange(files.filter((file) => file.attachment_id !== item.attachment_id))} />)}
+        disabled={removeDisabled || processing || recording} onRemove={() => onChange(files.filter((file) => file.attachment_id !== item.attachment_id))} />)}
     </ul>}
   </div>;
 }

@@ -92,6 +92,130 @@ async function newNote(page, body) {
   return dialog;
 }
 
+async function attachPhoto(page, dialog) {
+  const bytes = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 4; canvas.height = 4;
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    return [...new Uint8Array(await blob.arrayBuffer())];
+  });
+  await dialog.getByLabel("Elegir fotos").setInputFiles({ name: "foto.png", mimeType: "image/png", buffer: Buffer.from(bytes) });
+  await expect(dialog.getByRole("button", { name: "Quitar foto 1" })).toBeEnabled();
+}
+
+test("un adjunto rechazado se puede quitar tras recargar y nunca se reintenta", async ({ page }) => {
+  const requests = await simulate(page);
+  let uploads = 0;
+  await page.route(/\/v1\/journal\/[^/]+\/attachments\?/, (route) => {
+    uploads++;
+    return route.fulfill({ status: 422, json: { detail: "Archivo inválido" } });
+  });
+  await page.goto("/");
+  await openDiary(page);
+  let dialog = await newNote(page, "Nota con foto rechazada.");
+  await attachPhoto(page, dialog);
+  await dialog.getByRole("button", { name: "Guardar nota" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Adjunto rechazado");
+  await expect(dialog.getByRole("button", { name: "Quitar foto 1" })).toBeEnabled();
+  await expect(dialog.getByRole("button", { name: /Reintentar/ })).toHaveCount(0);
+  await expect(dialog.getByRole("button", { name: "Completar nota" })).toBeDisabled();
+  await page.reload();
+  await openDiary(page);
+  await page.getByRole("button", { name: "Nueva nota", exact: true }).click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("alert")).toContainText("Adjunto rechazado");
+  await expect(dialog.getByRole("button", { name: /Reintentar/ })).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Quitar foto 1" }).click();
+  await dialog.getByRole("button", { name: "Completar nota" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(uploads).toBe(1);
+  expect(requests.posts).toHaveLength(1);
+});
+
+test("un fallo transitorio permite reintentar el adjunto sin duplicar la nota", async ({ page }) => {
+  const requests = await simulate(page);
+  let uploads = 0;
+  await page.route(/\/v1\/journal\/[^/]+\/attachments\?/, (route) => {
+    uploads++;
+    return uploads === 1
+      ? route.fulfill({ status: 503, json: { detail: "Temporal" } })
+      : route.fulfill({ json: { attachment_id: "foto-confirmada", kind: "photo" } });
+  });
+  await page.goto("/");
+  await openDiary(page);
+  const dialog = await newNote(page, "Nota con envío temporalmente fallido.");
+  await attachPhoto(page, dialog);
+  await dialog.getByRole("button", { name: "Guardar nota" }).click();
+  await expect(dialog.getByRole("button", { name: "Quitar foto 1" })).toBeEnabled();
+  await dialog.getByRole("button", { name: "Reintentar adjuntos" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(uploads).toBe(2);
+  expect(requests.posts).toHaveLength(1);
+});
+
+test("un borrador confirmado sin blobs recuperables se puede completar", async ({ page }) => {
+  const requests = await simulate(page);
+  await page.goto("/");
+  await page.evaluate(async ({ account, entry }) => {
+    const key = `fierro:bitacora:diario:${encodeURIComponent(account.user.email)}:${account.user.org}`;
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("fierro-journal-media", 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("drafts");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction("drafts", "readwrite");
+      transaction.objectStore("drafts").put({
+        body: entry.body, category: "general", occurred: "2026-11-18T08:30", animals: [],
+        saved_at: Date.now(), confirmed: entry,
+        files: [
+          { attachment_id: "sin-datos", kind: "audio", status: "rejected" },
+          { attachment_id: "url-vencida", kind: "photo", status: "uploading", file: "blob:ya-no-existe" },
+        ],
+      }, key);
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }, { account: session, entry: previous });
+  await openDiary(page);
+  await page.getByRole("button", { name: "Nueva nota", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("list", { name: "Adjuntos por guardar" })).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Completar nota" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(requests.posts).toHaveLength(0);
+});
+
+test("detener una grabación al instante avisa y no agrega ni sube audio", async ({ page }) => {
+  const requests = await simulate(page);
+  await page.addInitScript(() => {
+    navigator.mediaDevices.getUserMedia = async () => ({ getTracks: () => [{ stop() {} }] });
+    window.MediaRecorder = class {
+      static isTypeSupported() { return true; }
+      state = "inactive";
+      mimeType = "audio/webm";
+      start() { this.state = "recording"; }
+      stop() {
+        this.state = "inactive";
+        this.ondataavailable({ data: new Blob(["cabecera sin audio"]) });
+        this.onstop();
+      }
+    };
+  });
+  await page.goto("/");
+  await openDiary(page);
+  const dialog = await newNote(page, "Nota sin audio vacío.");
+  await dialog.getByRole("button", { name: "Nota de voz", exact: true }).click();
+  await dialog.getByRole("button", { name: "Detener grabación" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Graba al menos un segundo");
+  await expect(dialog.getByRole("list", { name: "Adjuntos por guardar" })).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Guardar nota" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(requests.posts).toHaveLength(1);
+});
+
 test("guarda una nota del rancho en su día local y conserva la nota migrada", async ({ page }) => {
   const requests = await simulate(page);
   await page.goto("/");
