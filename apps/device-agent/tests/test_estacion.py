@@ -121,7 +121,7 @@ def test_filtro_no_finito_rompe_racha_y_exige_ventana_nueva(kg, estable_inicial,
     assert filtro.evaluar(450.0) is True
     assert caplog.record_tuples == [
         ("fierro_device", logging.WARNING, f"peso no finito descartado: {kg} kg; racha reiniciada")
-    ] * 2
+    ]  # dos datos invalidos seguidos: un solo aviso
 
 
 @pytest.mark.parametrize("kg", [float("nan"), float("inf"), float("-inf")])
@@ -528,3 +528,15 @@ def test_agent_con_backend_estacion_guarda_en_outbox_sin_tocar_main(
     assert agente.store.pending_count() == 1
     # Sigue desarmada mientras no regrese a cero.
     assert agente.capture_once() is None
+
+
+def test_racha_de_nan_avisa_una_sola_vez(caplog):
+    from fierro_device.drivers.estabilidad import FiltroEstable
+
+    filtro = FiltroEstable(banda_kg=0.5, ventana_s=1.0, clock=lambda: 0.0)
+    for _ in range(100):
+        assert filtro.evaluar(float("nan")) is False
+    assert caplog.text.count("peso no finito") == 1
+    filtro.evaluar(400.0)
+    filtro.evaluar(float("inf"))
+    assert caplog.text.count("peso no finito") == 2

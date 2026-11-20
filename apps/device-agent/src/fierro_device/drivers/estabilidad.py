@@ -31,14 +31,19 @@ class FiltroEstable:
         self._estable_inicial = estable_inicial
         self._ancla_kg: float | None = None
         self._estable_desde = float("-inf") if estable_inicial else 0.0
+        self._en_racha_no_finita = False
 
     def evaluar(self, kg: float) -> bool:
         ahora = self._clock()
         if not math.isfinite(kg):
             self._ancla_kg = None
             self._estable_desde = ahora
-            logger.warning("peso no finito descartado: %s kg; racha reiniciada", kg)
+            # Una bascula averiada puede mandar NaN a 10 Hz: avisar una vez por racha.
+            if not self._en_racha_no_finita:
+                self._en_racha_no_finita = True
+                logger.warning("peso no finito descartado: %s kg; racha reiniciada", kg)
             return False
+        self._en_racha_no_finita = False
         ancla = self._ancla_kg
         if ancla is None:
             self._ancla_kg = kg
