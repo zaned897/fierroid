@@ -3,12 +3,12 @@ import TelefonoConsulta from "./TelefonoConsulta.jsx";
 
 const BENEFICIOS = [
   {
-    titulo: "Durante el pesaje",
+    titulo: "Animal + peso",
     texto: "Relaciona el animal con su peso en un solo registro.",
     imagen: "home-corral-v2-ia",
   },
   {
-    titulo: "Después de la jornada",
+    titulo: "Historial",
     texto: "Consulta los pesajes y el historial de cada animal.",
     telefono: true,
   },
@@ -33,7 +33,7 @@ export default function Beneficios() {
               />}
               <div className="home-beneficio-texto">
                 <h3>{beneficio.titulo}</h3>
-                <p>{beneficio.texto}</p>
+                <p className="home-solo-lectores">{beneficio.texto}</p>
               </div>
             </article>
           ))}

@@ -21,8 +21,7 @@ export default function Home({ onEntrar }) {
               <p className="home-lema">Ganadería de siempre, tecnología de punta.</p>
               <h1 id="home-titulo">El peso de tu ganado, siempre a la mano.</h1>
               <p className="home-descripcion">
-                La manga, el arete y el ojo del vaquero, con una báscula que no olvida.
-                Registra cada pesaje y consulta el historial de tus animales desde tu celular.
+                Registra en el corral. Consulta desde tu celular.
               </p>
               <ul className="home-sellos" aria-label="Lo que distingue a Fierro">
                 <li>Funciona sin señal</li>
