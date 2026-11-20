@@ -33,6 +33,9 @@ variable "api_image" {
 
     Usar el digest (sha256:...) y no una etiqueta movil en production: una
     etiqueta se reescribe y deja de saberse que esta corriendo.
+
+    Solo cuenta al CREAR el servicio y el job. Despues la imagen la cambia
+    .github/workflows/deploy-api.yml y Terraform la ignora (ver runtime.tf).
   EOT
   type        = string
 }

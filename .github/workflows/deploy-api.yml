@@ -1,0 +1,161 @@
+# Despliega la API a Cloud Run.
+#
+#   push a stage      -> CI verde -> build -> migraciones -> servicio -> /health
+#   push a production -> CI verde -> aprobacion manual -> MISMO digest de stage
+#
+# Una imagen por candidato: se construye una sola vez en stage y production
+# despliega ese digest, nunca uno reconstruido (ver infra/README.md). Si el
+# commit de production no paso por stage, el job falla en vez de construir.
+#
+# Terraform es dueno de la infraestructura; este workflow solo cambia la
+# imagen. runtime.tf ignora `image` para que un `apply` no regrese a la
+# imagen vieja de los .tfvars. Por eso aqui no hace falta el estado de
+# Terraform ni las cadenas de Neon: nada de eso sale de tu maquina.
+#
+# Sin llaves JSON: GitHub se identifica con Google por Workload Identity
+# Federation. Configuracion inicial en infra/README.md.
+name: Deploy API
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [stage, production]
+
+permissions:
+  contents: read
+  id-token: write # para pedirle a Google un token de corta vida
+
+env:
+  PROJECT_ID: fierro-caw-scale
+  REGION: northamerica-south1
+  REPO: northamerica-south1-docker.pkg.dev/fierro-caw-scale/fierro/fierro-api
+  SHA: ${{ github.event.workflow_run.head_sha }}
+
+jobs:
+  stage:
+    # Solo CI verde de un push a este repo. Sin el filtro de evento, un PR
+    # desde un fork con una rama llamada "stage" dispararia el despliegue.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'stage'
+    runs-on: ubuntu-latest
+    environment:
+      name: stage
+      url: ${{ steps.verificar.outputs.url }}
+    concurrency:
+      group: deploy-api-stage
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Reusar la imagen si este commit ya paso por stage
+        id: previa
+        run: |
+          digest=$(gcloud artifacts docker images describe "$REPO:stage-ok-$SHA" \
+            --format='value(image_summary.digest)' 2>/dev/null || true)
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Construir y subir
+        id: build
+        if: steps.previa.outputs.digest == ''
+        run: |
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build -f apps/api/Dockerfile -t "$REPO:build-$SHA" .
+          # Comprobar el codigo dentro de la imagen, no que el build pasara:
+          # ya se desplego una imagen que compilaba y le faltaba una dependencia.
+          docker run --rm --entrypoint python "$REPO:build-$SHA" -c "import fierro_api.main"
+          docker push "$REPO:build-$SHA"
+          ref=$(docker inspect --format='{{index .RepoDigests 0}}' "$REPO:build-$SHA")
+          echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
+
+      - name: Fijar el digest
+        run: |
+          digest="${{ steps.previa.outputs.digest }}${{ steps.build.outputs.digest }}"
+          case "$digest" in sha256:*) ;; *) echo "::error::Digest vacio o invalido: '$digest'"; exit 1 ;; esac
+          echo "IMAGE=$REPO@$digest" >> "$GITHUB_ENV"
+
+      - name: Desplegar
+        run: ./scripts/deploy-api-cloud-run.sh deploy stage "$IMAGE"
+
+      - name: Verificar
+        id: verificar
+        run: ./scripts/deploy-api-cloud-run.sh verify stage "$IMAGE" >> "$GITHUB_OUTPUT"
+
+      # Solo despues de que stage respondio bien: production busca esta
+      # etiqueta, asi que una imagen que fallo en stage nunca llega alla.
+      - name: Marcar el digest como validado en stage
+        run: gcloud artifacts docker tags add "$IMAGE" "$REPO:stage-ok-$SHA" --quiet
+
+      - name: Resumen
+        run: |
+          {
+            echo "### API desplegada en stage"
+            echo "- commit: \`$SHA\`"
+            echo "- imagen: \`$IMAGE\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  production:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'production'
+    runs-on: ubuntu-latest
+    # El environment "production" tiene revisor obligatorio: el job espera
+    # aqui hasta que alguien aprueba en GitHub.
+    environment:
+      name: production
+      url: ${{ steps.verificar.outputs.url }}
+    concurrency:
+      group: deploy-api-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Buscar el digest que stage valido
+        run: |
+          digest=$(gcloud artifacts docker images describe "$REPO:stage-ok-$SHA" \
+            --format='value(image_summary.digest)' 2>/dev/null || true)
+          if [ -z "$digest" ]; then
+            echo "::error::El commit $SHA no tiene imagen validada en stage."
+            echo "Nada entra a production sin pasar por stage: promueve primero a stage,"
+            echo "espera a que su despliegue termine en verde y luego promueve a production."
+            exit 1
+          fi
+          echo "IMAGE=$REPO@$digest" >> "$GITHUB_ENV"
+
+      - name: Desplegar
+        run: ./scripts/deploy-api-cloud-run.sh deploy production "$IMAGE"
+
+      - name: Verificar
+        id: verificar
+        run: ./scripts/deploy-api-cloud-run.sh verify production "$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Resumen
+        run: |
+          {
+            echo "### API desplegada en production"
+            echo "- commit: \`$SHA\`"
+            echo "- imagen: \`$IMAGE\` (la misma que valido stage)"
+          } >> "$GITHUB_STEP_SUMMARY"
