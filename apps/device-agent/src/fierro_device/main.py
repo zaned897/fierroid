@@ -16,7 +16,7 @@ from fierro_device.models import WeightReading
 from fierro_device.notify import sd_notify
 from fierro_device.settings import Settings
 from fierro_device.store import OutboxStore
-from fierro_device.sync import CloudSync
+from fierro_device.sync import CloudSync, ReadingRejected
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,6 +45,7 @@ class Agent:
         self._running = True
         self._started = time.monotonic()
         self._next_sync = 0.0
+        self._isolate_readings = False
         self.backoff = Backoff(settings.sync_interval_s, settings.sync_max_s, aleatorio)
         self._last_heartbeat = float("-inf")  # primer heartbeat al arrancar
         self._last_tag: str | None = None
@@ -91,12 +92,26 @@ class Agent:
         return None
 
     def flush_outbox(self) -> int:
-        pending = self.store.pending(limit=50)
+        pending = self.store.pending(limit=1 if self._isolate_readings else 50)
         if not pending:
+            self._isolate_readings = False
             return 0
         antes = self.backoff.intervalo_s
         try:
-            accepted = self.sync.push_readings(pending)
+            try:
+                accepted = self.sync.push_readings(pending)
+            except ReadingRejected as exc:
+                if exc.event_id is None:
+                    # Una peticion por ciclo: no bloquear captura/heartbeat con 50 timeouts.
+                    self._isolate_readings = True
+                    logger.warning("rechazo sin event_id; se aislaran las lecturas: %s", exc)
+                    self.backoff.fallo()
+                else:
+                    self.store.mark_quarantined(exc.event_id, exc.reason)
+                    logger.error("quarantined event_id=%s: %s", exc.event_id, exc.reason)
+                    self._isolate_readings = False
+                    self.backoff.exito()  # progreso local; no es un ACK ni cuenta como synced
+                return 0
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
             if accepted:
