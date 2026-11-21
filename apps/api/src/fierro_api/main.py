@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import hmac
 import math
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -16,6 +16,7 @@ from pydantic import AwareDatetime, BaseModel, Field, field_validator
 from fierro_api import __version__, asistente, google_auth, journal, waitlist
 from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
+from fierro_api import dinero_store as dinero
 from fierro_api.auth import (
     AuthError,
     AuthUser,
@@ -26,6 +27,14 @@ from fierro_api.auth import (
     revoke_all_api_keys,
     revoke_api_key,
     user_for_api_key,
+)
+from fierro_api.dinero_models import (
+    Kind,
+    MovementIn,
+    MovementList,
+    MovementOut,
+    PriceHistory,
+    VoidIn,
 )
 from fierro_api.settings import Settings
 from fierro_api.store import SALUD_CAMPOS, build_store
@@ -452,6 +461,60 @@ def _write_scope(user: AuthUser, org: str | None) -> str:
             )
         return org
     return _scope(user)  # type: ignore[return-value]
+
+
+@app.post("/v1/dinero/movimientos", response_model=MovementOut)
+def post_money(body: MovementIn, user: CurrentUser,
+               org: str | None = Query(default=None)) -> dict[str, Any]:
+    """Captura manual confirmada. Reintentar con el mismo UUID y contenido."""
+    scope = _write_scope(user, org)
+    try:
+        return dinero.add(_require_postgres(), org=scope, author_id=user.id, movement=body)
+    except dinero.MovementConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/dinero/movimientos/{movement_id}/anular", response_model=MovementOut)
+def void_money(movement_id: UUID, body: VoidIn, user: CurrentUser,
+               org: str | None = Query(default=None)) -> dict[str, Any]:
+    """Inserta una anulación; conserva la fila original sin cambios."""
+    scope = _write_scope(user, org)
+    try:
+        return dinero.void(_require_postgres(), org=scope, author_id=user.id,
+                           original_id=movement_id, operation=body)
+    except dinero.MovementMissing as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except dinero.MovementConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/v1/dinero/movimientos", response_model=MovementList)
+def get_money(user: CurrentUser, org: str | None = Query(default=None),
+              animal: str | None = Query(default=None),
+              desde: Annotated[date | None, Query()] = None,
+              hasta: Annotated[date | None, Query()] = None,
+              kind: Annotated[Kind | None, Query()] = None,
+              estado: Literal["vigente", "anulado", "anulacion", "todos"] = "vigente",
+              ) -> dict[str, Any]:
+    """Movimientos por fecha de evento, extremos inclusivos. Decimales en texto."""
+    scope = _write_scope(user, org)
+    if desde is not None and hasta is not None and hasta < desde:
+        raise HTTPException(status_code=422, detail="hasta debe ser igual o posterior a desde")
+    return {"movements": dinero.list_movements(
+        _require_postgres(), org=scope, animal=animal, desde=desde, hasta=hasta,
+        kind=kind, estado=estado,
+    )}
+
+
+@app.get("/v1/dinero/precio", response_model=PriceHistory)
+def get_money_price(user: CurrentUser,
+                    org: str | None = Query(default=None)) -> dict[str, Any]:
+    """Último precio confirmado con fecha <= hoy UTC, e historial completo."""
+    return dinero.price(_require_postgres(), org=_write_scope(user, org))
 
 
 @app.get("/v1/animals")
