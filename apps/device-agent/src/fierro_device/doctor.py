@@ -28,7 +28,17 @@ def _pendientes(db_path: str) -> str:
 def _puerto_presente(puerto: str) -> bool:
     from serial.tools import list_ports
 
-    return any(p.device == puerto for p in list_ports.comports())
+    # comports() lista /dev/ttyUSB*, no los enlaces de udev (/dev/fierro-lector):
+    # comparar contra el destino real.
+    real = os.path.realpath(puerto) if os.path.islink(puerto) else puerto
+    return any(p.device in (puerto, real) for p in list_ports.comports())
+
+
+def _destino_puerto(puerto: str) -> str:
+    """A que dispositivo real apunta un puerto (los enlaces de udev cambian de destino)."""
+    if not os.path.islink(puerto):
+        return puerto
+    return f"{puerto} -> {os.path.realpath(puerto)}"
 
 
 def run_doctor(settings: Settings, config_path: Path | None) -> int:
@@ -54,6 +64,10 @@ def run_doctor(settings: Settings, config_path: Path | None) -> int:
     modo = "SIMULADO" if settings.mock_hw else "hardware real"
     backend = os.getenv("FIERRO_HW_BACKEND") or "serial"
     ok(f"estacion={settings.device_id} modo={modo} backend={backend}")
+    if not settings.mock_hw and backend == "serial":
+        # SerialHardware.read() lanza NotImplementedError: el agente arranca,
+        # sincroniza y late, pero no captura.
+        falla("backend serial sin drivers: el agente no captura (ver SerialHardware)")
 
     try:
         ok(f"outbox {settings.db_path}: {_pendientes(settings.db_path)}")
@@ -61,6 +75,8 @@ def run_doctor(settings: Settings, config_path: Path | None) -> int:
         falla(f"outbox {settings.db_path}: {exc}")
 
     if not settings.mock_hw:
+        for nombre, puerto in (("bascula", settings.scale_port), ("lector", settings.rfid_port)):
+            print(f"[INFO] puerto {nombre}: {_destino_puerto(puerto)}")
         if _puerto_presente(settings.rfid_port):
             ok(f"puerto {settings.rfid_port} conectado")
         else:

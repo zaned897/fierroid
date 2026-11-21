@@ -10,6 +10,7 @@ from fierro_device import __version__
 from fierro_device.config import ConfigError, load_config
 from fierro_device.hardware import build_hardware
 from fierro_device.models import WeightReading
+from fierro_device.notify import sd_notify
 from fierro_device.settings import Settings
 from fierro_device.store import OutboxStore
 from fierro_device.sync import CloudSync
@@ -35,9 +36,11 @@ class Agent:
         self._running = True
         self._started = time.monotonic()
         self._last_sync = 0.0
-        self._last_heartbeat = 0.0
+        self._last_heartbeat = float("-inf")  # primer heartbeat al arrancar
         self._last_tag: str | None = None
         self._last_tag_at = 0.0
+        # Error de hardware sin configurar: se registra una vez y se deja de capturar.
+        self._hw_error: str | None = None
 
     def stop(self, *_args: object) -> None:
         logger.info("shutdown requested")
@@ -94,13 +97,16 @@ class Agent:
         now = time.monotonic()
         if now - self._last_heartbeat < 30:
             return
+        # Por intento, no por exito: sin red, reintentar en cada vuelta sumaria un
+        # timeout por vuelta y systemd mataria al agente por watchdog.
+        self._last_heartbeat = now
         try:
             self.sync.heartbeat(
                 pending_count=self.store.pending_count(),
                 agent_version=__version__,
                 uptime_s=now - self._started,
+                last_error=self._hw_error,
             )
-            self._last_heartbeat = now
         except Exception:
             logger.exception("heartbeat failed")
 
@@ -114,20 +120,27 @@ class Agent:
             self.settings.api_url,
             self.settings.db_path,
         )
+        sd_notify("READY=1")
         while self._running:
-            try:
-                self.capture_once()
-            except NotImplementedError:
-                logger.error("hardware not implemented; exiting")
-                break
-            except Exception:
-                logger.exception("capture loop error")
+            if self._hw_error is None:
+                try:
+                    self.capture_once()
+                except NotImplementedError as exc:
+                    # Salir con Restart=always seria un bucle de reinicios: seguimos
+                    # vaciando la outbox y avisando por heartbeat, sin capturar.
+                    self._hw_error = str(exc) or type(exc).__name__
+                    logger.error("hardware not configured; capture disabled: %s", exc)
+                except Exception:
+                    logger.exception("capture loop error")
             now = time.monotonic()
             if now - self._last_sync >= self.settings.sync_interval_s:
                 self.flush_outbox()
                 self._last_sync = now
             self.maybe_heartbeat()
+            # Solo si la vuelta termino: una lectura colgada deja de latir y systemd reinicia.
+            sd_notify("WATCHDOG=1")
             time.sleep(self.settings.poll_interval_s)
+        sd_notify("STOPPING=1")
         self.sync.close()
         self.store.close()
         logger.info("agent stopped")

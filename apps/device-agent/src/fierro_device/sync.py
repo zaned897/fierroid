@@ -26,11 +26,19 @@ class CloudSync:
         accepted = data.get("accepted_ids") or [r["event_id"] for r in readings]
         return list(accepted)
 
-    def heartbeat(self, *, pending_count: int, agent_version: str, uptime_s: float) -> None:
-        payload = {
+    def heartbeat(
+        self,
+        *,
+        pending_count: int,
+        agent_version: str,
+        uptime_s: float,
+        last_error: str | None = None,
+    ) -> None:
+        payload: dict[str, Any] = {
             "pending_count": pending_count,
             "agent_version": agent_version,
             "uptime_s": int(uptime_s),
+            "last_error": last_error,
         }
         resp = self._client.post(
             f"{self.api_url}/v1/devices/{self.device_id}/heartbeat",
