@@ -26,6 +26,7 @@ def _settings(db_path: str) -> Settings:
         mock_hw=True,
         poll_interval_s=0.01,
         sync_interval_s=0.0,
+        sync_max_s=0.0,
         mock_interval_s=3600.0,
         scale_port="/dev/null",
         rfid_port="/dev/null",

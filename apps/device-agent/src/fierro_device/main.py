@@ -2,18 +2,25 @@ from __future__ import annotations
 
 import argparse
 import logging
+import random
 import signal
 import sys
 import time
+from collections.abc import Callable
 
 from fierro_device import __version__
+from fierro_device.backoff import Backoff, guardar_estado
 from fierro_device.config import ConfigError, load_config
 from fierro_device.hardware import build_hardware
 from fierro_device.models import WeightReading
 from fierro_device.notify import sd_notify
 from fierro_device.settings import Settings
 from fierro_device.store import OutboxStore
-from fierro_device.sync import CloudSync
+from fierro_device.sync import CloudSync, ReadingRejected
+
+# Rechazos consecutivos que se aceptan como lecturas venenosas antes de suponer
+# que el problema es del servidor y dejar de poner lecturas en cuarentena.
+CUARENTENAS_SEGUIDAS_MAX = 5
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,8 +30,14 @@ logger = logging.getLogger("fierro_device")
 
 
 class Agent:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        reloj: Callable[[], float] = time.monotonic,
+        aleatorio: Callable[[], float] = random.random,
+    ) -> None:
         self.settings = settings
+        self._reloj = reloj
         self.store = OutboxStore(settings.db_path)
         self.hw = build_hardware(
             mock=settings.mock_hw,
@@ -35,7 +48,10 @@ class Agent:
         self.sync = CloudSync(settings.api_url, settings.device_id)
         self._running = True
         self._started = time.monotonic()
-        self._last_sync = 0.0
+        self._next_sync = 0.0
+        self._isolate_readings = False
+        self._cuarentenas_seguidas = 0
+        self.backoff = Backoff(settings.sync_interval_s, settings.sync_max_s, aleatorio)
         self._last_heartbeat = float("-inf")  # primer heartbeat al arrancar
         self._last_tag: str | None = None
         self._last_tag_at = 0.0
@@ -81,17 +97,68 @@ class Agent:
         return None
 
     def flush_outbox(self) -> int:
-        pending = self.store.pending(limit=50)
+        pending = self.store.pending(limit=1 if self._isolate_readings else 50)
         if not pending:
+            self._isolate_readings = False
             return 0
+        antes = self.backoff.intervalo_s
         try:
-            accepted = self.sync.push_readings(pending)
+            try:
+                accepted = self.sync.push_readings(pending)
+            except ReadingRejected as exc:
+                if exc.event_id is None:
+                    # Una peticion por ciclo: no bloquear captura/heartbeat con 50 timeouts.
+                    self._isolate_readings = True
+                    logger.warning("rechazo sin event_id; se aislaran las lecturas: %s", exc)
+                    self.backoff.fallo()
+                elif self._cuarentenas_seguidas >= CUARENTENAS_SEGUIDAS_MAX:
+                    # Tantos rechazos sin un solo ACK huelen a falla del servidor
+                    # (esquema nuevo, proxy): mejor atascar ruidoso que vaciar la cola.
+                    logger.error(
+                        "%d lecturas seguidas en cuarentena sin ningun ACK; event_id=%s "
+                        "queda pending hasta que el servidor acepte alguna: %s",
+                        self._cuarentenas_seguidas,
+                        exc.event_id,
+                        exc.reason,
+                    )
+                    self.backoff.fallo()
+                else:
+                    self.store.mark_quarantined(exc.event_id, exc.reason)
+                    self._cuarentenas_seguidas += 1
+                    logger.error("quarantined event_id=%s: %s", exc.event_id, exc.reason)
+                    self._isolate_readings = False
+                    self.backoff.exito()  # progreso local; no es un ACK ni cuenta como synced
+                return 0
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
+            if accepted:
+                self._cuarentenas_seguidas = 0
+                self.backoff.exito()
+            else:
+                # 200 sin confirmar nada: la API esta degradada, no reintentar a 2 s.
+                logger.warning("sync sin ACK de %d lecturas; quedan pending", len(pending))
+                self.backoff.fallo()
             return len(accepted)
         except Exception:
             logger.exception("sync failed; readings remain pending")
+            self.backoff.fallo()
             return 0
+        finally:
+            if self.backoff.intervalo_s != antes:
+                self._guardar_estado_sync()
+
+    def _guardar_estado_sync(self) -> None:
+        try:
+            guardar_estado(self.settings.db_path, {"intervalo_s": self.backoff.intervalo_s})
+        except OSError:
+            logger.exception("no se pudo guardar el estado del sync")
+
+    def maybe_sync(self) -> None:
+        now = self._reloj()
+        if now < self._next_sync:
+            return
+        self.flush_outbox()
+        self._next_sync = self._reloj() + self.backoff.espera()
 
     def maybe_heartbeat(self) -> None:
         now = time.monotonic()
@@ -120,6 +187,8 @@ class Agent:
             self.settings.api_url,
             self.settings.db_path,
         )
+        # Al arrancar el intervalo vuelve al minimo: que doctor no vea el de la corrida anterior.
+        self._guardar_estado_sync()
         sd_notify("READY=1")
         while self._running:
             if self._hw_error is None:
@@ -132,10 +201,7 @@ class Agent:
                     logger.error("hardware not configured; capture disabled: %s", exc)
                 except Exception:
                     logger.exception("capture loop error")
-            now = time.monotonic()
-            if now - self._last_sync >= self.settings.sync_interval_s:
-                self.flush_outbox()
-                self._last_sync = now
+            self.maybe_sync()
             self.maybe_heartbeat()
             # Solo si la vuelta termino: una lectura colgada deja de latir y systemd reinicia.
             sd_notify("WATCHDOG=1")

@@ -64,3 +64,29 @@ El comando anterior con `python -m dotenv ... run --override` sigue funcionando.
 - Esperar más de 20 segundos entre capturas de la misma tarjeta.
 - `captured` confirma persistencia local; `synced` confirma ACK de la API.
 - Detener con Ctrl+C. Abrir COM6 puede reiniciar el micro: esperar unos segundos.
+
+## Rechazos de lecturas en el sync
+
+Solo `accepted_ids` / `duplicate_ids` del servidor para los `event_id` enviados
+permiten marcar una lectura `synced`. Ante validación HTTP 400/422, un `event_id`
+explícito (en la raíz del JSON o en `detail`) identifica la lectura que pasa a
+`quarantined`. Se conserva íntegro su payload y se guarda el código HTTP y el
+cuerpo de respuesta en `quarantine_reason`; también se registra un error en el log.
+Un ID ajeno al envío no cambia ninguna lectura.
+
+Si el rechazo no identifica la lectura, no se pone el lote en cuarentena: los
+siguientes ciclos envían una lectura por vez. Solo su rechazo individual permite
+ponerla en cuarentena. Se vuelve a lotes de 50 al aislar una lectura rechazada o
+vaciar la cola. Cada ciclo hace una sola petición, dejando avanzar captura,
+heartbeat y watchdog. Un reinicio puede repetir el aislamiento de forma segura.
+
+Freno: si 5 lecturas seguidas pasan a cuarentena sin que el servidor acepte
+ninguna, se asume una falla del servidor (esquema nuevo, proxy) y se deja de
+apartar lecturas. Quedan `pending` con error en el log hasta que el servidor
+acepte alguna. Así un rechazo general no vacía la cola en cuarentena.
+
+5xx, timeout, red y otros 4xx (incluidos autenticación y límites) dejan las
+lecturas `pending` y mantienen el backoff con jitter. La cuarentena queda fuera
+del envío automático y requiere revisión; nunca se borra ni se convierte en
+`synced`. La migración añade únicamente la columna nullable `quarantine_reason`
+si falta, sin reconstruir tablas ni modificar los datos previos.
