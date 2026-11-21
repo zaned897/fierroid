@@ -189,6 +189,50 @@
   background: #102b2399;
 }
 
+:is(.journal-dialog, .journal-photo-dialog):modal {
+  overscroll-behavior: contain;
+}
+
+:is(.journal-dialog, .journal-photo-dialog)::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.journal-media-picker {
+  padding-block: 1rem;
+  border-block: 1px solid var(--line);
+}
+
+.journal-media-label { margin: 0 0 .75rem; font-weight: 600; }
+.journal-media-label span { font-weight: 400; color: var(--muted); }
+.journal-media-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.journal-media-help { font-size: .875rem; margin-bottom: 0; }
+.journal-recording { padding: .75rem; margin-top: .75rem; border-left: 3px solid #a33b25; background: #fff4ef; }
+.journal-recording p { margin-top: 0; font-variant-numeric: tabular-nums; }
+
+.journal-media-previews,
+.journal-media-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.journal-media-previews li,
+.journal-media-item { min-width: 0; }
+.journal-media-previews li { padding: .5rem; border: 1px solid var(--line); border-radius: .5rem; }
+.journal-media-previews img { display: block; width: 100%; height: 8rem; object-fit: cover; margin-bottom: .5rem; border-radius: .25rem; }
+.journal-media-previews audio,
+.journal-audio audio { display: block; width: 100%; min-width: 0; margin-block: .5rem; }
+.journal-audio p { margin: 0; font-size: .875rem; color: var(--muted); }
+.dashboard button.journal-thumbnail { display: block; width: 100%; padding: 0; overflow: hidden; background: #eef3f1; }
+.journal-thumbnail img { display: block; width: 100%; height: 10rem; object-fit: cover; }
+.journal-photo-dialog { box-sizing: border-box; width: min(64rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; overflow: auto; }
+.journal-photo-dialog::backdrop { background: #102b23c9; }
+.journal-photo-dialog h3 { margin: 0; }
+.journal-photo-dialog > img { display: block; max-width: 100%; max-height: 75dvh; margin: 1rem auto 0; object-fit: contain; }
+
 .journal-dialog h2 {
   margin: 0;
   font-size: 1.5rem;

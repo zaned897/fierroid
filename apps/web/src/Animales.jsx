@@ -172,7 +172,8 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired, onDiario }) {
       </div>
 
       {error && <p className="error">{error}</p>}
-      <BitacoraAnimal animal={animal} session={session} onExpired={onExpired} onDiario={onDiario} />
+      <BitacoraAnimal key={`${session.user.email}-${animal.org}-${animal.tag_id}`}
+        animal={animal} session={session} onExpired={onExpired} onDiario={onDiario} />
     </section>
   );
 }

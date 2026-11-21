@@ -8,6 +8,7 @@
  */
 
 import { clearAllDrafts } from "./bitacoraDraft.js";
+import { clearAllMediaDrafts } from "./journalMediaDraft.js";
 
 const STORAGE_KEY = "fierro.session";
 
@@ -31,6 +32,7 @@ export function saveSession(session) {
 }
 
 export function clearSession() {
+  clearAllMediaDrafts().catch(() => {});
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
@@ -41,7 +43,7 @@ export function clearSession() {
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 /** fetch con la credencial puesta. Lanza si la sesión ya no sirve. */
-export async function apiFetch(path, { session, ...options } = {}) {
+export async function apiFetch(path, { session, responseType = "json", ...options } = {}) {
   const headers = { ...(options.headers || {}) };
   if (session?.api_key) {
     headers.Authorization = `Bearer ${session.api_key}`;
@@ -68,7 +70,7 @@ export async function apiFetch(path, { session, ...options } = {}) {
     error.status = res.status;
     throw error;
   }
-  return res.json();
+  return responseType === "blob" ? res.blob() : res.json();
 }
 
 /** Cambia el ID token de Google por una API key nuestra. */
