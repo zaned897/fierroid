@@ -26,6 +26,7 @@ from collections.abc import Callable
 from fierro_device.drivers.micro_simulado import MicroSimulado
 from fierro_device.drivers.peso_simulado import PesoSimulado
 from fierro_device.drivers.rc522_serie import PuertoSerie, Rc522Serie
+from fierro_device.drivers.ventana import VentanaCaptura
 from fierro_device.hardware import HardwareBackend, HardwareSample
 
 logger = logging.getLogger("fierro_device")
@@ -46,37 +47,32 @@ class PrototipoHardware:
     ) -> None:
         self._rfid = rfid
         self._peso = peso
-        self._ventana_s = ventana_s
-        self._clock = clock
-        self._tag_actual: str | None = None
-        self._ventana_desde = 0.0
+        self._ventana = VentanaCaptura(ventana_s=ventana_s, clock=clock)
 
     def read(self) -> HardwareSample:
         muestra = self._rfid.read()
         if muestra.tag_id is None or muestra.weight_kg is not None:
             return muestra
-        return self._emparejar(muestra)
+        return self._emparejar(muestra.tag_id, muestra.source)
 
-    def _emparejar(self, tag: HardwareSample) -> HardwareSample:
-        ahora = self._clock()
-        if tag.tag_id != self._tag_actual:
-            logger.info("ventana de captura abierta para %s", tag.tag_id)
-            self._tag_actual = tag.tag_id
-            self._ventana_desde = ahora
-        elif ahora - self._ventana_desde >= self._ventana_s:
+    def _emparejar(self, tag_id: str, fuente_tag: str) -> HardwareSample:
+        if tag_id != self._ventana.tag:
+            logger.info("ventana de captura abierta para %s", tag_id)
+            self._ventana.abrir(tag_id)
+        elif self._ventana.vencida():
             logger.warning(
                 "ventana vencida sin peso estable para %s: no se emite",
-                tag.tag_id,
+                tag_id,
             )
-            self._tag_actual = None
-            return HardwareSample(None, None, False, tag.source)
+            self._ventana.cerrar()
+            return HardwareSample(None, None, False, fuente_tag)
         if self._peso is None:
-            return HardwareSample(None, None, False, tag.source)
+            return HardwareSample(None, None, False, fuente_tag)
         peso = self._peso.read()
         if peso.weight_kg is None or not peso.stable:
-            return HardwareSample(None, None, False, tag.source)
+            return HardwareSample(None, None, False, fuente_tag)
         return HardwareSample(
-            tag_id=tag.tag_id,
+            tag_id=tag_id,
             weight_kg=peso.weight_kg,
             stable=True,
             source=peso.source,
