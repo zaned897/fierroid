@@ -17,7 +17,7 @@ class OutboxStore:
         self._conn = sqlite3.connect(path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA synchronous=NORMAL")
+        self._conn.execute("PRAGMA synchronous=FULL")  # corte de luz: no perder commits
         self._migrate()
 
     def _migrate(self) -> None:
@@ -39,6 +39,10 @@ class OutboxStore:
             CREATE INDEX IF NOT EXISTS idx_readings_status ON readings(status);
             """
         )
+        # Aditiva e idempotente: el esquema existente no restringe status con CHECK.
+        columns = {row["name"] for row in self._conn.execute("PRAGMA table_info(readings)")}
+        if "quarantine_reason" not in columns:
+            self._conn.execute("ALTER TABLE readings ADD COLUMN quarantine_reason TEXT")
         self._conn.commit()
 
     def save_reading(self, reading: WeightReading) -> bool:
@@ -88,9 +92,20 @@ class OutboxStore:
             f"""
             UPDATE readings
             SET status = 'synced', synced_at = datetime('now')
-            WHERE event_id IN ({placeholders})
+            WHERE status = 'pending' AND event_id IN ({placeholders})
             """,
             event_ids,
+        )
+        self._conn.commit()
+
+    def mark_quarantined(self, event_id: str, reason: str) -> None:
+        """Conserva la lectura y el rechazo permanente; nunca equivale a un ACK."""
+        self._conn.execute(
+            """
+            UPDATE readings SET status = 'quarantined', quarantine_reason = ?
+            WHERE event_id = ? AND status = 'pending'
+            """,
+            (reason, event_id),
         )
         self._conn.commit()
 
@@ -99,6 +114,16 @@ class OutboxStore:
             "SELECT COUNT(*) AS c FROM readings WHERE status = 'pending'"
         ).fetchone()
         return int(row["c"])
+
+    def ultimo_sync(self) -> str | None:
+        """`synced_at` mas reciente como ISO UTC, o None si nunca hubo ACK."""
+        row = self._conn.execute(
+            "SELECT max(synced_at) AS s FROM readings WHERE status = 'synced'"
+        ).fetchone()
+        if not row["s"]:
+            return None
+        # datetime('now') de SQLite es UTC sin zona: "YYYY-MM-DD HH:MM:SS".
+        return str(row["s"]).replace(" ", "T") + "+00:00"
 
     def close(self) -> None:
         self._conn.close()

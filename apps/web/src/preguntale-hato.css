@@ -175,6 +175,22 @@
   line-height: 1.45;
 }
 
+.preguntale-hato-respuesta .home-faq-item {
+  margin-top: 10px;
+}
+
+.preguntale-hato-respuesta .home-faq-item summary {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  font-size: 0.88rem;
+}
+
+.preguntale-hato-detalle {
+  padding: 0.85rem 1rem 1rem;
+  border-top: 1px solid var(--home-borde);
+  background: var(--home-marfil);
+}
+
 .preguntale-hato-lateral {
   padding: 24px 20px;
   background: var(--home-noche);
@@ -185,10 +201,22 @@
   min-width: 0;
 }
 
+.preguntale-hato-lateral .home-faq-item summary {
+  min-height: 52px;
+  padding: 0.85rem 1.1rem;
+  font-size: 0.95rem;
+}
+
 .preguntale-hato-reglas {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.preguntale-hato-lateral .home-faq-item .preguntale-hato-reglas {
+  padding: 0.25rem 1.1rem 0.5rem;
+  border-top: 1px solid var(--home-borde);
+  background: var(--home-marfil);
 }
 
 .preguntale-hato-reglas li {
@@ -196,18 +224,22 @@
   flex-direction: column;
   gap: 4px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(232, 238, 233, 0.12);
+  border-bottom: 1px solid var(--home-borde);
   font-size: 0.9rem;
   line-height: 1.45;
 }
 
+.preguntale-hato-reglas li:last-child {
+  border-bottom: 0;
+}
+
 .preguntale-hato-reglas strong {
-  color: var(--home-niebla);
+  color: var(--home-bosque);
   font-size: 0.95rem;
 }
 
 .preguntale-hato-reglas span {
-  color: #b5cebf;
+  color: var(--home-muted);
 }
 
 @media (max-width: 960px) {
@@ -234,12 +266,6 @@
 
   .preguntale-hato-pitch {
     justify-self: start;
-  }
-
-  /* En celular el bloque cabe en una pantalla: las tres reglas ya se leen en
-     la conversación de ejemplo. */
-  .preguntale-hato-reglas {
-    display: none;
   }
 
   .preguntale-hato-conversacion {

@@ -1,27 +1,35 @@
+import { useId } from "react";
+
 import HomeIcon from "./icons/HomeIcon.jsx";
 
 const PASOS = [
   {
-    titulo: "Identifica al animal",
-    texto: "El lector reconoce su arete.",
+    titulo: "Arete",
+    texto: "Lectura automática",
     icono: "arete",
   },
   {
-    titulo: "Guarda el pesaje",
-    texto: "El equipo registra el peso en el corral.",
+    titulo: "Pesaje local",
+    texto: "Guarda sin señal",
     icono: "bascula",
   },
   {
-    titulo: "Consulta su historial",
-    texto: "Los datos se sincronizan cuando hay conexión.",
+    titulo: "Historial",
+    texto: "Sube con conexión",
     icono: "nube",
   },
 ];
 
 export default function Diagrama() {
+  const idDescripcion = useId();
+
   return (
     <div className="diagrama diagrama-home">
-      <ol className="pasos">
+      <p id={idDescripcion} className="home-solo-lectores">
+        El lector identifica el arete; el equipo guarda el peso en el corral,
+        incluso sin señal. Los datos se sincronizan cuando hay conexión.
+      </p>
+      <ol className="pasos" aria-describedby={idDescripcion}>
         {PASOS.map((paso, indice) => (
           <li key={paso.titulo} className="paso">
             <div className="paso-senal" aria-hidden="true">

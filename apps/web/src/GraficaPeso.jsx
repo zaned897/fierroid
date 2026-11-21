@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import "./grafica-animacion.css";
 
 /**
@@ -58,72 +58,23 @@ const mes = (fecha) =>
 
 export default function GraficaPeso() {
   const [activo, setActivo] = useState(null);
-  const dibujo = useRef(null);
-  const idTabla = useId();
+  const idResumen = useId();
   const idDegradado = useId();
   const punto = activo === null ? null : SERIE[activo];
-
-  useEffect(() => {
-    const svg = dibujo.current;
-    const preferencia = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (!svg || preferencia.matches || !window.IntersectionObserver || !svg.animate) return undefined;
-
-    const animaciones = [];
-    const animar = (selector, cuadros, opciones) => {
-      animaciones.push(svg.querySelector(selector).animate(cuadros, opciones));
-    };
-    const observador = new IntersectionObserver((entradas) => {
-      if (!entradas.some((entrada) => entrada.isIntersecting)) return;
-      observador.disconnect();
-      if (preferencia.matches) return;
-      animar(".grafica-linea", [
-        { strokeDasharray: "1", strokeDashoffset: 1 },
-        { strokeDasharray: "1", strokeDashoffset: 0 },
-      ], { duration: 1500, delay: 180, easing: "linear", fill: "backwards" });
-      animar(".grafica-area", [{ opacity: 0 }, { opacity: 1 }],
-        { duration: 1200, delay: 550, easing: "ease-out", fill: "backwards" });
-      svg.querySelectorAll(".grafica-punto").forEach((elemento, indice) => {
-        animaciones.push(elemento.animate([
-          { opacity: 0, transform: "scale(0.4)" },
-          { opacity: 1, transform: "scale(1.25)", offset: 0.7 },
-          { opacity: 1, transform: "scale(1)" },
-        ], { duration: 300, delay: 180 + indice * 1500 / (SERIE.length - 1), fill: "backwards", easing: "ease-out" }));
-      });
-      animar(".grafica-destello", [
-        { opacity: 0, transform: "scale(0.7)" },
-        { opacity: 0.6, transform: "scale(1)", offset: 0.2 },
-        { opacity: 0, transform: "scale(2.5)" },
-      ], { duration: 850, delay: 1680, fill: "backwards", easing: "ease-out" });
-    }, { threshold: 0.25 });
-    const detener = () => {
-      if (!preferencia.matches) return;
-      observador.disconnect();
-      animaciones.forEach((animacion) => animacion.cancel());
-    };
-    observador.observe(svg);
-    preferencia.addEventListener("change", detener);
-    return () => {
-      observador.disconnect();
-      preferencia.removeEventListener("change", detener);
-      animaciones.forEach((animacion) => animacion.cancel());
-    };
-  }, []);
 
   const linea = SERIE.map((d, i) => `${i ? "L" : "M"}${posX(i)} ${posY(d.kg)}`).join(" ");
 
   return (
     <figure className="grafica">
       <figcaption className="grafica-titulo">
-        Peso del arete <span className="tag">484381933670979</span>, mayo a
-        septiembre de 2026
+        Ejemplo ilustrativo · kg · mayo–septiembre 2026
       </figcaption>
 
       <svg
-        ref={dibujo}
         viewBox={`0 0 ${ANCHO} ${ALTO}`}
         className="grafica-svg"
         role="img"
-        aria-describedby={idTabla}
+        aria-describedby={idResumen}
         aria-label="Curva de peso: de 43 a 106.5 kilogramos en 17 pesajes; uno marcado inestable"
       >
         <defs>
@@ -223,11 +174,17 @@ export default function GraficaPeso() {
         )}
       </svg>
 
+      <p id={idResumen} className="home-solo-lectores">
+        Ejemplo de curva de peso del arete 484381933670979: sube de 43 a 106.5 kg
+        en 17 pesajes entre mayo y septiembre de 2026; el pesaje del 27 de agosto
+        está marcado como inestable. La tabla completa está en Ver pesajes.
+      </p>
+
       {/* La tabla no es un extra: es como se lee esto sin ver la gráfica. */}
       <details className="grafica-tabla">
-        <summary>Ver los 17 pesajes como tabla</summary>
-        <table id={idTabla}>
-          <caption>Peso registrado por fecha</caption>
+        <summary>Ver pesajes</summary>
+        <table>
+          <caption>Arete 484381933670979: peso registrado por fecha</caption>
           <thead>
             <tr>
               <th scope="col">Fecha</th>

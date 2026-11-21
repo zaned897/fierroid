@@ -68,10 +68,20 @@ def build_hardware(
     rfid_port: str,
     mock_interval_s: float,
 ) -> HardwareBackend:
-    if os.getenv("FIERRO_HW_BACKEND") == "prototipo":
+    backend = os.getenv("FIERRO_HW_BACKEND")
+    if backend == "prototipo":
         from fierro_device.drivers.prototipo import construir_prototipo
 
         return construir_prototipo(mock=mock, rfid_port=rfid_port)
+    if backend == "estacion":
+        from fierro_device.drivers.estacion import construir_estacion
+
+        return construir_estacion(
+            mock=mock,
+            scale_port=scale_port,
+            rfid_port=rfid_port,
+            mock_interval_s=mock_interval_s,
+        )
     if mock:
         return MockHardware(interval_s=mock_interval_s)
     return SerialHardware(scale_port=scale_port, rfid_port=rfid_port)

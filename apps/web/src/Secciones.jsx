@@ -100,7 +100,7 @@ export default function Secciones() {
         data-revelar
       >
         <div className="bloque-cabeza">
-          <h2 id="como-funciona-titulo">Del pesaje al historial, en tres pasos</h2>
+          <h2 id="como-funciona-titulo">Del corral al historial</h2>
         </div>
         <Diagrama />
       </section>
@@ -111,15 +111,14 @@ export default function Secciones() {
       <section className="bloque dato" data-revelar>
         <div className="dato-texto">
           <h2>El historial de cada animal</h2>
-          <p>
-            Del arete al peso, a lo largo del tiempo. Cuánto ganó entre una
-            pasada y la siguiente, y cuándo dejó de ganar.
-          </p>
-          <p className="dato-apunte">
-            Fíjate en el 27 de agosto: la báscula no se estabilizó y esa lectura
-            queda marcada. Se guarda igual, señalada — un dato dudoso avisado es
-            útil; uno maquillado, no.
-          </p>
+          <details className="home-faq-item">
+            <summary>Leer el ejemplo<span className="home-faq-signo" aria-hidden="true" /></summary>
+            <p>
+              Del arete al peso, a lo largo del tiempo. Cuánto ganó entre una
+              pasada y la siguiente, y cuándo dejó de ganar. En este ejemplo,
+              el pesaje del 27 de agosto está marcado como inestable.
+            </p>
+          </details>
         </div>
         <GraficaPeso />
       </section>

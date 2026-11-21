@@ -2,17 +2,27 @@ from __future__ import annotations
 
 import argparse
 import logging
+import random
 import signal
 import sys
 import time
+from collections.abc import Callable
+from datetime import UTC, datetime
 
 from fierro_device import __version__
+from fierro_device.backoff import Backoff, guardar_estado
 from fierro_device.config import ConfigError, load_config
 from fierro_device.hardware import build_hardware
 from fierro_device.models import WeightReading
+from fierro_device.notify import sd_notify
+from fierro_device.salud import leer_salud
 from fierro_device.settings import Settings
 from fierro_device.store import OutboxStore
-from fierro_device.sync import CloudSync
+from fierro_device.sync import CloudSync, ReadingRejected
+
+# Rechazos consecutivos que se aceptan como lecturas venenosas antes de suponer
+# que el problema es del servidor y dejar de poner lecturas en cuarentena.
+CUARENTENAS_SEGUIDAS_MAX = 5
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,8 +32,14 @@ logger = logging.getLogger("fierro_device")
 
 
 class Agent:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        reloj: Callable[[], float] = time.monotonic,
+        aleatorio: Callable[[], float] = random.random,
+    ) -> None:
         self.settings = settings
+        self._reloj = reloj
         self.store = OutboxStore(settings.db_path)
         self.hw = build_hardware(
             mock=settings.mock_hw,
@@ -34,10 +50,21 @@ class Agent:
         self.sync = CloudSync(settings.api_url, settings.device_id)
         self._running = True
         self._started = time.monotonic()
-        self._last_sync = 0.0
-        self._last_heartbeat = 0.0
+        self._next_sync = 0.0
+        self._isolate_readings = False
+        self._cuarentenas_seguidas = 0
+        self.backoff = Backoff(settings.sync_interval_s, settings.sync_max_s, aleatorio)
+        self._last_heartbeat = float("-inf")  # primer heartbeat al arrancar
         self._last_tag: str | None = None
         self._last_tag_at = 0.0
+        # Error de hardware sin configurar: se registra una vez y se deja de capturar.
+        self._hw_error: str | None = None
+        # Ultimo error de captura/driver desde el heartbeat anterior. Tras un
+        # heartbeat enviado vuelve a `_hw_error` (persistente) o a None.
+        self._last_error: str | None = None
+        # Ultimo push aceptado por la API (ISO UTC), para el heartbeat. Se toma de
+        # la outbox al arrancar: un reinicio no debe borrar el dato en la nube.
+        self._last_sync_ok_at: str | None = self.store.ultimo_sync()
 
     def stop(self, *_args: object) -> None:
         logger.info("shutdown requested")
@@ -78,29 +105,89 @@ class Agent:
         return None
 
     def flush_outbox(self) -> int:
-        pending = self.store.pending(limit=50)
+        pending = self.store.pending(limit=1 if self._isolate_readings else 50)
         if not pending:
+            self._isolate_readings = False
             return 0
+        antes = self.backoff.intervalo_s
         try:
-            accepted = self.sync.push_readings(pending)
+            try:
+                accepted = self.sync.push_readings(pending)
+            except ReadingRejected as exc:
+                if exc.event_id is None:
+                    # Una peticion por ciclo: no bloquear captura/heartbeat con 50 timeouts.
+                    self._isolate_readings = True
+                    logger.warning("rechazo sin event_id; se aislaran las lecturas: %s", exc)
+                    self.backoff.fallo()
+                elif self._cuarentenas_seguidas >= CUARENTENAS_SEGUIDAS_MAX:
+                    # Tantos rechazos sin un solo ACK huelen a falla del servidor
+                    # (esquema nuevo, proxy): mejor atascar ruidoso que vaciar la cola.
+                    logger.error(
+                        "%d lecturas seguidas en cuarentena sin ningun ACK; event_id=%s "
+                        "queda pending hasta que el servidor acepte alguna: %s",
+                        self._cuarentenas_seguidas,
+                        exc.event_id,
+                        exc.reason,
+                    )
+                    self.backoff.fallo()
+                else:
+                    self.store.mark_quarantined(exc.event_id, exc.reason)
+                    self._cuarentenas_seguidas += 1
+                    logger.error("quarantined event_id=%s: %s", exc.event_id, exc.reason)
+                    self._isolate_readings = False
+                    self.backoff.exito()  # progreso local; no es un ACK ni cuenta como synced
+                return 0
             self.store.mark_synced(accepted)
             logger.info("synced %d readings", len(accepted))
+            if accepted:
+                self._cuarentenas_seguidas = 0
+                self.backoff.exito()
+                self._last_sync_ok_at = datetime.now(UTC).isoformat()
+            else:
+                # 200 sin confirmar nada: la API esta degradada, no reintentar a 2 s.
+                logger.warning("sync sin ACK de %d lecturas; quedan pending", len(pending))
+                self.backoff.fallo()
             return len(accepted)
         except Exception:
             logger.exception("sync failed; readings remain pending")
+            self.backoff.fallo()
             return 0
+        finally:
+            if self.backoff.intervalo_s != antes:
+                self._guardar_estado_sync()
+
+    def _guardar_estado_sync(self) -> None:
+        try:
+            guardar_estado(self.settings.db_path, {"intervalo_s": self.backoff.intervalo_s})
+        except OSError:
+            logger.exception("no se pudo guardar el estado del sync")
+
+    def maybe_sync(self) -> None:
+        now = self._reloj()
+        if now < self._next_sync:
+            return
+        self.flush_outbox()
+        self._next_sync = self._reloj() + self.backoff.espera()
 
     def maybe_heartbeat(self) -> None:
         now = time.monotonic()
         if now - self._last_heartbeat < 30:
             return
+        # Por intento, no por exito: sin red, reintentar en cada vuelta sumaria un
+        # timeout por vuelta y systemd mataria al agente por watchdog.
+        self._last_heartbeat = now
         try:
             self.sync.heartbeat(
                 pending_count=self.store.pending_count(),
                 agent_version=__version__,
                 uptime_s=now - self._started,
+                last_error=self._last_error,
+                salud={
+                    **leer_salud(self.settings.db_path),
+                    "last_sync_ok_at": self._last_sync_ok_at,
+                },
             )
-            self._last_heartbeat = now
+            self._last_error = self._hw_error
         except Exception:
             logger.exception("heartbeat failed")
 
@@ -114,20 +201,27 @@ class Agent:
             self.settings.api_url,
             self.settings.db_path,
         )
+        # Al arrancar el intervalo vuelve al minimo: que doctor no vea el de la corrida anterior.
+        self._guardar_estado_sync()
+        sd_notify("READY=1")
         while self._running:
-            try:
-                self.capture_once()
-            except NotImplementedError:
-                logger.error("hardware not implemented; exiting")
-                break
-            except Exception:
-                logger.exception("capture loop error")
-            now = time.monotonic()
-            if now - self._last_sync >= self.settings.sync_interval_s:
-                self.flush_outbox()
-                self._last_sync = now
+            if self._hw_error is None:
+                try:
+                    self.capture_once()
+                except NotImplementedError as exc:
+                    # Salir con Restart=always seria un bucle de reinicios: seguimos
+                    # vaciando la outbox y avisando por heartbeat, sin capturar.
+                    self._hw_error = self._last_error = str(exc) or type(exc).__name__
+                    logger.error("hardware not configured; capture disabled: %s", exc)
+                except Exception as exc:
+                    self._last_error = f"{type(exc).__name__}: {exc}"
+                    logger.exception("capture loop error")
+            self.maybe_sync()
             self.maybe_heartbeat()
+            # Solo si la vuelta termino: una lectura colgada deja de latir y systemd reinicia.
+            sd_notify("WATCHDOG=1")
             time.sleep(self.settings.poll_interval_s)
+        sd_notify("STOPPING=1")
         self.sync.close()
         self.store.close()
         logger.info("agent stopped")
