@@ -16,6 +16,7 @@ from fierro_device.backoff import Backoff, leer_estado
 from fierro_device.main import Agent
 from fierro_device.models import WeightReading
 from fierro_device.settings import Settings
+from fierro_device.store import OutboxStore
 from fierro_device.sync import CloudSync, SyncError
 
 
@@ -26,6 +27,8 @@ class ApiFalsa:
         self.falla_500: Callable[[int], bool] = lambda _n: False
         self.respuesta: Callable[[list[str], list[str]], dict[str, Any]] | None = None
         self.llamadas = 0
+        self.rechazo: Callable[[list[str]], httpx.Response | None] | None = None
+        self.lotes: list[list[str]] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.llamadas += 1
@@ -36,6 +39,11 @@ class ApiFalsa:
         if request.url.path.endswith("/heartbeat"):
             return httpx.Response(200, json={"ok": True})
         ids = [r["event_id"] for r in json.loads(request.content)["readings"]]
+        self.lotes.append(ids)
+        if self.rechazo is not None:
+            rechazo = self.rechazo(ids)
+            if rechazo is not None:
+                return rechazo
         aceptados = [e for e in ids if e not in self.guardados]
         duplicados = [e for e in ids if e in self.guardados]
         self.guardados.extend(aceptados)
@@ -179,6 +187,119 @@ def test_500_intermitente(agente, api):
     assert len(api.guardados) == len(set(api.guardados))
 
 
+@pytest.mark.parametrize("codigo", [400, 422])
+@pytest.mark.parametrize("identificacion", ["event_id", "detail", "sin_id", "texto"])
+def test_lectura_venenosa_no_bloquea_nuevas_y_se_conserva(
+    agente, api, codigo, identificacion, caplog,
+):
+    anteriores = _capturar(agente, 60)
+    venenosa = anteriores[17]
+    originales = {
+        r["event_id"]: r["payload"]
+        for r in agente.store._conn.execute("SELECT event_id, payload FROM readings")
+    }
+
+    def rechazar(ids):
+        if venenosa not in ids:
+            return None
+        detalle = {"event_id": venenosa, "message": "peso invalido"}
+        if identificacion == "texto":
+            return httpx.Response(codigo, text="peso invalido")
+        cuerpo = {
+            "event_id": detalle,
+            "detail": {"detail": detalle},
+            "sin_id": {"detail": "peso invalido"},
+        }[identificacion]
+        return httpx.Response(codigo, json=cuerpo)
+
+    api.rechazo = rechazar
+    assert agente.flush_outbox() == 0
+    assert len(api.lotes[0]) == 50
+    assert api.guardados == []  # un rechazo nunca es ACK, ni siquiera de las otras 49
+    nuevas = _capturar(agente, 3)
+    for _ in range(65):
+        if not agente.store.pending_count():
+            break
+        llamadas = api.llamadas
+        agente.flush_outbox()
+        assert api.llamadas == llamadas + 1  # deja respirar captura y watchdog
+
+    assert agente.store.pending_count() == 0
+    assert set(api.guardados) == set(anteriores + nuevas) - {venenosa}
+    assert len(api.guardados) == 62
+    assert "quarantined" in caplog.text and venenosa in caplog.text
+    # Reinicio: la cuarentena y el motivo son persistentes; ninguna fila desaparece.
+    reopened = OutboxStore(agente.settings.db_path)
+    try:
+        rows = {r["event_id"]: r for r in reopened._conn.execute("SELECT * FROM readings")}
+        assert len(rows) == 63
+        for event_id, row in rows.items():
+            if event_id in originales:
+                assert row["payload"] == originales[event_id]
+            if event_id == venenosa:
+                assert row["status"] == "quarantined"
+                assert row["synced_at"] is None
+                assert str(codigo) in row["quarantine_reason"]
+                assert "peso invalido" in row["quarantine_reason"]
+            else:
+                assert row["status"] == "synced"
+                assert row["synced_at"] is not None
+                assert row["quarantine_reason"] is None
+    finally:
+        reopened.close()
+
+
+@pytest.mark.parametrize("error", [500, 503, 401, 403, 404, 408, 413, 425, 429, "timeout", "red"])
+def test_fallo_transitorio_o_global_no_pone_en_cuarentena(agente, api, error):
+    ids = _capturar(agente, 3)
+
+    def fallar(_ids):
+        if error == "timeout":
+            raise httpx.ReadTimeout("sin respuesta")
+        if error == "red":
+            raise httpx.ConnectError("sin red")
+        return httpx.Response(error, json={"event_id": ids[0], "detail": "fallo"})
+
+    api.rechazo = fallar
+    for intervalo in (4.0, 8.0):
+        assert agente.flush_outbox() == 0
+        assert agente.backoff.intervalo_s == intervalo
+        rows = agente.store._conn.execute("SELECT * FROM readings").fetchall()
+        assert len(rows) == 3
+        assert all(r["status"] == "pending" and r["synced_at"] is None for r in rows)
+        assert all(r["quarantine_reason"] is None for r in rows)
+    api.rechazo = None
+    assert agente.flush_outbox() == 3
+    assert agente.backoff.intervalo_s == 2.0
+
+
+def test_rechazo_con_id_ajeno_no_pone_nada_en_cuarentena(agente, api):
+    _capturar(agente, 1)
+    api.rechazo = lambda _ids: httpx.Response(
+        422, json={"detail": {"event_id": "ajeno", "message": "peso invalido"}},
+    )
+    assert agente.flush_outbox() == 0
+    assert agente.store.pending_count() == 1
+    assert agente.backoff.intervalo_s == 4.0
+
+
+def test_aislamiento_conserva_ack_estricto_y_backoff(agente, api):
+    ids = _capturar(agente, 3)
+    api.rechazo = lambda enviados: (
+        httpx.Response(422, json={"detail": "peso invalido"}) if len(enviados) > 1 else None
+    )
+    assert agente.flush_outbox() == 0
+    assert agente.store.pending_count() == 3  # no adivinar cual de las tres fallo
+    api.respuesta = lambda _a, _d: {"accepted_ids": ids[1:] + ["ajeno"]}
+    assert agente.flush_outbox() == 0  # no hay ACK del unico id enviado
+    assert api.lotes[-1] == ids[:1]
+    assert agente.store.pending_count() == 3
+    assert agente.backoff.intervalo_s == 8.0
+    api.respuesta = None
+    assert agente.flush_outbox() == 1  # duplicate_ids confirma el ACK perdido
+    assert agente.store.pending_count() == 2
+
+
 def test_push_sin_campos_de_ack_lanza():
     def transporte(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"count": 1})
@@ -265,3 +386,28 @@ def test_al_arrancar_el_estado_vuelve_al_minimo(agente, api, tmp_path, monkeypat
     assert doctor._ultimo_sync(str(tmp_path / "no-existe.db"), 2.0) == (
         "ultimo sync OK: nunca; intervalo actual: 2 s"
     )
+
+
+def test_rechazo_de_todo_no_vacia_la_cola_en_cuarentena(agente, api, caplog):
+    """Si el servidor rechaza todo (esquema nuevo, proxy), no se aparta la cola entera."""
+    from fierro_device.main import CUARENTENAS_SEGUIDAS_MAX
+
+    ids = _capturar(agente, 20)
+    api.rechazo = lambda _ids: httpx.Response(422, json={"detail": "esquema nuevo"})
+    for _ in range(30):
+        agente.flush_outbox()
+    estados = dict(
+        agente.store._conn.execute("SELECT event_id, status FROM readings").fetchall()
+    )
+    en_cuarentena = [e for e in ids if estados[e] == "quarantined"]
+    assert len(en_cuarentena) == CUARENTENAS_SEGUIDAS_MAX
+    assert agente.store.pending_count() == 20 - CUARENTENAS_SEGUIDAS_MAX
+    assert "sin ningun ACK" in caplog.text
+    # En cuanto el servidor acepta de nuevo, la cola sigue y el contador se reinicia.
+    api.rechazo = None
+    for _ in range(30):
+        if not agente.store.pending_count():
+            break
+        agente.flush_outbox()
+    assert agente.store.pending_count() == 0
+    assert agente._cuarentenas_seguidas == 0
