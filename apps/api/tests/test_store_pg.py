@@ -137,6 +137,32 @@ def test_heartbeat_actualiza_en_vez_de_insertar(store):
     assert rows[0]["agent_version"] == "0.2.0"
 
 
+def test_heartbeat_guarda_salud_y_un_heartbeat_viejo_la_vuelve_null(store):
+    device_id = f"rpi-hb-{uuid.uuid4().hex[:8]}"
+    salud = {
+        "disk_used_pct": 12.5,
+        "cpu_temp_c": 61.0,
+        "throttled": 0xFFFFFFFF,
+        "clock_synced": False,
+        "hw_rev": "proto-b",
+        "last_sync_ok_at": datetime(2026, 11, 19, 4, 0, tzinfo=timezone.utc),
+        "last_error": "fallo",
+    }
+    store.heartbeat(device_id, pending_count=1, agent_version="0.2.0", uptime_s=5, salud=salud)
+    (d,) = [d for d in store.list_devices() if d["device_id"] == device_id]
+    assert d["disk_used_pct"] == 12.5
+    assert d["cpu_temp_c"] == 61.0
+    assert d["throttled"] == 0xFFFFFFFF
+    assert d["clock_synced"] is False
+    assert d["hw_rev"] == "proto-b"
+    assert d["last_sync_ok_at"] == "2026-11-19T04:00:00+00:00"
+    assert d["last_error"] == "fallo"
+
+    store.heartbeat(device_id, pending_count=0, agent_version="0.1.0", uptime_s=6)
+    (d,) = [d for d in store.list_devices() if d["device_id"] == device_id]
+    assert all(d[c] is None for c in salud)
+
+
 def test_list_readings_respeta_el_limite(store):
     store.upsert_readings([make_reading() for _ in range(5)])
     assert len(store.list_readings(limit=3)) == 3

@@ -154,6 +154,24 @@ def test_una_organizacion_no_ve_las_estaciones_de_otra(client, mundo):
     assert DEVICE_A not in vistos_b
 
 
+def test_la_salud_de_las_estaciones_solo_la_ve_su_organizacion(client, mundo):
+    for device, hw in ((DEVICE_A, "rev-a"), (DEVICE_B, "rev-b")):
+        resp = client.post(
+            f"/v1/devices/{device}/heartbeat",
+            json={"pending_count": 0, "hw_rev": hw, "cpu_temp_c": 50.0, "clock_synced": True},
+        )
+        assert resp.status_code == 200
+
+    a = entrar(client, mundo["a"])
+    estaciones = client.get("/v1/devices", headers=a).json()["devices"]
+    assert {d["device_id"] for d in estaciones} & {DEVICE_A, DEVICE_B} == {DEVICE_A}
+    (propia,) = [d for d in estaciones if d["device_id"] == DEVICE_A]
+    assert propia["hw_rev"] == "rev-a"
+    assert propia["clock_synced"] is True
+    assert propia["disk_used_pct"] is None
+    assert all(d.get("hw_rev") != "rev-b" for d in estaciones)
+
+
 def test_una_organizacion_no_ve_las_lecturas_de_otra(client, mundo):
     a = entrar(client, mundo["a"])
     b = entrar(client, mundo["b"])

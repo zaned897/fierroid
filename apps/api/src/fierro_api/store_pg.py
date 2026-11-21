@@ -14,6 +14,8 @@ from psycopg import Connection
 from psycopg.rows import DictRow, dict_row
 from psycopg_pool import ConnectionPool
 
+from fierro_api.store import SALUD_CAMPOS
+
 
 def _as_utc(value: str | datetime) -> datetime:
     dt = value if isinstance(value, datetime) else datetime.fromisoformat(value)
@@ -178,19 +180,33 @@ class PostgresReadingStore:
         pending_count: int,
         agent_version: str | None,
         uptime_s: int | None,
+        salud: dict[str, Any] | None = None,
     ) -> None:
+        salud = salud or {}
+        columnas = ", ".join(SALUD_CAMPOS)
+        marcas = ", ".join("%s" for _ in SALUD_CAMPOS)
+        actualizar = ",\n                  ".join(f"{c} = EXCLUDED.{c}" for c in SALUD_CAMPOS)
         with self._pool.connection() as conn, conn.cursor() as cur:
             cur.execute(
-                """
-                INSERT INTO devices (device_id, pending_count, agent_version, uptime_s, last_seen)
-                VALUES (%s, %s, %s, %s, now())
+                f"""
+                INSERT INTO devices (
+                  device_id, pending_count, agent_version, uptime_s, last_seen, {columnas}
+                )
+                VALUES (%s, %s, %s, %s, now(), {marcas})
                 ON CONFLICT (device_id) DO UPDATE SET
                   pending_count = EXCLUDED.pending_count,
                   agent_version = EXCLUDED.agent_version,
                   uptime_s      = EXCLUDED.uptime_s,
-                  last_seen     = EXCLUDED.last_seen
+                  last_seen     = EXCLUDED.last_seen,
+                  {actualizar}
                 """,
-                (device_id, pending_count, agent_version, uptime_s),
+                (
+                    device_id,
+                    pending_count,
+                    agent_version,
+                    uptime_s,
+                    *(salud.get(c) for c in SALUD_CAMPOS),
+                ),
             )
 
     def list_devices(self, *, org_slug: str | None = None) -> list[dict[str, Any]]:
@@ -205,7 +221,8 @@ class PostgresReadingStore:
             cur.execute(
                 f"""
                 SELECT d.device_id, d.pending_count, d.agent_version,
-                       d.uptime_s, d.last_seen
+                       d.uptime_s, d.last_seen,
+                       {", ".join(f"d.{c}" for c in SALUD_CAMPOS)}
                 FROM devices d
                 LEFT JOIN ranches ra ON ra.id = d.ranch_id
                 LEFT JOIN organizations o ON o.id = ra.org_id
@@ -215,7 +232,14 @@ class PostgresReadingStore:
                 parametros,
             )
             rows = cur.fetchall()
-        return [{**row, "last_seen": _iso(row["last_seen"])} for row in rows]
+        return [
+            {
+                **row,
+                "last_seen": _iso(row["last_seen"]),
+                "last_sync_ok_at": _iso(row["last_sync_ok_at"]),
+            }
+            for row in rows
+        ]
 
     def close(self) -> None:
         self._pool.close()

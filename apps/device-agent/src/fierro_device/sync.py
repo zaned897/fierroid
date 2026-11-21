@@ -89,8 +89,10 @@ class CloudSync:
         agent_version: str,
         uptime_s: float,
         last_error: str | None = None,
+        salud: dict[str, Any] | None = None,
     ) -> None:
         payload: dict[str, Any] = {
+            **(salud or {}),
             "pending_count": pending_count,
             "agent_version": agent_version,
             "uptime_s": int(uptime_s),
