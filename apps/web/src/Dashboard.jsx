@@ -25,7 +25,26 @@ export function PanelIcon({ name }) {
   return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] || paths.cuenta} /></svg>;
 }
 
-export default function Dashboard({ user, vista, onVista, onSalir, children }) {
+/**
+ * Aviso del rancho demo. Encendido es imposible de pasar por alto: los datos
+ * de demostración nunca deben confundirse con lo que mandan las básculas.
+ */
+function AvisoDemo({ demo }) {
+  if (!demo) return null;
+  return demo.activo ? (
+    <div className="dashboard-demo is-on" role="status">
+      <p><strong>Datos de demostración.</strong> Lo que ves es un rancho de ejemplo, no lo que mandan tus básculas.</p>
+      <button type="button" onClick={demo.onCambiar}>Ver mis datos reales</button>
+    </div>
+  ) : (
+    <div className="dashboard-demo">
+      <p>Estás viendo tus datos reales.</p>
+      <button type="button" onClick={demo.onCambiar}>Ver datos de demostración</button>
+    </div>
+  );
+}
+
+export default function Dashboard({ user, demo = null, vista, onVista, onSalir, children }) {
   const heading = useRef(null);
   const previousView = useRef(vista);
   useEffect(() => {
@@ -37,7 +56,9 @@ export default function Dashboard({ user, vista, onVista, onSalir, children }) {
   }, [vista]);
   const available = sections.filter(([id]) => id !== "admin" || user.is_superuser);
   const title = sections.find(([id]) => id === vista)?.[1] || "Pesajes";
-  const context = user.is_superuser ? "Todas las organizaciones" : user.org || "Sin organización";
+  const context = demo?.activo
+    ? `${demo.org} (demostración)`
+    : user.is_superuser ? "Todas las organizaciones" : user.org || "Sin organización";
   return (
     <div className="dashboard">
       <a className="dashboard-skip" href="#panel-contenido">Saltar al contenido</a>
@@ -66,6 +87,7 @@ export default function Dashboard({ user, vista, onVista, onSalir, children }) {
             </div>
           </details>
         </header>
+        <AvisoDemo demo={demo} />
         <main id="panel-contenido" className="dashboard-main" tabIndex={-1}>
           <h1 ref={heading} tabIndex={-1}>{title}</h1>
           {children}

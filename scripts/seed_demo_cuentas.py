@@ -339,8 +339,14 @@ def _comprobar_entorno(api: Api, permitir_produccion: bool) -> None:
         raise SystemExit("La llave no es de un superusuario: no puede crear ranchos demo.")
 
 
-def cuentas_reales(arbol: list[dict[str, Any]]) -> list[str]:
-    return [o["slug"] for o in arbol if not o.get("es_demo")]
+def cuentas_reales(arbol: list[dict[str, Any]], usuarios: list[dict[str, Any]]) -> list[str]:
+    """Organizaciones que no son demo y tienen al menos un usuario.
+
+    Sin usuarios nadie veria el demo: es la organizacion 'demo' de 003 o una
+    de pruebas, y sembrarle un rancho demo solo seria ruido.
+    """
+    con_gente = {u.get("org") for u in usuarios}
+    return [o["slug"] for o in arbol if not o.get("es_demo") and o["slug"] in con_gente]
 
 
 def sembrar_cuenta(api: Api, org: str, *, seed: int, hasta: date, semanas: int,
@@ -437,7 +443,12 @@ def main(argv: list[str] | None = None) -> int:
     api = Api(args.api, args.token, args.timeout)
     try:
         _comprobar_entorno(api, args.permitir_produccion)
-        orgs = cuentas_reales(api("GET", "/v1/orgs")["orgs"]) if args.todas else args.org
+        orgs = (
+            cuentas_reales(api("GET", "/v1/orgs")["orgs"], api("GET", "/v1/users")["users"])
+            if args.todas
+            else args.org
+        )
+        print(f"cuentas: {', '.join(orgs) or '(ninguna)'}")
         for org in orgs:
             if args.purgar:
                 print(f"{org}: purgado {api('DELETE', f'/v1/orgs/{_q(org)}/demo')['borrado']}")
