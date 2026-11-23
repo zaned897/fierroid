@@ -57,6 +57,8 @@ class AuthUser:
     org_slug: str | None
     is_superuser: bool
     full_name: str | None = None
+    # Rancho demo de su cuenta (016), si existe. Puede leerlo y escribirlo.
+    demo_org_slug: str | None = None
 
     def to_public(self) -> dict[str, Any]:
         return {
@@ -64,6 +66,7 @@ class AuthUser:
             "email": self.email,
             "full_name": self.full_name,
             "org": self.org_slug,
+            "demo_org": self.demo_org_slug,
             "is_superuser": self.is_superuser,
         }
 
@@ -242,9 +245,10 @@ def revoke_all_api_keys(dsn: str, user_id: int) -> int:
 
 _SELECT_USER = """
 SELECT u.id, u.email, u.password_hash, u.full_name, u.org_id,
-       u.is_superuser, u.is_active, o.slug AS org_slug
+       u.is_superuser, u.is_active, o.slug AS org_slug, d.slug AS demo_org_slug
 FROM users u
 LEFT JOIN organizations o ON o.id = u.org_id
+LEFT JOIN organizations d ON d.demo_de_org_id = u.org_id AND d.es_demo
 """
 
 
@@ -256,6 +260,7 @@ def _row_to_user(row: dict[str, Any]) -> AuthUser:
         org_slug=row["org_slug"],
         is_superuser=row["is_superuser"],
         full_name=row["full_name"],
+        demo_org_slug=row["demo_org_slug"],
     )
 
 
