@@ -5,6 +5,7 @@ import { CowForTag } from "./icons/cows.jsx";
 import { fetchPhotoUrl, reducirImagen } from "./photo.js";
 import HistorialAnimal from "./HistorialAnimal.jsx";
 import BitacoraAnimal from "./BitacoraAnimal.jsx";
+import DineroAnimal from "./DineroAnimal.jsx";
 import Rezagados from "./Rezagados.jsx";
 import "./animales.css";
 
@@ -46,7 +47,7 @@ function Retrato({ animal, session, size = 56, recarga }) {
   return <CowForTag tagId={animal.tag_id} size={size} className="cow" />;
 }
 
-function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
+function Ficha({ animal, animales, session, onCerrar, onCambio, onExpired }) {
   const archivo = useRef(null);
   const [alias, setAlias] = useState(animal.alias || "");
   const [notes, setNotes] = useState(animal.notes || "");
@@ -147,6 +148,7 @@ function Ficha({ animal, session, onCerrar, onCambio, onExpired }) {
 
       {/* La evolución del peso es el dato principal de la ficha: va antes de editar. */}
       <HistorialAnimal animal={animal} session={session} onExpired={onExpired} />
+      <DineroAnimal animal={animal} animales={animales.filter((a) => a.org === animal.org)} session={session} onExpired={onExpired} />
 
       <label className="campo">
         Nombre
@@ -218,6 +220,7 @@ export default function Animales({ session, onExpired, arete = null }) {
       <Ficha
         key={`${seleccionado.org}-${seleccionado.tag_id}`}
         animal={seleccionado}
+        animales={animales}
         session={session}
         onCerrar={() => setAbierto(null)}
         onCambio={recargar}

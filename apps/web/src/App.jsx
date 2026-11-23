@@ -6,6 +6,7 @@ import Asistente from "./Asistente.jsx";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import Dashboard from "./Dashboard.jsx";
+import Dinero from "./Dinero.jsx";
 import {
   clearSession,
   exchangeGoogleToken,
@@ -93,6 +94,7 @@ function Contenido() {
       {vista === "historial" && <Pesajes key="historial" session={session} onExpired={expirada} historial onRecientes={() => setVista("pesajes")} />}
       {vista === "estaciones" && <Estaciones session={session} onExpired={expirada} />}
       {vista === "animales" && <Animales key={arete || "hato"} session={session} onExpired={expirada} arete={arete} />}
+      {vista === "dinero" && <Dinero session={session} onExpired={expirada} onAbrir={(tag) => { setArete(tag); setVista("animales"); }} />}
       {vista === "asistente" && <Asistente session={session} onExpired={expirada} onAbrir={(tag) => { setArete(tag); setVista("animales"); }} />}
       {vista === "admin" && usuario.is_superuser && (
         <Admin session={session} onExpired={expirada} />
