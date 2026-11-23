@@ -37,7 +37,7 @@ Si la pregunta es de otro tema (clima, precios del mercado, noticias, recetas, s
 tareas generales, charla), no llames ninguna herramienta y contesta solo: "{FUERA_DE_TEMA}"
 - Contesta en 4 líneas como máximo.
 - Todo número sobre el hato (animales, pesos, ganancias, fechas) sale de una herramienta. \
-Nunca lo estimes ni lo inventes. Si ninguna herramienta tiene el dato (precio, raza, vacunas, \
+Nunca lo estimes ni lo inventes. Si ninguna herramienta tiene el dato (raza, vacunas, \
 dueño), di que Fierro no lo tiene registrado.
 - Di en una frase qué contaste y qué dejaste fuera, con la regla que devuelve la herramienta.
 - Si una herramienta dice lectura_incompleta, avisa que solo revisaste los pesajes más recientes.
@@ -92,7 +92,10 @@ HERRAMIENTAS: list[dict[str, Any]] = [
         "description": (
             "Ficha de un arete: alias, notas, sus últimos pesajes estables "
             "(marcando los atípicos), "
-            "ganancia diaria y bitácora reciente."
+            "ganancia diaria, bitácora reciente y su dinero (#174): valor hoy, "
+            "lo invertido por categoría, resultado, ganancia del día en pesos, "
+            "efecto mercado y precio mínimo para no perder, cada cifra con su "
+            "fuente; si una cifra es null, su motivo dice por qué."
         ),
         "strict": True,
         "input_schema": {
@@ -138,6 +141,8 @@ class DatosHato(Protocol):
     truncado: bool
 
     def bitacora(self, tag_id: str) -> list[dict[str, Any]]: ...
+
+    def dinero(self, tag_id: str) -> dict[str, Any] | None: ...
 
 
 @dataclass
@@ -185,7 +190,12 @@ def _correr(
         ficha = hato.ficha_animal(datos.lecturas, datos.fichas, tag)
         if ficha is None:
             return {"error": f"No hay ningún animal con arete {tag} en este rancho."}
-        return {**ficha, "bitacora": datos.bitacora(tag)[:10], "lectura_incompleta": datos.truncado}
+        return {
+            **ficha,
+            "bitacora": datos.bitacora(tag)[:10],
+            "dinero": datos.dinero(tag),
+            "lectura_incompleta": datos.truncado,
+        }
     if nombre == "buscar_animales":
         return {
             **hato.buscar_animales(

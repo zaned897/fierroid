@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import hmac
 import math
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -16,6 +16,7 @@ from pydantic import AwareDatetime, BaseModel, Field, field_validator
 from fierro_api import __version__, asistente, google_auth, journal, waitlist
 from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
+from fierro_api import dinero as cuentas
 from fierro_api import dinero_store as dinero
 from fierro_api.auth import (
     AuthError,
@@ -517,6 +518,79 @@ def get_money_price(user: CurrentUser,
     return dinero.price(_require_postgres(), org=_write_scope(user, org))
 
 
+# Paginas al leer TODAS las lecturas de una organizacion para las cuentas.
+PAGINA_CUENTAS = 1000
+
+
+def _todas_las_lecturas(org: str, tag_id: str | None = None) -> list[dict[str, Any]]:
+    """Todas, no una pagina (criterio de #79): recorre el cursor hasta el final."""
+    lecturas: list[dict[str, Any]] = []
+    cursor: tuple[str, str] | None = None
+    while True:
+        pagina = store.list_readings(
+            limit=PAGINA_CUENTAS, org_slug=org, tag_id=tag_id, cursor=cursor
+        )
+        lecturas.extend(pagina)
+        if len(pagina) < PAGINA_CUENTAS:
+            return lecturas
+        cursor = (str(pagina[-1]["captured_at"]), str(pagina[-1]["event_id"]))
+
+
+def _hato_cuentas(dsn: str, org: str) -> dict[str, dict[str, Any]]:
+    # Etapa 1: el corral es etiqueta libre del gasto; ningun animal tiene corral
+    # asignado todavia, asi que un gasto de corral queda a la vista sin asignar.
+    return {a["tag_id"]: {"corral": None} for a in animals_mod.list_animals(dsn, org_slug=org)}
+
+
+def _hoy() -> date:
+    return datetime.now(UTC).date()
+
+
+@app.get("/v1/animals/{tag_id}/dinero")
+def get_animal_money(
+    tag_id: str, user: CurrentUser, org: str | None = Query(default=None),
+    dia: Annotated[date | None, Query()] = None,
+) -> dict[str, Any]:
+    """Cuanto vale, cuanto lleva metido y cuanto gana al dia, al cierre de `dia` (UTC)."""
+    dsn = _require_postgres()
+    scope = _write_scope(user, org)
+    try:
+        estado = cuentas.estado_animal(
+            tag_id, dia or _hoy(), _todas_las_lecturas(scope, tag_id),
+            dinero.list_movements(dsn, org=scope), _hato_cuentas(dsn, scope),
+        )
+    except cuentas.AreteDesconocido as exc:
+        raise HTTPException(status_code=404, detail="Animal no encontrado") from exc
+    except ValueError as exc:
+        # Datos contradictorios (dos ventas, venta antes de la compra): se dicen.
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return cuentas.para_json(estado)  # type: ignore[no-any-return]
+
+
+@app.get("/v1/hato/dinero")
+def get_herd_money(
+    user: CurrentUser, org: str | None = Query(default=None),
+    mes: Annotated[str | None, Query(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")] = None,
+) -> dict[str, Any]:
+    """En que se fue el dinero del mes (AAAA-MM) y cada vaca al cierre del mes o de hoy."""
+    dsn = _require_postgres()
+    scope = _write_scope(user, org)
+    hoy = _hoy()
+    desde = date.fromisoformat(f"{mes}-01") if mes else hoy.replace(day=1)
+    if desde > hoy:
+        raise HTTPException(status_code=422, detail="El mes todavia no empieza")
+    siguiente = date(desde.year + desde.month // 12, desde.month % 12 + 1, 1)
+    dia = min(hoy, siguiente - timedelta(days=1))
+    try:
+        resumen = cuentas.dinero_del_hato(
+            desde, dia, _todas_las_lecturas(scope),
+            dinero.list_movements(dsn, org=scope), _hato_cuentas(dsn, scope),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return cuentas.para_json(resumen)  # type: ignore[no-any-return]
+
+
 @app.get("/v1/animals")
 def get_animals(user: CurrentUser) -> dict[str, Any]:
     return {"animals": animals_mod.list_animals(_require_postgres(), org_slug=_scope(user))}
@@ -918,6 +992,19 @@ class _DatosHato:
         if not (settings.dsn and self.org):
             return []
         return journal.list_entries(settings.dsn, org=self.org, tag=tag_id, limit=10, before=None)
+
+    def dinero(self, tag_id: str) -> dict[str, Any] | None:
+        """Las mismas cifras que `GET /v1/animals/{tag_id}/dinero`, con su fuente."""
+        if not (settings.dsn and self.org):
+            return None
+        try:
+            return cuentas.estado_animal(
+                tag_id, _hoy(), _todas_las_lecturas(self.org, tag_id),
+                dinero.list_movements(settings.dsn, org=self.org),
+                _hato_cuentas(settings.dsn, self.org),
+            )
+        except ValueError as exc:
+            return {"error": str(exc)}
 
 
 def _cliente_claude() -> Any:

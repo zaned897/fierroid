@@ -489,3 +489,57 @@ def test_efecto_mercado_negativo_y_sin_precio_anterior():
     tarde = [precio("p2", "40", D0 + timedelta(days=5))]
     r = dinero.estado_animal("A", dia, engorda(1.0), tarde, hato_de("A"))
     assert r["efecto_mercado_mxn"]["motivo"] == "falta_precio_anterior"
+
+
+# --- hato completo ---------------------------------------------------------
+
+
+def test_hato_del_mes_por_categoria_vendidos_y_activos():
+    vacas = [f"V{i}" for i in range(10)]
+    fin = D0 + timedelta(days=29)
+    movimientos = [
+        gasto("g", "3000", period_start=D0, period_end=fin),
+        gasto("s", "50", scope="corral", corral="9", category="sanidad"),
+        mov("c", "compra", D0, animals=["V0"], amount_mxn=Decimal(8000)),
+        mov("v", "venta", D0 + timedelta(days=14), animals=["V0"], amount_mxn=Decimal(10000)),
+        precio("p", "45"),
+    ]
+    r = dinero.dinero_del_hato(D0, fin, [], movimientos, hato_de(*vacas))
+    assert r["mes"]["por_categoria"] == {"alimento": Decimal("3000.00"), "sanidad": Decimal(50)}
+    assert r["mes"]["gastos_mxn"] == Decimal("3050.00")
+    # Ningún animal está en el corral 9: lo de sanidad queda a la vista, no se pierde.
+    assert r["mes"]["sin_asignar_mxn"] == Decimal(50)
+    assert r["mes"]["compras_mxn"] == Decimal(8000) and r["mes"]["ventas_mxn"] == Decimal(10000)
+    assert [a["tag_id"] for a in r["animales"]] == vacas[1:]
+    vendida = r["vendidos"][0]
+    assert vendida["tag_id"] == "V0" and vendida["dias_en_rancho"] == 14
+    # 8000 de compra + 14 días a 10 MXN de alimento.
+    assert vendida["costo_acumulado"]["mxn"] == Decimal("8140.00")
+    assert vendida["resultado"]["mxn"] == Decimal("1860.00")
+    # Lo mismo que la ficha de cada vaca.
+    ficha = dinero.estado_animal("V1", fin, [], movimientos, hato_de(*vacas))
+    assert r["animales"][0] == ficha
+
+
+def test_hato_del_mes_solo_cuenta_los_dias_del_rango():
+    vacas = [f"V{i}" for i in range(10)]
+    g = gasto("g", "3000", period_start=D0, period_end=D0 + timedelta(days=29))
+    r = dinero.dinero_del_hato(
+        D0 + timedelta(days=10), D0 + timedelta(days=19), [], [g], hato_de(*vacas)
+    )
+    assert r["mes"]["por_categoria"] == {"alimento": Decimal("1000.00")}
+    assert r["mes"]["fuente"]["movimientos"] == ["g"]
+    with pytest.raises(ValueError, match="Rango invertido"):
+        dinero.dinero_del_hato(D0 + timedelta(days=1), D0, [], [g], hato_de(*vacas))
+
+
+def test_para_json_conserva_centavos_como_texto():
+    assert dinero.para_json({"a": [Decimal("0.10"), D0], "b": None}) == {
+        "a": ["0.10", "2026-09-01"],
+        "b": None,
+    }
+
+
+def test_arete_desconocido_tiene_su_propio_error():
+    with pytest.raises(dinero.AreteDesconocido):
+        dinero.estado_animal("Z", D0, [], [], hato_de("A"))

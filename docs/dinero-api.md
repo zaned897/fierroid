@@ -58,3 +58,33 @@ curl -H "Authorization: Bearer $FIERRO_KEY" -H 'Content-Type: application/json' 
 
 curl -H "Authorization: Bearer $FIERRO_KEY" http://localhost:8000/v1/dinero/precio
 ```
+
+## Cuentas de la etapa 1 (#174)
+
+Solo lectura. Calculan sobre **todas** las lecturas y movimientos vigentes de la
+organización (se recorre el cursor completo, criterio de #79). Montos como texto
+con dos decimales; días en UTC.
+
+- `GET /v1/animals/{tag_id}/dinero?org=&dia=AAAA-MM-DD`: `valor_hoy`,
+  `costo_acumulado` (total y `por_categoria`, con `compra`), `resultado`,
+  `ganancia_dia_mxn` (con `kg_dia` y `costo_dia_mxn`), `efecto_mercado_mxn`,
+  `precio_minimo_kg` y `roi`. Cada cifra trae `fuente` y, si es `null`, un
+  `motivo`: `falta_precio`, `falta_precio_anterior`, `faltan_pesajes`, `vendida`
+  o `sin_costos`. Arete sin pesajes, ficha ni movimientos: 404. Datos
+  contradictorios (dos ventas, venta antes de la compra): 409 con el detalle.
+- `GET /v1/hato/dinero?org=&mes=AAAA-MM` (por defecto el mes en curso; un mes
+  futuro es 422): `mes` con lo devengado del mes por categoría (incluye lo que
+  no tuvo a quién cargarse, informado aparte en `sin_asignar_mxn`), compras y
+  ventas del mes; `animales` con el estado de cada vaca activa al cierre del mes
+  o de hoy, y `vendidos` con su resultado realizado y `dias_en_rancho`.
+- El asistente recibe el mismo bloque en `ficha_animal` como `dinero`.
+
+Supuestos de la etapa (escritos también en `fierro_api/dinero.py`): reparto por
+cabeza-día, gastos por devengo, un solo precio del kilo por rancho. Ningún
+animal tiene corral asignado todavía, así que un gasto de alcance corral queda
+completo en `sin_asignar` hasta que exista esa asignación.
+
+```bash
+curl -H "Authorization: Bearer $FIERRO_KEY" 'http://localhost:8000/v1/animals/MX-0182/dinero'
+curl -H "Authorization: Bearer $FIERRO_KEY" 'http://localhost:8000/v1/hato/dinero?mes=2026-11'
+```
