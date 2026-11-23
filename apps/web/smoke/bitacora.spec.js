@@ -31,6 +31,8 @@ async function simularRancho(page, { perderPrimerAck = false } = {}) {
   }, sesion);
 
   const historialVacio = (route) => route.fulfill({ json: { readings: [], next_cursor: null } });
+  // Al abrir, la web refresca la cuenta (rancho demo, 016). Esta no tiene demo.
+  await page.route("/v1/auth/me", (route) => route.fulfill({ json: { ...sesion.user, demo_org: null } }));
   await page.route("/v1/devices", (route) => route.fulfill({ json: { devices: [] } }));
   await page.route("/v1/animals", (route) => route.fulfill({ json: { animals: [animal] } }));
   await page.route("/v1/readings?*", historialVacio);
