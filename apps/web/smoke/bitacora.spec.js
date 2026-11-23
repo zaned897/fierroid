@@ -35,6 +35,16 @@ async function simularRancho(page, { perderPrimerAck = false } = {}) {
   await page.route("/v1/animals", (route) => route.fulfill({ json: { animals: [animal] } }));
   await page.route("/v1/readings?*", historialVacio);
   await page.route(`/v1/animals/${animal.tag_id}/readings?*`, historialVacio);
+  // La ficha también trae su dinero (#175): sin precio ni movimientos.
+  const sinPrecio = { mxn: null, motivo: "falta_precio", fuente: {} };
+  await page.route(`/v1/animals/${animal.tag_id}/dinero?*`, (route) => route.fulfill({ json: {
+    tag_id: animal.tag_id, dia: "2026-09-01", estado: "activa", precio: null,
+    valor_hoy: sinPrecio, resultado: sinPrecio, ganancia_dia_mxn: sinPrecio, efecto_mercado_mxn: sinPrecio,
+    costo_acumulado: { mxn: "0.00", por_categoria: {}, fuente: { movimientos: [] } },
+    precio_minimo_kg: { mxn: null, motivo: "faltan_pesajes", fuente: {} },
+    roi: { valor: null, motivo: "falta_precio", fuente: {} },
+  } }));
+  await page.route("/v1/dinero/movimientos?*", (route) => route.fulfill({ json: { movements: [] } }));
 
   const solicitudes = [];
   const entradas = new Map();

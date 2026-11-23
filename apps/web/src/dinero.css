@@ -1,0 +1,130 @@
+/* Dinero, etapa 1 (#175). Colores y tarjetas de dashboard.css; maqueta aprobada. */
+.dinero {
+  --gana: #1f6b45;
+  --pierde: #a33d26;
+  --pierde-fondo: #fbefe9;
+  --cat-compra: #8a877c;
+  --cat-alimento: #e3a94a;
+  --cat-mano_obra: #6b5b95;
+  --cat-sanidad: #176575;
+  --cat-instalaciones: #84948c;
+  --cat-transporte: #2e7d57;
+  --cat-otros: #b39a6b;
+}
+.dinero .cat-compra { background: var(--cat-compra); }
+.dinero .cat-alimento { background: var(--cat-alimento); }
+.dinero .cat-mano_obra { background: var(--cat-mano_obra); }
+.dinero .cat-sanidad { background: var(--cat-sanidad); }
+.dinero .cat-instalaciones { background: var(--cat-instalaciones); }
+.dinero .cat-transporte { background: var(--cat-transporte); }
+.dinero .cat-otros { background: var(--cat-otros); }
+
+.dinero-cabeza { align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.dinero-cabeza h2, .dinero-cabeza h3, .dinero-cabeza p { margin: 0; }
+.dashboard .dinero-primario { min-height: 48px; padding: 10px 20px; border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 650; }
+.dashboard .dinero-primario:hover { background: #0f4f5c; color: #fff; }
+.dashboard .dinero-enlace { min-height: 0; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.dashboard .dinero-enlace:hover { background: none; }
+
+.dinero-ficha { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 24px; align-items: start; }
+.dashboard .dinero-tarjeta { container-type: inline-size; margin-bottom: 24px; }
+.dinero-tarjeta h2, .dinero-tarjeta h3 { margin: 0 0 16px; font-size: 1.15rem; }
+.dinero-resultado h3 { color: var(--muted); font-size: 1rem; font-weight: 600; }
+.dinero-grande { margin: 0 0 16px; color: var(--gana); font-size: clamp(2.2rem, 9cqi, 4rem); font-weight: 780; letter-spacing: -.045em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.dinero-grande.pierde, .dinero-dia.pierde, .pierde-texto { color: var(--pierde); }
+.dinero-dia { display: inline-block; margin: 0 0 10px; padding: 8px 14px; border-radius: 8px; background: #edf5ee; color: var(--gana); font-size: 1.1rem; font-weight: 700; }
+.dinero-dia.pierde { background: var(--pierde-fondo); }
+.dinero-sin, .dinero-grande.dinero-sin { color: var(--ink); font-size: 1.15rem; letter-spacing: 0; font-weight: 600; }
+.dinero-motivo { color: #8a5710; font-weight: 650; }
+.dinero-cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin: 20px 0 0; padding-top: 20px; border-top: 1px solid var(--line); }
+.dinero-cifras dt { color: var(--muted); font-size: .85rem; }
+.dinero-cifras dd { margin: 2px 0 0; font-size: .85rem; }
+.dinero-cifras .dinero-numero { font-size: 1.6rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+
+.dinero-escalera { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.dinero-escalera li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(60px, 1fr) auto; align-items: center; gap: 12px; }
+.dinero-escalera strong, .dinero-escalera li > span:first-child { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dinero-escalera strong { text-align: end; font-weight: 600; }
+.dinero-barra { display: block; block-size: 14px; }
+.dinero-barra > span { display: block; block-size: 100%; border-radius: 4px; }
+.dinero-barra .metido { background: #5b6b63; }
+.dinero-barra .vale { background: #255c42; }
+.dinero-escalera-total { margin-top: 14px; padding-top: 14px; border-top: 1px dashed #9bab9f; }
+.dinero-escalera-total li > span:first-child, .dinero-escalera-total strong { font-weight: 750; }
+.dinero-escalera-total li:last-child strong { color: var(--gana); }
+@container (max-width: 420px) {
+  .dinero-escalera li { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
+  .dinero-escalera .dinero-barra { grid-row: 2; grid-column: 1 / -1; }
+}
+
+.dinero-tabla { position: relative; overflow-x: auto; }
+.dinero-arete { white-space: nowrap; }
+.dinero-fecha-movil { display: none; }
+.dinero-alias { display: block; color: var(--muted); font-size: .8rem; }
+@container (max-width: 520px) {
+  .dinero-tabla table { font-size: .88rem; }
+  .dinero-tabla :is(th, td) { padding: 10px 4px; }
+  .dinero-tabla .num { white-space: normal; }
+  .dinero-tabla td:first-child { white-space: nowrap; }
+  .dinero-tabla td button:not(.dinero-enlace) { min-height: 40px; padding: 6px 10px; }
+  .dinero-por-dia :is(th, td):nth-child(3),
+  .dinero-vendidas-tarjeta :is(th, td):nth-child(2),
+  .dinero-movimientos :is(th, td):is(:nth-child(1), :nth-child(3)) { display: none; }
+  .dinero-movimientos .dinero-fecha-movil { display: inline; }
+}
+.dinero-tabla table { inline-size: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.dinero-tabla th { padding: 10px 12px; background: #f1f4f1; color: var(--muted); font-size: .82rem; font-weight: 650; text-align: start; white-space: nowrap; }
+.dinero-tabla td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.dinero-tabla .num { text-align: end; white-space: nowrap; }
+.dinero-tabla tr.pierde td { background: var(--pierde-fondo); }
+.dinero-tabla tr.pierde td.num { color: var(--pierde); }
+.dinero-tabla td button { min-height: 40px; }
+.dinero-revisar { color: var(--pierde); }
+.dashboard .dinero-orden { min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.dinero-confirmar { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dinero-fuente { margin: 16px 0 0; font-size: .85rem; }
+.visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.dinero-controles { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: 12px; margin: -12px 0 24px; }
+.dinero-controles .campo { margin: 0; min-inline-size: 200px; }
+.dinero-controles select { min-height: 48px; }
+.dinero-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 16px; margin: 0 0 24px; }
+.dashboard .dinero-resumen .panel { margin: 0; }
+.dinero-resumen dt { color: var(--muted); font-weight: 600; }
+.dinero-resumen dd { margin: 4px 0 0; }
+.dinero-resumen dd:not(.muted) { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 780; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.dashboard .dinero-aviso { border-color: #e0c48e; background: #fffaf0; }
+.dinero-apilada { display: flex; gap: 3px; block-size: 40px; margin-bottom: 16px; overflow: hidden; border-radius: 8px; }
+.dinero-apilada > span { flex-basis: 0; min-inline-size: 4px; }
+.dinero-punto { display: inline-block; inline-size: 12px; block-size: 12px; margin-inline-end: 10px; border-radius: 3px; }
+
+.dinero-dialogo { inline-size: min(640px, calc(100vw - 24px)); max-block-size: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 14px; color: var(--ink, #173b30); box-shadow: 0 24px 80px #143c2d40; }
+.dinero-dialogo::backdrop { background: #143c2d80; }
+.dinero-dialogo form { display: grid; gap: 18px; padding: 28px; }
+.dinero-dialogo-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dinero-dialogo-cabeza h2 { margin: 0; font-size: 1.4rem; }
+.dinero-dialogo .dinero-cerrar { inline-size: 44px; min-height: 44px; padding: 0; font-size: 1.5rem; line-height: 1; }
+.dinero-opciones { margin: 0; padding: 0; border: 0; }
+.dinero-opciones legend { margin-bottom: 10px; padding: 0; font-weight: 700; }
+.dinero-opciones > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.dinero-opciones label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px; border: 1px solid #9bab9f; border-radius: 999px; cursor: pointer; }
+.dinero-opciones label:has(input:checked) { border-color: var(--accent, #176575); background: #eaf2f1; font-weight: 650; }
+.dinero-opciones input { accent-color: var(--accent, #176575); margin: 0; }
+.dinero-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.dinero-dialogo .campo { display: grid; gap: 6px; margin: 0; font-weight: 700; }
+.dinero-dialogo .campo .muted { font-weight: 400; }
+.dinero-dialogo .campo :is(input, select) { min-height: 48px; font-size: 1.05rem; }
+.dashboard .dinero-dialogo .campo.dinero-dias input { max-inline-size: 180px; }
+.dinero-previa { display: grid; gap: 2px; padding: 16px; border-radius: 10px; background: #f1f4f1; }
+.dinero-previa span, .dinero-previa small { color: var(--muted, #586b63); }
+.dinero-previa strong { font-size: 1.3rem; }
+.dinero-dialogo-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+.dinero-dialogo-acciones button { min-height: 48px; padding: 10px 20px; }
+.dinero-dialogo .error { margin: 0; }
+
+@media (max-width: 800px) {
+  .dinero-cabeza .dinero-primario { inline-size: 100%; }
+  .dinero-controles { justify-content: stretch; margin-top: 0; }
+  .dinero-controles > * { flex: 1 1 100%; }
+  .dinero-dialogo form { padding: 20px; }
+}
