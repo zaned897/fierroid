@@ -17,6 +17,7 @@ Skills equivalentes, espejadas en `.cursor/skills/` (Cursor) y `.claude/skills/`
 | `fierro-dev-workflow` | Flujo general de trabajo |
 | `fierro-pull-requests` | Crear y actualizar PRs |
 | `fierro-jira` | Tickets en Jira |
+| `onboarding` | Colaborador nuevo que no programa: instalar, levantar, revisar un PR o primer PR ([`ONBOARDING.md`](ONBOARDING.md)) |
 
 ### Reglas no negociables
 

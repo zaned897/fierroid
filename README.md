@@ -32,6 +32,7 @@ Docs de detalle:
 - [`docs/environments.md`](docs/environments.md) — **entornos y promoción** (dev / stage / production)
 - [`docs/agent/anti-vibe-coding.md`](docs/agent/anti-vibe-coding.md) — **antes de escribir código**: buscar en el grafo, contrato primero
 - [`AGENTS.md`](AGENTS.md) — notas para Cloud Agents
+- [`ONBOARDING.md`](ONBOARDING.md) — **colaboradores nuevos**: levantar, ver previews y abrir el primer PR con Claude Code
 
 ---
 

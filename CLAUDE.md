@@ -36,6 +36,7 @@ En `.claude/skills/` (espejo de `.cursor/skills/`). Cargar la que aplique **ante
 | `fierro-dev-workflow` | Flujo general |
 | `fierro-pull-requests` | Ramas y PRs |
 | `fierro-jira` | Tickets |
+| `onboarding` | Colaborador nuevo que no programa: instalar, levantar, revisar un PR o primer PR. Ver [`ONBOARDING.md`](ONBOARDING.md) |
 
 Contenido canónico y extendido: [`docs/agent/README.md`](docs/agent/README.md).
 Notas de Cloud Agents: [`AGENTS.md`](AGENTS.md).
