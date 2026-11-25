@@ -638,14 +638,31 @@ button.animal:hover {
   margin: 0 auto;
 }
 
-/* 3. Dato: la grafica manda, el texto la acompana. */
+/* 3. Dato: la grafica manda, el texto la acompana. Grafica a lo ancho con
+   el titulo en una franja encima: Beneficios, justo antes, ya parte la
+   pantalla en dos columnas y no deben repetirse composiciones (#158). */
 .dato {
   display: grid;
-  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
-  align-items: center;
-  gap: 3rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
   max-width: 72rem;
   margin: 0 auto;
+}
+
+.dato-texto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.dato-texto h2 {
+  margin-bottom: 0;
+}
+
+.dato-texto .home-faq-item {
+  flex: 0 1 24rem;
 }
 
 .dato h2 {
@@ -1009,10 +1026,8 @@ button.contraste:hover {
     font-size: 1.25rem;
   }
 
-  /* La grafica pasa debajo del texto y ocupa el ancho. */
-  .dato {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2rem;
+  .dato-texto .home-faq-item {
+    flex-basis: 100%;
   }
 
   .cierre-hero {
