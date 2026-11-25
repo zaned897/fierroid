@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { imagenes } from "./img/index.js";
 import "./vision-premium.css";
 
@@ -31,8 +33,17 @@ const yoloHorseMask =
 const yoloPersonMask =
   "437,202 429,214 426,221 420,231 416,238 412,246 416,268 409,281 394,300 388,309 384,319 381,334 377,349 377,397 381,405 399,418 409,422 424,427 433,431 448,435 459,429 472,424 480,429 476,442 476,450 499,476 502,484 506,491 523,491 557,486 546,469 538,461 529,452 510,437 510,429 514,411 510,397 502,390 493,382 484,369 478,360 474,351 471,304 467,292 474,270 480,257 484,238 493,232 497,227 491,221 482,217";
 
+/** Ancho del lienzo SVG; el corte del deslizador se expresa en sus unidades. */
+const ANCHO = 1200;
+
 export default function VisionPremium() {
   const photo = imagenes["seccion-hato"];
+  // Porcentaje de la foto que se ve sin marcar, de izquierda a derecha.
+  // Arranca en 30 %: las detecciones ocupan del 20 % al 80 % del ancho, así
+  // que casi todas se ven marcadas y queda una franja de foto para comparar.
+  // Sin JavaScript el corte se queda ahí y la imagen sigue siendo legible.
+  const [corte, setCorte] = useState(30);
+  const x = (corte / 100) * ANCHO;
 
   return (
     <section
@@ -55,15 +66,25 @@ export default function VisionPremium() {
         </div>
       </div>
 
+      {/* Imagen dividida con deslizador (#158): a la izquierda la foto tal
+          cual, a la derecha lo que separa el modelo. Ya no es una rejilla con
+          inspector al lado; las capacidades van en una franja debajo. */}
       <div className="vision-canvas-grid">
         <figure className="vision-canvas">
+          <div className="vision-comparador">
           <svg
             viewBox="0 0 1200 874"
             role="img"
             aria-label="Foto de prueba con cada animal y la persona marcados por separado"
             aria-describedby="vision-descripcion"
           >
+            <defs>
+              <clipPath id="vision-corte">
+                <rect x={x} width={ANCHO - x} height="874" />
+              </clipPath>
+            </defs>
             <image href={photo.src} width="1200" height="874" />
+            <g clipPath="url(#vision-corte)">
             <rect width="1200" height="874" fill="#041b16" opacity=".18" />
               <g strokeLinejoin="round">
                 {/* DETECCIÓN 1: PERSONA / VAQUERO (conf 0.85) */}
@@ -218,7 +239,23 @@ export default function VisionPremium() {
                   </g>
                 </g>
               </g>
+            </g>
           </svg>
+          <span className="vision-rotulo vision-rotulo-foto" aria-hidden="true">Foto</span>
+          <span className="vision-rotulo vision-rotulo-modelo" aria-hidden="true">Segmentación</span>
+          <span className="vision-divisor" style={{ left: `${corte}%` }} aria-hidden="true" />
+          <input
+            className="vision-deslizador"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={corte}
+            onChange={(evento) => setCorte(Number(evento.target.value))}
+            aria-label="Comparar la foto original con la segmentación"
+            aria-valuetext={`${corte} % de foto original, ${100 - corte} % segmentada`}
+          />
+          </div>
           <p id="vision-descripcion" className="home-solo-lectores">
             La foto de prueba distingue una vaca blanca, una vaca gris, un caballo
             y una persona. Separar animales está en prueba; estimar medidas y

@@ -1,9 +1,11 @@
-/* Fierro Vision: una foto de prueba y el estado real de cada capacidad. */
+/* Fierro Vision: una foto de prueba y el estado real de cada capacidad.
+   Fondo claro entre Pregúntale a tu Hato y las preguntas frecuentes, ambas
+   oscuras, para que los fondos se alternen (#158). */
 
 .home-publica .vision-premium {
   padding: 88px max(24px, calc((100% - 1200px) / 2));
-  background: var(--home-noche);
-  color: var(--home-niebla);
+  background: var(--home-marfil);
+  color: var(--home-texto);
   scroll-margin-top: 24px;
 }
 
@@ -18,7 +20,7 @@
 .vision-eyebrow {
   font: 600 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   letter-spacing: 0.14em;
-  color: #a4c7b7;
+  color: var(--home-petroleo);
   text-transform: uppercase;
   margin-bottom: 12px;
 }
@@ -28,15 +30,15 @@
   display: inline-block;
   padding: 3px 8px;
   margin-left: 10px;
-  border: 1px solid var(--home-ambar);
+  border: 1px solid #b07a1c;
   border-radius: 999px;
-  color: var(--home-ambar);
+  color: #8a5a00;
   letter-spacing: 0.08em;
   font-size: 11px;
 }
 
 .vision-heading h2 {
-  color: var(--home-niebla);
+  color: var(--home-texto);
   font-size: clamp(2rem, 4vw, 3.4rem);
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -50,40 +52,106 @@
 }
 
 .vision-pitch p {
-  color: #b5cebf;
+  color: var(--home-muted);
   line-height: 1.6;
   font-size: 1rem;
   margin: 0;
 }
 
 .vision-premium :is(a, summary):focus-visible {
-  outline: 2px solid var(--home-brote);
+  outline: 2px solid var(--home-petroleo);
   outline-offset: 3px;
 }
 
-/* Foto e inspector */
+/* Foto dividida arriba y franja de capacidades debajo. */
 .vision-canvas-grid {
+  container: vision / inline-size;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  border: 1px solid #244b3b;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+
+.vision-canvas {
+  margin: 0;
+  min-width: 0;
+}
+
+/* El deslizador cubre la foto entera: se arrastra desde cualquier punto y
+   con el teclado responde a las flechas como cualquier <input type=range>. */
+.vision-comparador {
+  position: relative;
   border-radius: 12px;
   overflow: hidden;
   background: var(--home-noche);
 }
 
-.vision-canvas {
-  margin: 0;
-  padding: 16px;
-  background: var(--home-noche);
-  min-width: 0;
+.vision-comparador:has(.vision-deslizador:focus-visible) {
+  outline: 3px solid var(--home-petroleo);
+  outline-offset: 3px;
 }
 
 .vision-canvas svg {
   width: 100%;
   display: block;
-  border-radius: 6px;
-  background: var(--home-noche);
-  border: 1px solid #19382b;
+}
+
+.vision-rotulo {
+  position: absolute;
+  top: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(4, 27, 22, 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.vision-rotulo-foto { left: 12px; }
+.vision-rotulo-modelo { right: 12px; }
+
+/* Línea del corte con su manija; la posición la da el deslizador. */
+.vision-divisor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(4, 27, 22, 0.25);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.vision-divisor::after {
+  content: "‹ ›";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(4, 27, 22, 0.35);
+  color: var(--home-texto);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+
+.vision-deslizador {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  cursor: ew-resize;
+  opacity: 0;
+  touch-action: pan-y;
 }
 
 .vision-canvas figcaption {
@@ -93,30 +161,32 @@
   gap: 8px;
   margin-top: 10px;
   font-size: 12px;
-  color: #8da698;
+  color: var(--home-muted);
 }
 
 .vision-canvas figcaption a {
-  color: #8da698;
+  color: var(--home-muted);
   text-decoration: none;
 }
 
 .vision-canvas figcaption a:hover {
   text-decoration: underline;
-  color: #a4beaf;
+  color: var(--home-petroleo);
 }
 
 .vision-inspector {
-  padding: 24px 20px;
-  background: var(--home-noche);
-  border-left: 1px solid #1f3f32;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 20px 32px;
   min-width: 0;
 }
 
 .vision-capacidades {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 32px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -128,7 +198,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(232, 238, 233, 0.12);
+  border-top: 2px solid var(--home-borde);
   font-size: 0.95rem;
   line-height: 1.4;
 }
@@ -143,20 +213,20 @@
 }
 
 .vision-capacidades .en-prueba {
-  background: rgba(108, 197, 150, 0.18);
-  color: var(--home-brote);
+  background: rgba(108, 197, 150, 0.22);
+  color: #1d6b45;
 }
 
 .vision-capacidades .por-validar {
-  background: rgba(227, 169, 74, 0.16);
-  color: var(--home-ambar);
+  background: rgba(227, 169, 74, 0.2);
+  color: #7a4f00;
 }
 
 .vision-detalles summary {
   min-height: 44px;
   display: flex;
   align-items: center;
-  color: #a4c7b7;
+  color: var(--home-petroleo);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -164,7 +234,7 @@
 
 .vision-detalles p {
   margin: 0 0 12px;
-  color: #9cb5a7;
+  color: var(--home-muted);
   font-size: 0.88rem;
   line-height: 1.5;
 }
@@ -198,39 +268,38 @@
 
 .badge-bovino {
   background: rgba(16, 185, 129, 0.2);
-  color: var(--home-brote);
+  color: #065f46;
   border: 1px solid #059669;
 }
 
 .badge-bovino-gris {
   background: rgba(14, 165, 233, 0.2);
-  color: #7dd3fc;
+  color: #075985;
   border: 1px solid #0284c7;
 }
 
 .badge-equino {
   background: rgba(139, 92, 246, 0.2);
-  color: #c4b5fd;
+  color: #5b21b6;
   border: 1px solid #7c3aed;
 }
 
 .badge-persona {
   background: rgba(245, 158, 11, 0.2);
-  color: var(--home-ambar-claro);
+  color: #92400e;
   border: 1px solid #d97706;
 }
 
 .vision-class-meta {
   font: 11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #8da698;
+  color: var(--home-muted);
 }
 
 .vision-btn-reserve {
-  margin-top: auto;
   display: block;
   text-align: center;
-  border: 1px solid var(--home-brote);
-  color: var(--home-brote);
+  border: 1px solid var(--home-petroleo);
+  color: var(--home-petroleo);
   font-weight: 700;
   font-size: 0.95rem;
   padding: 12px 14px;
@@ -240,16 +309,16 @@
 }
 
 .vision-btn-reserve:hover {
-  background: rgba(108, 197, 150, 0.12);
+  background: rgba(23, 101, 117, 0.08);
 }
 
-@media (max-width: 960px) {
-  .vision-canvas-grid {
-    grid-template-columns: 1fr;
-  }
+/* La franja se apila según el ancho de la sección, no de la pantalla. */
+@container vision (max-width: 44rem) {
   .vision-inspector {
-    border-left: 0;
-    border-top: 1px solid #1f3f32;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vision-capacidades {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -264,8 +333,5 @@
   }
   .vision-pitch {
     justify-self: start;
-  }
-  .vision-canvas {
-    padding: 8px;
   }
 }

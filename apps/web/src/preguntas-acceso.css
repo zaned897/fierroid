@@ -64,6 +64,30 @@
   font-size: 1rem;
 }
 
+/* Acordeón sin cajas sobre fondo oscuro (#158): separadores en vez de
+   tarjetas, y oscuro después de Fierro Vision para alternar los fondos.
+   Acotado a #preguntas-frecuentes: `.home-faq-item` también se usa en los
+   detalles de otras secciones y esos no cambian. */
+.home-publica .home-faq { background: var(--home-bosque); color: var(--home-niebla); }
+.home-publica .home-faq h2 { color: var(--home-niebla); }
+.home-faq .home-faq-lista { gap: 0; border-top: 1px solid rgba(237, 245, 239, 0.2); }
+.home-faq .home-faq-item {
+  border: 0;
+  border-bottom: 1px solid rgba(237, 245, 239, 0.2);
+  border-radius: 0;
+  background: transparent;
+}
+.home-publica .home-faq .home-faq-item summary { padding-inline: 0; color: var(--home-niebla); }
+.home-faq .home-faq-item summary:hover { background: transparent; color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.home-faq .home-faq-item summary:focus-visible { outline-color: var(--home-brote); outline-offset: 2px; }
+.home-faq .home-faq-signo { color: var(--home-brote); }
+.home-publica .secciones .home-faq .home-faq-item > p {
+  max-width: 46rem;
+  padding: 0 0 1.25rem;
+  border-top: 0;
+  background: transparent;
+  color: rgba(237, 245, 239, 0.8);
+}
 
 .home-pie { padding: 1.75rem 1.5rem; }
 .home-pie-contenido { max-width: 76rem; margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
@@ -97,6 +121,8 @@
   .home-faq h2 { font-size: 1.5rem; margin-bottom: 1.25rem; }
   .home-faq-item summary { padding: 0.9rem 1rem; min-height: 54px; font-size: 0.95rem; gap: 1rem; }
   .home-faq-item > p { padding: 0.9rem 1rem 1rem; font-size: 0.9rem; }
+  .home-publica .home-faq .home-faq-item summary { padding-inline: 0; }
+  .home-publica .secciones .home-faq .home-faq-item > p { padding: 0 0 1rem; }
   .home-pie-contenido { flex-direction: column; gap: 1rem; }
   .home-pie nav { flex-direction: column; gap: 0; }
   .home-pie-marca strong { font-size: 1.65rem; }
