@@ -167,6 +167,18 @@ resource "google_cloud_run_v2_service" "api" {
     }
   }
 
+  # La imagen la cambia .github/workflows/deploy-api.yml, no Terraform.
+  # api_image solo cuenta al crear el servicio; sin esto, cada `apply`
+  # regresaria a la imagen vieja de los .tfvars. client y client_version los
+  # escribe gcloud al desplegar y saldrian como cambio en cada plan.
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      template[0].containers[0].image,
+    ]
+  }
+
   depends_on = [
     google_secret_manager_secret_version.dsn,
     google_secret_manager_secret_iam_member.api_dsn,
@@ -224,6 +236,15 @@ resource "google_cloud_run_v2_job" "migrate" {
 
       }
     }
+  }
+
+  # Igual que el servicio: la imagen la cambia el workflow de despliegue.
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      template[0].template[0].containers[0].image,
+    ]
   }
 
   depends_on = [

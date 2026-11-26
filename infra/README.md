@@ -247,75 +247,133 @@ renderiza.
 
 ## Desplegar una versión nueva de la API
 
-Lo de arriba es el arranque, se hace una vez. Esto es lo de cada vez, y es
-manual mientras no exista Workload Identity Federation.
+Lo de arriba es el arranque, se hace una vez. Lo de cada vez lo hace
+[`deploy-api.yml`](../.github/workflows/deploy-api.yml): **promover la rama es
+desplegar**.
 
-**La PWA no entra aquí:** Vercel la despliega sola al mergear a `main`. Eso
-significa que el front siempre va **por delante** de la API durante el rato que
-tardes en correr estos pasos. La PWA tolera una API vieja a propósito — ver
-`normalizar()` en [`apps/web/src/Login.jsx`](../apps/web/src/Login.jsx) — pero
-esa tolerancia se escribe caso por caso, así que un cambio de contrato que la
-PWA ya use rompe el login hasta que la API salga.
+```
+push a stage      ─▶ CI verde ─▶ build ─▶ migraciones ─▶ servicio ─▶ /health ─▶ marca stage-ok-<sha>
+push a production ─▶ CI verde ─▶ espera tu aprobación ─▶ el digest de stage-ok-<sha> ─▶ migraciones ─▶ servicio ─▶ /health
+```
+
+Promover sigue siendo lo de [`environments.md`](../docs/environments.md):
+
+```bash
+git checkout stage && git pull && git merge --ff-only origin/main && git push
+# ...probar stage...
+git checkout production && git pull && git merge --ff-only origin/stage && git push
+```
+
+El job de `production` se detiene en *Waiting for review*. Se aprueba en la
+pestaña **Actions** del repo, en la corrida de *Deploy API*.
+
+**La PWA no entra aquí:** Vercel la despliega sola al mergear a `main`. El
+front va **por delante** de la API hasta que promueves. La PWA tolera una API
+vieja a propósito — ver `normalizar()` en
+[`apps/web/src/Login.jsx`](../apps/web/src/Login.jsx) — pero esa tolerancia se
+escribe caso por caso.
 
 ### Se construye una vez, no una por entorno
 
-La regla: **una imagen por candidato a release.** Se construye desde el árbol de
-`stage`, se despliega ahí, y a `production` va **ese mismo digest**. Reconstruir
-para `production` produce otra imagen, y entonces `production` corre algo que
-`stage` nunca probó — que es exactamente lo que la cadena de promoción existe
-para impedir.
+**Una imagen por candidato a release.** Se construye desde el commit de
+`stage`, se despliega ahí, y a `production` va **ese mismo digest**.
+Reconstruir produce otra imagen, y entonces `production` corre algo que `stage`
+nunca probó. Dos builds del mismo código ya dieron digests distintos.
 
-No es teórico. Dos builds del mismo código dieron digests distintos aunque las
-nueve capas y el `created` fueran idénticos: la diferencia estaba en metadatos
-del build. Un digest distinto es un artefacto distinto aunque el contenido
-coincida, y para saberlo hubo que abrir las dos imágenes y comparar.
+Por eso el workflow etiqueta la imagen como `stage-ok-<sha>` **solo después**
+de que stage respondió bien en `/health`, y `production` busca esa etiqueta.
+Si el commit no pasó por stage, el job de production **falla** en vez de
+construir.
 
-```bash
-git checkout stage && git merge --ff-only origin/main && git push
-```
+### Quién es dueño de qué
 
-Se construye desde ese árbol, no desde la rama en la que estabas:
+Terraform es dueño de la infraestructura (secretos, variables, escalado,
+permisos); el workflow solo cambia la **imagen**. `runtime.tf` ignora `image`,
+así que `api_image` en los `.tfvars` solo cuenta al **crear** el servicio, y un
+`apply` posterior no regresa a una imagen vieja.
 
-```bash
-IMG=northamerica-south1-docker.pkg.dev/fierro-caw-scale/fierro/fierro-api:stage
-docker build -f apps/api/Dockerfile -t "$IMG" .
-docker push "$IMG"
-```
+Eso es lo que permite que CI no necesite el estado de Terraform ni los
+`.tfvars`: las cadenas de Neon no salen de tu máquina. Terraform sigue siendo
+manual, para los cambios de infraestructura, que son raros.
 
-**Comprobar el código dentro de la imagen, no que el build pasara.** Ya nos
-pasó desplegar una imagen que compilaba y a la que le faltaba una dependencia:
+Para ver qué corre en cada entorno:
 
 ```bash
-docker run --rm --entrypoint python "$IMG" -c "import fierro_api.main"
+gcloud run services describe fierro-api-production --region northamerica-south1 \
+  --format='value(spec.template.spec.containers[0].image)'
 ```
 
-El `push` imprime el digest. Va a **los dos** `.tfvars`, en `api_image`, con
-`@sha256:...` en lugar de la etiqueta. **Con la etiqueta móvil Terraform no ve
-ningún cambio y Cloud Run se queda con la imagen anterior**, sin decir nada.
+### A mano, si GitHub Actions no está disponible
 
-Primero `stage`, y ahí se prueba:
+El workflow usa [`scripts/deploy-api-cloud-run.sh`](../scripts/deploy-api-cloud-run.sh),
+que corre igual con `gcloud` autenticado (en Git Bash o WSL):
 
 ```bash
-terraform "-chdir=infra/terraform" apply "-var-file=stage.tfvars"
+IMG=northamerica-south1-docker.pkg.dev/fierro-caw-scale/fierro/fierro-api
+docker build -f apps/api/Dockerfile -t "$IMG:manual" . && docker push "$IMG:manual"
+# el push imprime el digest
+./scripts/deploy-api-cloud-run.sh deploy stage "$IMG@sha256:..."
+./scripts/deploy-api-cloud-run.sh verify stage "$IMG@sha256:..."
 ```
 
-Después `production`, con el mismo digest y sin reconstruir:
+### Configuración inicial (una vez)
 
-```bash
-git checkout production && git merge --ff-only origin/stage && git push
-terraform "-chdir=infra/terraform" apply "-var-file=production.tfvars"
+GitHub se identifica con Google por **Workload Identity Federation**: Google
+confía en el token que GitHub emite para cada corrida, y no existe ninguna llave
+JSON que guardar o que se pueda filtrar. Solo los jobs de este repo que corren
+en los environments `stage` o `production` obtienen credenciales.
+
+Requisito: los servicios de los dos entornos ya existen (`terraform apply` hecho
+en `stage` y `production`).
+
+**En Google Cloud**, en PowerShell, una sola vez:
+
+```powershell
+$PROJECT = "fierro-caw-scale"
+$NUM = gcloud projects describe $PROJECT --format "value(projectNumber)"
+$SA = "fierro-deployer@$PROJECT.iam.gserviceaccount.com"
+
+gcloud services enable iamcredentials.googleapis.com sts.googleapis.com --project $PROJECT
+
+# La identidad con la que despliega GitHub
+gcloud iam service-accounts create fierro-deployer --project $PROJECT --display-name "Deploy de la API desde GitHub Actions"
+
+# El puente con GitHub. La condicion acepta solo este repo (por id, que no
+# cambia si alguien crea otro repo con el mismo nombre) y solo los dos environments.
+gcloud iam workload-identity-pools create github --project $PROJECT --location global --display-name "GitHub Actions"
+gcloud iam workload-identity-pools providers create-oidc fierroid --project $PROJECT --location global --workload-identity-pool github --issuer-uri "https://token.actions.githubusercontent.com" --attribute-mapping "google.subject=assertion.sub,attribute.repository=assertion.repository" --attribute-condition "assertion.repository_id == '1344345774' && assertion.sub in ['repo:zaned897/fierroid:environment:stage', 'repo:zaned897/fierroid:environment:production']"
+
+gcloud iam service-accounts add-iam-policy-binding $SA --project $PROJECT --role roles/iam.workloadIdentityUser --member "principalSet://iam.googleapis.com/projects/$NUM/locations/global/workloadIdentityPools/github/attribute.repository/zaned897/fierroid"
+
+# Lo minimo para desplegar: Cloud Run, subir imagenes al registro, y correr
+# el servicio con la identidad que ya tiene cada entorno.
+gcloud projects add-iam-policy-binding $PROJECT --role roles/run.developer --member "serviceAccount:$SA" --condition None
+gcloud artifacts repositories add-iam-policy-binding fierro --project $PROJECT --location northamerica-south1 --role roles/artifactregistry.writer --member "serviceAccount:$SA"
+gcloud iam service-accounts add-iam-policy-binding "fierro-api-stage@$PROJECT.iam.gserviceaccount.com" --project $PROJECT --role roles/iam.serviceAccountUser --member "serviceAccount:$SA"
+gcloud iam service-accounts add-iam-policy-binding "fierro-api-production@$PROJECT.iam.gserviceaccount.com" --project $PROJECT --role roles/iam.serviceAccountUser --member "serviceAccount:$SA"
+
+# Esto se copia a GitHub como GCP_WIF_PROVIDER
+gcloud iam workload-identity-pools providers describe fierroid --project $PROJECT --location global --workload-identity-pool github --format "value(name)"
 ```
 
-Cada `apply` sale `2 to change, 0 to destroy`: el servicio y el job. Si hay
-migraciones nuevas, además `gcloud run jobs execute fierro-migrate-<entorno>
---region northamerica-south1 --wait`.
+**En GitHub**, en *Settings* del repo:
 
-Se verifica contra el origen que usa el navegador, no contra `*.run.app`, que
-es el que puede estar mal:
+1. *Environments* → **New environment** → `stage`. Sin reglas.
+2. *Environments* → **New environment** → `production`. Marcar **Required
+   reviewers** y agregarte. Esa es la aprobación de un clic.
+3. *Secrets and variables* → *Actions* → pestaña **Variables** → *New
+   repository variable*, dos veces:
+   - `GCP_WIF_PROVIDER` = la salida del último comando
+     (`projects/<número>/locations/global/workloadIdentityPools/github/providers/fierroid`)
+   - `GCP_DEPLOY_SA` = `fierro-deployer@fierro-caw-scale.iam.gserviceaccount.com`
 
-```bash
-curl -s https://fierroid.vercel.app/v1/auth/config
-```
+Son variables y no secretos porque no lo son: sin el token de GitHub de una
+corrida de este repo, no sirven para nada.
+
+No restringir los environments por rama (*Deployment branches*): el workflow
+se dispara con `workflow_run`, que GitHub reporta como corrido desde `main`, y
+una restricción a `production` lo bloquearía. Qué rama despliega a qué entorno
+ya lo decide el propio workflow.
 
 ## Lo que NO incluye
 
@@ -323,9 +381,6 @@ Escrito para que no se descubra a mitad del despliegue:
 
 - [ ] **Dominio propio.** Cloud Run da una URL `*.run.app` y Vercel una
       `*.vercel.app`. Mapear `app.fierro.mx` requiere verificar el dominio
-- [ ] **Credenciales de CI hacia Google.** Publicar imágenes desde GitHub
-      Actions necesita Workload Identity Federation. Hoy el push a Artifact
-      Registry es manual
 - [ ] **Monitoreo y alertas.** No hay aviso si la API se cae o si la cola de una
       estación crece
 - [ ] **Respaldos de Neon.** El nivel gratuito tiene restauración limitada en el
