@@ -8,6 +8,7 @@
  */
 
 import { clearAllDrafts } from "./bitacoraDraft.js";
+import { conDemo } from "./demo.js";
 
 const STORAGE_KEY = "fierro.session";
 
@@ -40,14 +41,20 @@ export function clearSession() {
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-/** fetch con la credencial puesta. Lanza si la sesión ya no sirve. */
-export async function apiFetch(path, { session, ...options } = {}) {
+/**
+ * fetch con la credencial puesta. Lanza si la sesión ya no sirve.
+ *
+ * Con el modo demo encendido, la ruta va al rancho demo (ver demo.js), salvo
+ * con `real: true`, que pregunta siempre por la cuenta real.
+ */
+export async function apiFetch(path, { session, real = false, ...options } = {}) {
   const headers = { ...(options.headers || {}) };
   if (session?.api_key) {
     headers.Authorization = `Bearer ${session.api_key}`;
   }
+  const ruta = real ? path : conDemo(path, session);
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${ruta}`, { ...options, headers });
 
   if (res.status === 401) {
     // Credencial revocada, expirada o cuenta desactivada. No hay nada que

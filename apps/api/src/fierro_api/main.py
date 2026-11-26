@@ -16,6 +16,7 @@ from pydantic import AwareDatetime, BaseModel, Field, field_validator
 from fierro_api import __version__, asistente, google_auth, journal, waitlist
 from fierro_api import admin as admin_mod
 from fierro_api import animals as animals_mod
+from fierro_api import demo as demo_mod
 from fierro_api import dinero_store as dinero
 from fierro_api.auth import (
     AuthError,
@@ -408,20 +409,27 @@ def logout_all(user: CurrentUser) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _scope(user: AuthUser) -> str | None:
+def _scope(user: AuthUser, org: str | None = None) -> str | None:
     """Organizacion a la que se acota la consulta. None = sin restringir.
 
-    Solo el superusuario recibe None. Un usuario normal sin organizacion
-    seria un None accidental, es decir acceso total: eso se corta aqui con un
-    403. No ver nada es infinitamente mejor que verlo todo.
+    Solo el superusuario recibe None, y solo si no pide una con `org`. Un
+    usuario normal sin organizacion seria un None accidental, es decir acceso
+    total: eso se corta aqui con un 403. No ver nada es infinitamente mejor
+    que verlo todo.
+
+    Un usuario normal puede pedir con `org` el rancho demo de su cuenta (016).
+    Cualquier otro `org` se ignora y queda en la suya, como siempre: nunca
+    abre una organizacion ajena (ver test_aislamiento).
     """
     if user.is_superuser:
-        return None
+        return org or None
     if not user.org_slug:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tu cuenta no tiene organizacion asignada. Contacta a un administrador.",
         )
+    if org and org == user.demo_org_slug:
+        return org
     return user.org_slug
 
 
@@ -460,7 +468,7 @@ def _write_scope(user: AuthUser, org: str | None) -> str:
                 detail="Como superusuario, indica la organizacion con ?org=<slug>",
             )
         return org
-    return _scope(user)  # type: ignore[return-value]
+    return _scope(user, org)  # type: ignore[return-value]
 
 
 @app.post("/v1/dinero/movimientos", response_model=MovementOut)
@@ -518,8 +526,8 @@ def get_money_price(user: CurrentUser,
 
 
 @app.get("/v1/animals")
-def get_animals(user: CurrentUser) -> dict[str, Any]:
-    return {"animals": animals_mod.list_animals(_require_postgres(), org_slug=_scope(user))}
+def get_animals(user: CurrentUser, org: str | None = Query(default=None)) -> dict[str, Any]:
+    return {"animals": animals_mod.list_animals(_require_postgres(), org_slug=_scope(user, org))}
 
 
 def _journal_cursor(cursor: str | None) -> tuple[datetime, UUID] | None:
@@ -762,11 +770,12 @@ def get_readings(
     cursor: str | None = Query(default=None),
     device_id: str | None = Query(default=None),
     tag_id: str | None = Query(default=None),
+    org: str | None = Query(default=None),
 ) -> dict[str, Any]:
     """Lecturas de la organizacion del usuario. El superusuario las ve todas."""
     readings = store.list_readings(
         limit=limit,
-        org_slug=_scope(user),
+        org_slug=_scope(user, org),
         device_id=device_id,
         tag_id=tag_id,
         cursor=_decode_cursor(cursor),
@@ -790,8 +799,8 @@ def post_heartbeat(device_id: str, body: HeartbeatIn) -> dict[str, Any]:
 
 
 @app.get("/v1/devices")
-def get_devices(user: CurrentUser) -> dict[str, Any]:
-    return {"devices": store.list_devices(org_slug=_scope(user))}
+def get_devices(user: CurrentUser, org: str | None = Query(default=None)) -> dict[str, Any]:
+    return {"devices": store.list_devices(org_slug=_scope(user, org))}
 
 
 # ---------------------------------------------------------------------------
@@ -815,6 +824,28 @@ def get_orgs(user: SuperUser) -> dict[str, Any]:
 def post_org(body: OrgIn, user: SuperUser) -> dict[str, Any]:
     try:
         return admin_mod.crear_org(_require_postgres(), slug=body.slug, name=body.name)
+    except admin_mod.ErrorDeDatos as exc:
+        raise _datos(exc) from exc
+
+
+@app.post("/v1/orgs/{org_slug}/demo")
+def post_demo(org_slug: str, user: SuperUser) -> dict[str, Any]:
+    """Crea (o devuelve) el rancho demo de una cuenta real. Idempotente."""
+    try:
+        return demo_mod.asegurar_demo(_require_postgres(), org_slug=org_slug)
+    except admin_mod.ErrorDeDatos as exc:
+        raise _datos(exc) from exc
+
+
+@app.delete("/v1/orgs/{org_slug}/demo")
+def delete_demo(org_slug: str, user: SuperUser) -> dict[str, Any]:
+    """Borra el rancho demo de una cuenta con todo su contenido.
+
+    Se niega si alguna estacion del demo tiene pesajes que no son de demo, o
+    si el demo tiene usuarios propios. La respuesta cuenta lo borrado.
+    """
+    try:
+        return demo_mod.purgar_demo(_require_postgres(), org_slug=org_slug)
     except admin_mod.ErrorDeDatos as exc:
         raise _datos(exc) from exc
 

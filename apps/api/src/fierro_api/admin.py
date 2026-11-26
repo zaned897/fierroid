@@ -54,7 +54,8 @@ def listar_orgs(dsn: str) -> dict[str, Any]:
     with _conectar(dsn) as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT o.slug AS org, o.name AS org_name,
+            SELECT o.slug AS org, o.name AS org_name, o.es_demo,
+                   (SELECT p.slug FROM organizations p WHERE p.id = o.demo_de_org_id) AS demo_de,
                    r.slug AS ranch, r.name AS ranch_name,
                    d.device_id,
                    (SELECT count(*) FROM readings x WHERE x.device_id = d.device_id) AS readings
@@ -78,7 +79,14 @@ def listar_orgs(dsn: str) -> dict[str, Any]:
     orgs: dict[str, dict[str, Any]] = {}
     for fila in filas:
         org = orgs.setdefault(
-            fila["org"], {"slug": fila["org"], "name": fila["org_name"], "ranches": []}
+            fila["org"],
+            {
+                "slug": fila["org"],
+                "name": fila["org_name"],
+                "es_demo": fila["es_demo"],
+                "demo_de": fila["demo_de"],
+                "ranches": [],
+            },
         )
         if fila["ranch"] is None:
             continue

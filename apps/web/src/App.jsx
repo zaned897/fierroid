@@ -7,6 +7,7 @@ import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import Dashboard from "./Dashboard.jsx";
 import {
+  apiFetch,
   clearSession,
   exchangeGoogleToken,
   loadSession,
@@ -16,6 +17,7 @@ import {
 import Pesajes from "./Pesajes.jsx";
 import Estaciones from "./Estaciones.jsx";
 import Entorno from "./Entorno.jsx";
+import { demoActivo, demoInicial } from "./demo.js";
 
 /**
  * Rutas minimas, sin router.
@@ -77,6 +79,43 @@ function Contenido() {
     setSession(null);
   }, []);
 
+  // Al abrir: refresca la cuenta (una sesión guardada antes de 016 no sabe de
+  // su rancho demo) y, la primera vez, decide si arranca en demo.
+  const sesionId = session?.id;
+  useEffect(() => {
+    if (!sesionId) return undefined;
+    const controller = new AbortController();
+    (async () => {
+      const actual = loadSession();
+      if (!actual) return;
+      const user = await apiFetch("/v1/auth/me", { session: actual, signal: controller.signal });
+      let demo = actual.demo;
+      if (!user.demo_org) {
+        demo = false;
+      } else if (demo === undefined) {
+        const reales = await apiFetch("/v1/readings?limit=1", {
+          session: actual, real: true, signal: controller.signal,
+        });
+        demo = demoInicial(user, reales.readings.length);
+      }
+      const nueva = { ...actual, user, demo };
+      saveSession(nueva);
+      setSession(nueva);
+    })().catch((error) => {
+      if (error.unauthorized) expirada();
+      // Otro fallo (red, abort): se queda la sesión guardada, que ya sirve.
+    });
+    return () => controller.abort();
+  }, [sesionId, expirada]);
+
+  const cambiarDemo = useCallback(() => {
+    setSession((actual) => {
+      const nueva = { ...actual, demo: !actual.demo };
+      saveSession(nueva);
+      return nueva;
+    });
+  }, []);
+
   if (!session) {
     return ruta === "/entrar" ? (
       <Login onSession={entrar} exchange={exchangeGoogleToken} onInicio={() => ir("/")} />
@@ -86,9 +125,15 @@ function Contenido() {
   }
 
   const usuario = session.user || {};
+  const demo = usuario.demo_org
+    ? { activo: demoActivo(session), org: usuario.demo_org, onCambiar: cambiarDemo }
+    : null;
 
   return (
-    <Dashboard user={usuario} vista={vista} onVista={(v) => { setArete(null); setVista(v); }} onSalir={salir}>
+    <Dashboard user={usuario} demo={demo} vista={vista} onVista={(v) => { setArete(null); setVista(v); }} onSalir={salir}>
+      {/* La clave remonta la vista al cambiar de rancho: nada de lo cargado
+          del rancho anterior sobrevive al cambio. */}
+      <div key={demoActivo(session) ? "demo" : "real"} className="dashboard-vista">
       {vista === "pesajes" && <Pesajes key="pesajes" session={session} onExpired={expirada} onHistorial={() => setVista("historial")} onEstaciones={() => setVista("estaciones")} />}
       {vista === "historial" && <Pesajes key="historial" session={session} onExpired={expirada} historial onRecientes={() => setVista("pesajes")} />}
       {vista === "estaciones" && <Estaciones session={session} onExpired={expirada} />}
@@ -97,6 +142,7 @@ function Contenido() {
       {vista === "admin" && usuario.is_superuser && (
         <Admin session={session} onExpired={expirada} />
       )}
+      </div>
     </Dashboard>
   );
 }

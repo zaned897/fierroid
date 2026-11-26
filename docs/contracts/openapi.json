@@ -1118,6 +1118,24 @@
     "/v1/animals": {
       "get": {
         "operationId": "get_animals_v1_animals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1130,6 +1148,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -2004,6 +2032,24 @@
     "/v1/devices": {
       "get": {
         "operationId": "get_devices_v1_devices_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2016,6 +2062,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -2720,6 +2776,98 @@
         "summary": "Post Org"
       }
     },
+    "/v1/orgs/{org_slug}/demo": {
+      "delete": {
+        "description": "Borra el rancho demo de una cuenta con todo su contenido.\n\nSe niega si alguna estacion del demo tiene pesajes que no son de demo, o\nsi el demo tiene usuarios propios. La respuesta cuenta lo borrado.",
+        "operationId": "delete_demo_v1_orgs__org_slug__demo_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Delete Demo V1 Orgs  Org Slug  Demo Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Demo"
+      },
+      "post": {
+        "description": "Crea (o devuelve) el rancho demo de una cuenta real. Idempotente.",
+        "operationId": "post_demo_v1_orgs__org_slug__demo_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Post Demo V1 Orgs  Org Slug  Demo Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Post Demo"
+      }
+    },
     "/v1/orgs/{org_slug}/ranches": {
       "post": {
         "operationId": "post_ranch_v1_orgs__org_slug__ranches_post",
@@ -2839,6 +2987,22 @@
                 }
               ],
               "title": "Tag Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
             }
           }
         ],
