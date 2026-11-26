@@ -3,6 +3,7 @@
 import json
 from copy import deepcopy
 from datetime import date
+from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -53,6 +54,7 @@ def load_data():
             fichas=[],
             truncado=False,
             bitacora=Mock(return_value=[]),
+            dinero=Mock(return_value={"valor_hoy": {"mxn": Decimal("18495.00")}}),
         )
     )
 
@@ -98,6 +100,9 @@ def test_responder_reutiliza_datos_entre_vueltas(load_data):
     assert [c["herramienta"] for c in result["consultas"]] == ["resumen_hato", "ficha_animal"]
     assert len(client.calls) == 3
     assert client.calls[2]["messages"][-1]["content"][0]["tool_use_id"] == "tool-2"
+    # La ficha trae el dinero de #174, con los centavos como texto.
+    ficha = json.loads(client.calls[2]["messages"][-1]["content"][0]["content"])
+    assert ficha["dinero"] == {"valor_hoy": {"mxn": "18495.00"}}
 
 
 def test_arete_inexistente_marca_resultado_como_error(load_data):

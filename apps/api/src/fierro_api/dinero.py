@@ -49,6 +49,10 @@ _MINIMO = datetime.min.replace(tzinfo=UTC)
 Activos = Mapping[date, Mapping[str, str | None]]
 
 
+class AreteDesconocido(ValueError):
+    """El arete no tiene pesajes, ficha ni movimientos en esta organización."""
+
+
 # --- utilidades ------------------------------------------------------------
 
 
@@ -100,7 +104,8 @@ def _centavos(valor: Fraction) -> int:
 
 
 def _de_centavos(centavos: int) -> Decimal:
-    return Decimal(centavos) / 100
+    # Siempre con dos decimales: "11000.00", no "11000", igual que #173.
+    return (Decimal(centavos) / 100).quantize(CENTAVO)
 
 
 def _dias(inicio: date, fin: date) -> list[date]:
@@ -377,18 +382,43 @@ def estado_animal(
         and not any(tag_id in (m.get("animals") or []) for m in confirmados)
         and not any(p.get("tag_id") == tag_id for p in pesajes)
     ):
-        raise ValueError(f"Arete desconocido: {tag_id}")
-    hasta_dia = [m for m in confirmados if _fecha(m["occurred_on"]) <= dia]
-    ventas = [m for m in hasta_dia if m["kind"] == "venta" and _un_animal(m) == tag_id]
-    venta = ventas[0] if ventas else None
-    vendida = {"venta": str(venta["movement_id"])} if venta is not None else {}
+        raise AreteDesconocido(f"Arete desconocido: {tag_id}")
+    return _estado(_contexto(confirmados, hato, dia), tag_id, pesajes)
 
+
+def _contexto(
+    confirmados: list[Mapping[str, Any]], hato: Mapping[str, Mapping[str, Any]], dia: date
+) -> dict[str, Any]:
+    """Lo que comparten todas las vacas al cierre de `dia`: activos y reparto de cada gasto.
+
+    Se calcula una vez por consulta; el hato completo no lo repite por animal.
+    """
+    hasta_dia = [m for m in confirmados if _fecha(m["occurred_on"]) <= dia]
     # Gastos por devengo: cuentan sus días hasta `dia`, se hayan pagado o no.
     gastos = [m for m in confirmados if m["kind"] == "gasto" and min(_dias_del_gasto(m)) <= dia]
     inicio = min([dia, *(min(_dias_del_gasto(m)) for m in gastos)])
     # Todos los confirmados, también los posteriores: una compra o venta
     # futura dice cuándo un animal todavía no existía o seguía activo.
     activos = activos_por_dia(hato, confirmados, inicio, dia)
+    repartos = {str(m["movement_id"]): (m, repartir(m, activos)) for m in gastos}
+    return {
+        "dia": dia,
+        "hasta_dia": hasta_dia,
+        "activos": activos,
+        "repartos": repartos,
+        "centavos": {k: reparto_en_centavos(r, dia) for k, (_, r) in repartos.items()},
+    }
+
+
+def _estado(
+    ctx: Mapping[str, Any], tag_id: str, pesajes: list[Mapping[str, Any]]
+) -> dict[str, Any]:
+    dia: date = ctx["dia"]
+    hasta_dia: list[Mapping[str, Any]] = ctx["hasta_dia"]
+    repartos: dict[str, tuple[Mapping[str, Any], dict[str, Any]]] = ctx["repartos"]
+    ventas = [m for m in hasta_dia if m["kind"] == "venta" and _un_animal(m) == tag_id]
+    venta = ventas[0] if ventas else None
+    vendida = {"venta": str(venta["movement_id"])} if venta is not None else {}
 
     # Costo acumulado en centavos cuadrados: compra más su parte de cada gasto.
     por_categoria: dict[str, int] = {}
@@ -399,9 +429,8 @@ def estado_animal(
                 _frac(m["amount_mxn"])
             )
             fuentes.append(str(m["movement_id"]))
-    repartos = {str(m["movement_id"]): (m, repartir(m, activos)) for m in gastos}
-    for movement_id, (m, reparto) in repartos.items():
-        centavos = reparto_en_centavos(reparto, dia).get(tag_id, 0)
+    for movement_id, (m, _) in repartos.items():
+        centavos = ctx["centavos"][movement_id].get(tag_id, 0)
         if centavos:
             categoria = str(m["category"])
             por_categoria[categoria] = por_categoria.get(categoria, 0) + centavos
@@ -521,3 +550,116 @@ def estado_animal(
         "precio_minimo_kg": minimo,
         "roi": roi,
     }
+
+
+# --- hato completo ---------------------------------------------------------
+
+
+def dinero_del_hato(
+    desde: date,
+    dia: date,
+    pesajes: Iterable[Mapping[str, Any]],
+    movimientos: Iterable[Mapping[str, Any]],
+    hato: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """El dinero de todo el rancho: en qué se fue entre `desde` y `dia`, y cada vaca a `dia`.
+
+    - `mes`: lo devengado entre `desde` y `dia` (ambos incluidos), por
+      categoría de gasto, más compras y ventas con fecha en ese rango. Cada
+      categoría incluye lo que no tuvo a quién cargarse; `sin_asignar_mxn`
+      dice cuánto fue, a la vista.
+    - `animales`: el estado de cada vaca activa al cierre de `dia`, con las
+      mismas reglas que la ficha (`estado_animal`).
+    - `vendidos`: cada venta confirmada hasta `dia`, con su resultado
+      realizado y los días entre la compra y la venta (`None` sin compra).
+    """
+    if desde > dia:
+        raise ValueError(f"Rango invertido: {desde} > {dia}")
+    confirmados = _confirmados(movimientos)
+    ctx = _contexto(confirmados, hato, dia)
+    por_tag: dict[str, list[Mapping[str, Any]]] = {}
+    for p in pesajes:
+        if p.get("tag_id"):
+            por_tag.setdefault(str(p["tag_id"]), []).append(p)
+
+    por_categoria: dict[str, int] = {}
+    sin_asignar = 0
+    fuentes: list[str] = []
+    antes = desde - timedelta(days=1)
+    for movement_id, (m, reparto) in ctx["repartos"].items():
+        hasta_dia = ctx["centavos"][movement_id]
+        previo = reparto_en_centavos(reparto, antes)
+        centavos = sum(hasta_dia.values()) - sum(previo.values())
+        if centavos:
+            categoria = str(m["category"])
+            por_categoria[categoria] = por_categoria.get(categoria, 0) + centavos
+            sin_asignar += hasta_dia.get(SIN_ASIGNAR, 0) - previo.get(SIN_ASIGNAR, 0)
+            fuentes.append(movement_id)
+    en_rango = [m for m in ctx["hasta_dia"] if desde <= _fecha(m["occurred_on"])]
+    compras = [m for m in en_rango if m["kind"] == "compra"]
+    ventas_mes = [m for m in en_rango if m["kind"] == "venta"]
+
+    vendidos_tags = {_un_animal(m) for m in ctx["hasta_dia"] if m["kind"] == "venta"}
+    compras_por_tag = {_un_animal(m): m for m in confirmados if m["kind"] == "compra"}
+    animales = [
+        _estado(ctx, tag, por_tag.get(tag, []))
+        for tag in sorted(ctx["activos"][dia])
+        if tag not in vendidos_tags
+    ]
+    vendidos = []
+    for venta in sorted(
+        (m for m in ctx["hasta_dia"] if m["kind"] == "venta"),
+        key=lambda m: (_fecha(m["occurred_on"]), str(m["movement_id"])),
+        reverse=True,
+    ):
+        tag = _un_animal(venta)
+        estado = _estado(ctx, tag, por_tag.get(tag, []))
+        compra = compras_por_tag.get(tag)
+        vendida_el = _fecha(venta["occurred_on"])
+        comprada_el = _fecha(compra["occurred_on"]) if compra else None
+        vendidos.append(
+            {
+                "tag_id": tag,
+                "vendida_el": vendida_el,
+                "comprada_el": comprada_el,
+                "dias_en_rancho": (vendida_el - comprada_el).days if comprada_el else None,
+                "venta_mxn": _mxn(_frac(venta["amount_mxn"])),
+                "costo_acumulado": estado["costo_acumulado"],
+                "resultado": estado["resultado"],
+            }
+        )
+
+    return {
+        "desde": desde,
+        "dia": dia,
+        "precio": precio_vigente(ctx["hasta_dia"], dia),
+        "mes": {
+            "gastos_mxn": _de_centavos(sum(por_categoria.values())),
+            "por_categoria": {k: _de_centavos(v) for k, v in sorted(por_categoria.items())},
+            "sin_asignar_mxn": _de_centavos(sin_asignar),
+            "compras_mxn": _de_centavos(sum(_centavos(_frac(m["amount_mxn"])) for m in compras)),
+            "ventas_mxn": _de_centavos(
+                sum(_centavos(_frac(m["amount_mxn"])) for m in ventas_mes)
+            ),
+            "fuente": {
+                "movimientos": fuentes,
+                "compras": [str(m["movement_id"]) for m in compras],
+                "ventas": [str(m["movement_id"]) for m in ventas_mes],
+            },
+        },
+        "animales": animales,
+        "vendidos": vendidos,
+    }
+
+
+def para_json(valor: Any) -> Any:
+    """Montos como texto (igual que #173) y fechas ISO, para no perder centavos en un float."""
+    if isinstance(valor, Decimal):
+        return str(valor)
+    if isinstance(valor, datetime | date):
+        return valor.isoformat()
+    if isinstance(valor, Mapping):
+        return {str(k): para_json(v) for k, v in valor.items()}
+    if isinstance(valor, list | tuple):
+        return [para_json(v) for v in valor]
+    return valor

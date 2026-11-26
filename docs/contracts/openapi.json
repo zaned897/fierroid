@@ -1272,6 +1272,86 @@
         "summary": "Put Animal"
       }
     },
+    "/v1/animals/{tag_id}/dinero": {
+      "get": {
+        "description": "Cuanto vale, cuanto lleva metido y cuanto gana al dia, al cierre de `dia` (UTC).",
+        "operationId": "get_animal_money_v1_animals__tag_id__dinero_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "title": "Tag Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dia",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dia"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Animal Money V1 Animals  Tag Id  Dinero Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Animal Money"
+      }
+    },
     "/v1/animals/{tag_id}/journal": {
       "get": {
         "operationId": "get_animal_journal_v1_animals__tag_id__journal_get",
@@ -2456,6 +2536,77 @@
           }
         ],
         "summary": "Get Money Price"
+      }
+    },
+    "/v1/hato/dinero": {
+      "get": {
+        "description": "En que se fue el dinero del mes (AAAA-MM) y cada vaca al cierre del mes o de hoy.",
+        "operationId": "get_herd_money_v1_hato_dinero_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Org"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Herd Money V1 Hato Dinero Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Herd Money"
       }
     },
     "/v1/journal": {
