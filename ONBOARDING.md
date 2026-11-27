@@ -56,8 +56,19 @@ cd apps/web && corepack pnpm install && corepack pnpm dev
 git switch main && git pull       # para volver a la versión buena
 ```
 
+## Niveles de issues
+Los issues pensados para colaboradores nuevos llevan una etiqueta de nivel y, arriba del texto, un bloque «Nivel N» con qué necesitas, cómo pedírselo a Claude y cómo ver el resultado. Empieza en el nivel 1 y **sube de nivel cuando tengas 2 PRs fusionados** en el actual.
+
+| Etiqueta | Qué incluye | Aquí, por ejemplo | Cómo se revisa |
+|---|---|---|---|
+| [`nivel-1`](https://github.com/zaned897/fierroid/issues?q=is%3Aopen+label%3Anivel-1) | Textos, datos, documentación, fotos o un solo archivo, sin lógica | relevamiento de gabinetes y de la manga, BOM v1 | Leyendo el PR o en la preview |
+| [`nivel-2`](https://github.com/zaned897/fierroid/issues?q=is%3Aopen+label%3Anivel-2) | Pantallas, estilos, SVG o modelos CAD/3D | CAD del layout interno y del soporte RFID, fotos reales en la página | Preview + `lint`/`build` en verde |
+| [`nivel-3`](https://github.com/zaned897/fierroid/issues?q=is%3Aopen+label%3Anivel-3) | Lógica de frontend o backend con pruebas, varias zonas | (más adelante; la estación y la API son de Eduardo) | Pruebas automáticas + preview |
+
+Etiquetas de área que acompañan al nivel: `hardware`, `bom`, `web`, `documentation`. Un issue con `bloqueado` espera algo del dueño (un archivo, una decisión): no lo tomes sin hablar con él.
+
 ## Primer PR
-Empieza por una issue con `good first issue` o la que te asigne el dueño. Buenos primeros cambios: textos de la app web y documentación. En un hilo nuevo de Claude:
+Empieza por un issue con etiqueta `nivel-1` (ver «Niveles de issues») o el que te asigne el dueño. Buenos primeros cambios: textos de la app web y documentación. En un hilo nuevo de Claude:
 > Quiero resolver esta issue: <liga>. No programo. Explícame en 3 líneas qué vas a cambiar y dónde se verá; cuando te diga que sí, hazlo en una rama, corre las pruebas que pide CLAUDE.md y abre un PR con la plantilla.
 
 ## No tocar sin el dueño
